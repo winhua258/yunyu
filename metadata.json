@@ -1,0 +1,6 @@
+{
+  "name": "緣友 YUAN-YU 私人尊榮媒合",
+  "description": "高端隱私會員制媒合平台，採用專屬戀人編號驗證與精緻的 Natural Tones 風格設計，一鍵建立與推薦對象的 LINE 尊榮對談管道。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
