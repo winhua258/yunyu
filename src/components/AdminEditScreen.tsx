@@ -199,79 +199,64 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     updatedMetrics: Record<string, PersonalityMetrics>,
     updatedAdminCodes: string[]
   ): Promise<{ success: boolean; message: string }> => {
-    const adminCode = prompt("為了安全，請輸入您的管理員編號以授權本次儲存：");
+    // 管理員已登入，直接使用記憶體中的管理員編號，不再對用戶彈出輸入框
+    const adminCode = adminCodes[0];
     if (!adminCode) {
-      const msg = "未提供管理員編號，操作已取消。";
+      const msg = "未找到管理員編號，請重新登入。";
       setErrorMessage(msg);
       return { success: false, message: msg };
     }
-
     const { success, message } = await syncSharedConfig({ profiles: updatedProfiles, metrics: updatedMetrics, adminCodes: updatedAdminCodes }, adminCode);
     return { success, message };
   };
 
-  // Save changes for currently selected profile
-  const handleSaveChanges = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const finalCode = editData.code.trim();
-    if (!finalCode) {
-      setErrorMessage("登入編號不可為空");
-      return;
-    }
+  const [isSaving, setIsSaving] = React.useState(false);
 
-    if (!editData.name.trim()) {
-      setErrorMessage("姓名不可為空");
-      return;
-    }
-
-    // System reserved check
+  // 自動儲存：可不傳入強制覆寫的編輯資料
+  const handleAutoSave = async (overrideEditData?: typeof editData) => {
+    const data = overrideEditData ?? editData;
+    const finalCode = data.code.trim();
+    if (!finalCode) { setErrorMessage("登入編號不可為空"); return; }
+    if (!data.name.trim()) { setErrorMessage("姓名不可為空"); return; }
     if (adminCodes.includes(finalCode) || RESERVED_MATCH_CODES.includes(finalCode)) {
       setErrorMessage(`編號「${finalCode}」為管理員或系統保留編號，請使用其他編號`);
       return;
     }
-
-    // Code duplicate check
     if (finalCode !== selectedCode && profiles[finalCode]) {
       setErrorMessage(`編號「${finalCode}」已被紳士「${profiles[finalCode].name}」使用，請更換其他編號`);
       return;
     }
 
-    const cleanImageUrls = editData.imageUrls.map(url => url.trim()).filter(url => url.length > 0);
+    const cleanImageUrls = data.imageUrls.map(url => url.trim()).filter(url => url.length > 0);
     const mainImageUrl = cleanImageUrls[0] || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800";
 
     const updatedProfile: Profile = {
       code: finalCode,
-      name: editData.name.trim(),
-      age: Number(editData.age) || 25,
-      location: editData.location.trim(),
-      tagline: editData.tagline.trim(),
-      bio: editData.bio.trim(),
-      lifestyle: editData.lifestyleStr.split(",").map(t => t.trim()).filter(t => t.length > 0),
+      name: data.name.trim(),
+      age: Number(data.age) || 25,
+      location: data.location.trim(),
+      tagline: data.tagline.trim(),
+      bio: data.bio.trim(),
+      lifestyle: data.lifestyleStr.split(",").map(t => t.trim()).filter(t => t.length > 0),
       imageUrl: mainImageUrl,
       imageUrls: cleanImageUrls.length > 0 ? cleanImageUrls : [mainImageUrl],
-      cardDetail: editData.cardDetail.trim(),
-      idealMatch: editData.idealMatch.trim(),
-      contactLineUrl: editData.contactLineUrl.trim(),
-      isAcceptingMatches: editData.isAcceptingMatches ?? true,
+      cardDetail: data.cardDetail.trim(),
+      idealMatch: data.idealMatch.trim(),
+      contactLineUrl: data.contactLineUrl.trim(),
+      isAcceptingMatches: data.isAcceptingMatches ?? true,
     };
 
-    // 1. Build new profiles
     const newProfiles = { ...profiles };
-    if (finalCode !== selectedCode) {
-      delete newProfiles[selectedCode];
-    }
+    if (finalCode !== selectedCode) { delete newProfiles[selectedCode]; }
     newProfiles[finalCode] = updatedProfile;
 
-    // 2. Build new metrics
     const newMetrics = { ...allMetrics };
-    if (finalCode !== selectedCode) {
-      delete newMetrics[selectedCode];
-    }
+    if (finalCode !== selectedCode) { delete newMetrics[selectedCode]; }
     newMetrics[finalCode] = { ...currentMetrics };
 
-    // Update states in place
+    setIsSaving(true);
     const result = await handleSync(newProfiles, newMetrics, adminCodes);
+    setIsSaving(false);
 
     if (!result || !result.success) {
       setErrorMessage(result?.message || "儲存失敗，請檢查網路或管理員編號。");
@@ -279,19 +264,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       return;
     }
 
-    // Re-fetch the canonical data from the server to ensure consistency
     await refreshData();
-
-    // Set active selection to the new code
     setSelectedCode(finalCode);
-    
     setErrorMessage("");
-    setSuccessMessage(`「${editData.name} (${finalCode})」資料與特質指標已成功儲存！登入驗證與測驗配對將立即生效。`);
-
-    // Auto clear success message after 4s
-    setTimeout(() => {
-      setSuccessMessage("");
-    }, 4000);
+    setSuccessMessage(`「${data.name} (${finalCode})」已儲存。`);
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   // Reset current profile to default values
@@ -815,7 +792,15 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 )}
               </AnimatePresence>
 
-              <form id="form-admin-edit" onSubmit={handleSaveChanges} className="space-y-8">
+              {/* 自動儲存狀態指示器 */}
+              {isSaving && (
+                <div className="fixed bottom-6 right-6 z-50 bg-brand-olive text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse">
+                  <Save className="w-3.5 h-3.5" />
+                  <span>儲存中...</span>
+                </div>
+              )}
+
+              <div id="form-admin-edit" className="space-y-8">
                 
                 {/* 1. Basic Fields Block including Dynamic Code */}
                 <div className="space-y-4">
@@ -834,6 +819,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         required
                         value={editData.code}
                         onChange={handleFormChange}
+                        onBlur={() => void handleAutoSave()}
                         placeholder="例如：520"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -850,6 +836,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         required
                         value={editData.name}
                         onChange={handleFormChange}
+                        onBlur={() => void handleAutoSave()}
                         placeholder="例如：彥廷"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -868,6 +855,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         max={99}
                         value={editData.age}
                         onChange={handleFormChange}
+                        onBlur={() => void handleAutoSave()}
                         placeholder="例如：27"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -884,6 +872,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         required
                         value={editData.location}
                         onChange={handleFormChange}
+                        onBlur={() => void handleAutoSave()}
                         placeholder="例如：台北市"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -897,7 +886,12 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => setEditData(prev => ({ ...prev, isAcceptingMatches: !(prev.isAcceptingMatches ?? true) }))}
+                        onClick={() => {
+                          const next = !(editData.isAcceptingMatches ?? true);
+                          const nextData = { ...editData, isAcceptingMatches: next };
+                          setEditData(nextData);
+                          void handleAutoSave(nextData);
+                        }}
                         className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-olive ${
                           (editData.isAcceptingMatches ?? true) ? 'bg-brand-olive' : 'bg-gray-300'
                         }`}
@@ -913,7 +907,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </span>
                     </div>
                     <span className="text-[10px] text-brand-light block mt-1.5 italic">
-                      提示：關閉後，麗人進行「AI 靈魂共鳴測驗」時將不會配對到此位紳士。
+                      提示：關閉後，麗人進行「AI 靈魂共鳴測驗」時將不會配對到此位紳士。切換即自動儲存。
                     </span>
                   </div>
                 </div>
@@ -945,6 +939,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           required
                           value={url}
                           onChange={(e) => handleImageUrlsChange(index, e.target.value)}
+                          onBlur={() => void handleAutoSave()}
                           placeholder="請輸入 Unsplash 圖片網址或任何公開圖片 CDN 連結"
                           className="flex-1 bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                         />
@@ -978,6 +973,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     required
                     value={editData.tagline}
                     onChange={handleFormChange}
+                    onBlur={() => void handleAutoSave()}
                     placeholder="例如：溫柔沉穩、追求空間與生活美學的室內設計師"
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
@@ -995,6 +991,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     required
                     value={editData.bio}
                     onChange={handleFormChange}
+                    onBlur={() => void handleAutoSave()}
                     placeholder="介紹他的工作背景、個性特質、愛好等詳細內容..."
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all leading-relaxed"
                   />
@@ -1012,6 +1009,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     required
                     value={editData.lifestyleStr}
                     onChange={handleFormChange}
+                    onBlur={() => void handleAutoSave()}
                     placeholder="例如：室內設計, 黑膠唱片, 古典音樂, 咖啡美學"
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
@@ -1029,6 +1027,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     required
                     value={editData.cardDetail}
                     onChange={handleFormChange}
+                    onBlur={() => void handleAutoSave()}
                     placeholder="描述他理想中的第一次約會場景或渴望的心動互動..."
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all leading-relaxed"
                   />
@@ -1046,6 +1045,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     required
                     value={editData.idealMatch}
                     onChange={handleFormChange}
+                    onBlur={() => void handleAutoSave()}
                     placeholder="描述他對女方性格、生活態度或頻率的深度期許..."
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all leading-relaxed"
                   />
@@ -1063,6 +1063,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     required
                     value={editData.contactLineUrl}
                     onChange={handleFormChange}
+                    onBlur={() => void handleAutoSave()}
                     placeholder="例如：https://line.me/R/ti/p/@yuanyu_v520"
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
@@ -1190,6 +1191,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                                         [key]: val
                                       }));
                                     }}
+                                    onMouseUp={() => void handleAutoSave()}
+                                    onTouchEnd={() => void handleAutoSave()}
                                     className="flex-1 accent-brand-olive h-1.5 bg-brand-border rounded-lg cursor-pointer"
                                   />
                                   <span className="text-[10px] text-brand-light font-bold">100</span>
@@ -1203,19 +1206,12 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </div>
                 </div>
 
-                {/* Form Submit Button */}
-                <div className="pt-6 border-t border-brand-border/60">
-                  <button
-                    id="btn-admin-submit-save"
-                    type="submit"
-                    className="w-full py-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer hover:scale-102 active:scale-98"
-                  >
-                    <Save className="w-4 h-4 text-brand-accent animate-pulse" />
-                    <span>儲存此紳士檔案與特質變更</span>
-                  </button>
+                {/* 自動儲存註記 */}
+                <div className="pt-4 border-t border-brand-border/40 text-center">
+                  <span className="text-[10px] text-brand-light italic">離開輸入框即自動儲存，特質滑桿放開後自動儲存</span>
                 </div>
 
-              </form>
+              </div>
 
             </div>
           </div>
