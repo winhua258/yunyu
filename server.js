@@ -60,6 +60,8 @@ const LadyProfileSchema = new mongoose.Schema({
   membershipLevel: { type: String, default: "free" }, // 新增：付費套餐等級 (free, experience, vip)
   assetVerified: { type: String, default: "none" }, // 新增：驗資審查狀態 (none, pending, approved)
   unlockedGentlemanCodes: { type: [String], default: [] }, // 新增：已解鎖的男方編號名單
+  deviceId: { type: String, default: "" }, // 設備指紋/辨識碼
+  ipAddress: { type: String, default: "" }, // 註冊時的 IP 位址
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -262,15 +264,50 @@ app.post("/api/profile-config", adminAuth, async (req, res) => {
 
 // --- Lady Profile API Endpoints ---
 
+// 獲取客戶端 IP 的輔助函式
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip;
+}
+
 // POST /api/lady/register: 模擬女性用戶註冊
 app.post("/api/lady/register", async (req, res) => {
   try {
+    const { name, photoUrl, deviceId } = req.body;
+    const clientIp = getClientIp(req);
+
+    // 設備指紋 + IP 掃描攔截機制：防止重複註冊多個帳號來重複答題與解鎖
+    let existingLady = null;
+    if (deviceId) {
+      existingLady = await LadyProfile.findOne({ deviceId });
+    }
+    
+    // 如果設備 ID 查不到，且 clientIp 存在，且非本地開發環節，則檢查 IP
+    if (!existingLady && clientIp) {
+      if (clientIp !== "127.0.0.1" && clientIp !== "::1" && clientIp !== "::ffff:127.0.0.1") {
+        existingLady = await LadyProfile.findOne({ ipAddress: clientIp });
+      }
+    }
+
+    if (existingLady) {
+      console.log(`[Scan Match] Auto-login for duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}) to code: ${existingLady.code}`);
+      return res.status(200).json({ 
+        message: "偵測到您的設備或 IP 已有註冊記錄，已自動為您載入原有帳戶。", 
+        lady: existingLady 
+      });
+    }
+
     const newLadyCode = uuidv4(); // 生成唯一的女性用戶編號
     const newLady = new LadyProfile({
       code: newLadyCode,
-      name: req.body.name || "未命名麗人", // 允許傳入名稱，否則使用預設
+      name: name || "未命名麗人", // 允許傳入名稱，否則使用預設
       isVerified: true, // 模擬已驗證
-      photoUrl: req.body.photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800",
+      photoUrl: photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800",
+      deviceId: deviceId || "",
+      ipAddress: clientIp || ""
     });
     await newLady.save();
     res.status(201).json({ message: "女性用戶註冊成功！", lady: newLady });

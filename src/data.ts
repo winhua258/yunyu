@@ -247,6 +247,16 @@ export async function syncSharedConfig(config: {
 
 // --- Lady Profile API Interactions ---
 
+// 獲取或建立設備唯一識別碼以實施防刷機制
+function getOrCreateDeviceId(): string {
+  let devId = localStorage.getItem("yuanyu_device_id");
+  if (!devId) {
+    devId = 'dev_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+    localStorage.setItem("yuanyu_device_id", devId);
+  }
+  return devId;
+}
+
 /**
  * Registers a new lady profile.
  * @param name - Optional name for the lady.
@@ -255,10 +265,11 @@ export async function syncSharedConfig(config: {
  */
 export async function registerLady(name?: string, photoUrl?: string): Promise<LadyProfile> {
   try {
+    const deviceId = getOrCreateDeviceId();
     const response = await fetch("/api/lady/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, photoUrl }),
+      body: JSON.stringify({ name, photoUrl, deviceId }),
     });
     if (!response.ok) {
       const errorData = await response.json();

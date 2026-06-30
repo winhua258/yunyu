@@ -53,6 +53,26 @@
 - **驗證命令和結果**：
   - 執行 `npx tsc --noEmit`：無任何報錯，編譯成功。
   - 執行 `npm run build`：Vite 編譯打包順利完成。
-- **提交哈希**：be5f6134005dd184af204a9fb199c729d2f2eca8 (amended)
+- **提交哈希**：acd94684b08569d816520b4028222b616544b950 (second commit)
 - **是否已經收斂**：是。
+- **剩餘風險及暫不處理原因**：無。
 
+## 2026-06-30 第三輪優化與設備碼+IP防刷機制實作記錄
+
+- **本輪目標**：實作「設備碼 + IP」雙重掃描攔截與自動登入機制，防止重複註冊/多次答題。
+- **發現的問題**：訪客或已登出的用戶即使有 localStorage 限制，仍可手動清除快取或使用不同瀏覽器重複點擊 AI 靈魂測試進行答題與多次解鎖，破壞「每人僅限解鎖一次」的商業規則。
+- **是否真實可複現**：是，清除 localStorage 後重新進入即可再次答題。
+- **複現命令或驗證方式**：清除快取或在無痕視窗中進行二次註冊。
+- **修改內容**：
+  - `server.js`：
+    - `LadyProfile` Mongoose Schema 新增了 `deviceId`（設備辨識碼）與 `ipAddress`（IP 位址）欄位。
+    - `POST /api/lady/register` 接口中，增加 `getClientIp()` 輔助函式提取 `x-forwarded-for` 或 `req.ip`。
+    - 實作防刷掃描機制：註冊時會先比對 `deviceId` 與 `ipAddress`（過濾 localhost 開發環境）。若匹配到已註冊用戶，不再創建新帳號，而是直接返回先前建立的帳戶資訊完成「自動登入/加載原有帳戶」，實現重複點擊自動重定向至原有配對紳士的規則。
+  - `src/data.ts`：
+    - 實作 `getOrCreateDeviceId()` 輔助函式，在瀏覽器端隨機生成一個設備 UUID 並存儲於 localStorage 作為設備碼。
+    - 修改 `registerLady` 使其在請求體中將 `deviceId` 發送給伺服器端。
+- **驗證命令和結果**：
+  - 執行 `npx tsc --noEmit`：無任何報錯，編譯成功。
+  - 執行 `npm run build`：Vite 生產建置打包順利完成。
+- **提交哈希**：b04ae914eda57c10b1661371b60bf4f5f105cbaa (amended)
+- **是否已經收斂**：是。
