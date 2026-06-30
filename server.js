@@ -30,6 +30,7 @@ const ProfileSchema = new mongoose.Schema({
   cardDetail: String,
   idealMatch: String,
   contactLineUrl: String,
+  isAcceptingMatches: { type: Boolean, default: true },
 }, { _id: false });
 
 const MetricsSchema = new mongoose.Schema({

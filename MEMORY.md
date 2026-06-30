@@ -132,4 +132,23 @@
 - **提交哈希**：40d30c3f972b88b9f60f5dcde8a2a0be83d52333 (amended)
 - **是否已經收斂**：是。
 
+## 2026-06-30 第六輪配對資格開關閃回與 Mongoose Schema 欄位修復記錄
+
+- **本輪目標**：修復後台變更配對資格後，開關數秒內自動閃回為「開啟」狀態的 Bug。
+- **發現的問題**：
+  1. **資料庫 Schema 欄位遺漏**：`server.js` 中的 Mongoose `ProfileSchema` 定義中缺少了 `isAcceptingMatches` 欄位。當前端發送儲存請求時，Mongoose 會將該未定義欄位自動過濾過濾掉，導致設定無法寫入 MongoDB。
+  2. **自動輪詢同步覆寫**：因資料庫中該值為空，伺服器返回設定時，前端判定為 `undefined` 並預設 fallback 為 `true`，因而在下一次 15 秒背景輪詢資料同步時，將已關閉的開關重新覆寫為「開啟」。
+- **修改內容**：
+  - `server.js`：
+    - 在 Mongoose `ProfileSchema` 定義中新增 `isAcceptingMatches: { type: Boolean, default: true }` 欄位，使其能正常被資料庫儲存與讀取。
+  - **重啟與同步**：
+    - 重新執行 `npm run build` 打包。
+    - 使用 `pm2 restart yuanyu` 重啟伺服器加載新 Schema，徹底修復閃回問題。
+- **驗證命令和結果**：
+  - 成功完成打包建置與後台重啟。
+  - 變更配對狀態後，狀態能長久正確保留。
+- **提交哈希**：6cdd23c6fe5d40a50f49caa7fd1f0bb3c5357864 (amended)
+- **是否已經收斂**：是。
+
+
 
