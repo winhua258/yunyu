@@ -29,7 +29,7 @@ import { Profile } from "../types";
 const IS_DEV = (import.meta as any).env?.DEV === true || (import.meta as any).env?.MODE === "development";
 
 interface VerificationScreenProps {
-  onVerifySuccess: (code: string) => void;
+  onVerifySuccess: (code: string, role?: string) => void;
   onSoulMatchClick?: () => void;
 }
 
@@ -68,14 +68,15 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       setError("");
       const response = await verifyAuthCode(sanitizedCode);
       
-      // 如果是用戶管理帳號或管理員角色，重新刷入授權資料
+      // 如果是管理員角色，背景刷新後台資料（不阻塞流程）
       if (response.role === "admin") {
-        await refreshData(sanitizedCode);
+        void refreshData(sanitizedCode);
       }
       
       setIsSuccess(true);
+      // 直接把 server 回傳的 role 傳給父層，不依賴非同步 adminCodes 狀態
       setTimeout(() => {
-        onVerifySuccess(sanitizedCode);
+        onVerifySuccess(sanitizedCode, response.role);
       }, 900);
     } catch (err: any) {
       setError(err.message || "查無此編號，請確認您的編號是否正確");

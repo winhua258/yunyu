@@ -39,9 +39,10 @@ export default function App() {
     }
   }, [loggedInLadyCode, ladyProfiles, hasInitializedLady]);
 
-  const handleVerifySuccess = async (code: string) => {
-    // 這個函式現在只處理紳士和管理員的驗證
-    if (adminCodes.includes(code)) {
+  const handleVerifySuccess = async (code: string, role?: string) => {
+    // 優先使用 server 直接回傳的 role，避免依賴非同步更新的 adminCodes 狀態造成競爭條件
+    const isAdmin = role === "admin" || adminCodes.includes(code);
+    if (isAdmin) {
       setShowAdmin(true);
       setVerifiedCode(null); // 管理員登入不顯示個人檔案
       if (loggedInLadyCode) logout();
