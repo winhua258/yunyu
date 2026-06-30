@@ -74,5 +74,34 @@
 - **驗證命令和結果**：
   - 執行 `npx tsc --noEmit`：無任何報錯，編譯成功。
   - 執行 `npm run build`：Vite 生產建置打包順利完成。
-- **提交哈希**：b04ae914eda57c10b1661371b60bf4f5f105cbaa (amended)
+- **提交哈希**：8e013be233c047cc92cbfd29e2b52a62ffba3194 (third commit)
 - **是否已經收斂**：是。
+- **剩餘風險及暫不處理原因**：無。
+
+## 2026-06-30 第四輪優化與背景同步閃屏與編號失效修復記錄
+
+- **本輪目標**：修復主頁/後台每隔 15 秒重新整理導致閃屏的 UX 問題，並恢復 `jim1995.YY` 等管理編號與 `daiC` 等紳士編號的登入效力。
+- **發現的問題**：
+  1. `DataContext.tsx` 中的輪詢機制每 15 秒調用 `refreshData()` 時會將 `isDataLoading` 設為 `true`，引發全螢幕 loading 畫面，造成高頻率的白屏/閃動。
+  2. 伺服器端後台程序（Express）未被重啟以載入最新的 `server.js` 及 `.env` 設定，導致 `/api/auth/verify` 等 API 返回 404 (Cannot POST)，編號無法通過後端驗證。
+  3. `package.json` 中的 dev/start 指令先前為 `node server.js`，由於它直接導入 `.ts` 檔案，在沒有載入 `tsx` 模組時會因為不支援 ESM TS 編譯解析而崩潰。
+  4. `.env` 中的 `ADMIN_CODES` 被之前的更改重置為 `"admin123"`，丟失了用戶原本的 `jim1995.YY` 管理主控碼。
+- **是否真實可複現**：是，啟動網頁停留 15 秒即可穩定複現全螢幕閃動；輸入編號登入皆會提示查無此人。
+- **複現命令或驗證方式**：停留網頁觀察閃動、用 `curl` 測試驗證接口 `/api/auth/verify`。
+- **修改內容**：
+  - `DataContext.tsx`：
+    - 修改 `refreshData` 使其接受第二個參數 `showLoadingScreen` (預設為 `false`)。
+    - 僅在首頁首次載入（`useEffect` 執行時）傳入 `true` 觸發全螢幕載入畫面，背景 15 秒自動輪詢不再設置載入狀態，從而修復閃屏問題。
+  - `package.json`：
+    - 將 `dev` 和 `start` 指令改為 `tsx server.js` 以便支援直接導入 `.ts` 檔案。
+  - `.env`：
+    - 將 `ADMIN_CODES` 修正為 `"admin123, jim1995.YY"`，成功回復主控管理碼。
+  - **重啟服務**：
+    - 在背景殺死舊的 `server.js` 後台進程並以 `tsx` 重新啟動 Node.js，使 `/api/auth/verify` 等安全驗證路由以及 `.env` 配置更新正式生效。
+- **驗證命令和結果**：
+  - 執行 `npx tsc --noEmit`：無任何報錯，編譯成功。
+  - 執行 `npm run build`：Vite 編譯打包順利完成。
+  - 使用 `curl` 驗證 `daiC` (紳士) 與 `jim1995.YY` (管理員) 接口：均正確返回對應角色與 profile 結構。
+- **提交哈希**：eee4d5b23de2228d886a1fa4e8c9059abb95ec67 (amended)
+- **是否已經收斂**：是。
+

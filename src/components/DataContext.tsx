@@ -38,8 +38,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [adminCodes, setAdminCodes] = useState<string[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
-  const refreshData = useCallback(async (adminCode?: string) => {
-    setIsDataLoading(true);
+  const refreshData = useCallback(async (adminCode?: string, showLoadingScreen = false) => {
+    if (showLoadingScreen) {
+      setIsDataLoading(true);
+    }
     try {
       const url = adminCode ? "/api/admin/config?ts=" + Date.now() : "/api/profile-config?ts=" + Date.now();
       const response = await fetch(url, {
@@ -68,7 +70,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // 僅在並無已加載的管理密碼時才重置為空
       setAdminCodes(prev => prev.length > 0 ? prev : []);
     } finally {
-      setIsDataLoading(false);
+      if (showLoadingScreen) {
+        setIsDataLoading(false);
+      }
     }
   }, []);
 
@@ -79,14 +83,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refreshData();
-
+    void refreshData(undefined, true); // 只有初次載入時顯示全螢幕「正在初始化」畫面
+ 
     // Set up polling to automatically refresh data every 15 seconds
     const intervalId = setInterval(() => {
       // To save resources, only refresh if the browser tab is active/visible.
       if (document.visibilityState === 'visible') {
         console.log("🔄 [DataContext] Auto-syncing data from server...");
-        void refreshData();
+        void refreshData(); // 靜態背景重新同步，不引發全螢幕閃動
       }
     }, 15000); // Poll every 15 seconds
 
