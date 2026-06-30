@@ -264,8 +264,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       return;
     }
 
-    await refreshData();
-    setSelectedCode(finalCode);
+    // 立即更新本地 profiles 狀態（樂觀更新），防止 useEffect 用舊資料把 toggle 蓋回
+    setOptimisticData({ profiles: newProfiles, metrics: newMetrics });
+    // 背景同步 server 最新資料，不 await 避免再次觸發閃回
+    void refreshData();
+
+    if (finalCode !== selectedCode) {
+      setSelectedCode(finalCode);
+    }
     setErrorMessage("");
     setSuccessMessage(`「${data.name} (${finalCode})」已儲存。`);
     setTimeout(() => setSuccessMessage(""), 3000);

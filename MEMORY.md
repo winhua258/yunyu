@@ -105,3 +105,31 @@
 - **提交哈希**：eee4d5b23de2228d886a1fa4e8c9059abb95ec67 (amended)
 - **是否已經收斂**：是。
 
+## 2026-06-30 第五輪後台登入卡死與後台無彈窗自動儲存實作記錄
+
+- **本輪目標**：
+  1. 修復管理員認證成功後卡在「正在啟用您專屬的安全媒合通道，請稍後...」的 Loading 頁面問題。
+  2. 移除後台管理儲存時彈出的「請輸入管理員編號」確認框。
+  3. 移除「儲存此紳士檔案與特質變更」按鈕，實作「離開輸入框（onBlur）、切換配對資格開關（onClick）及放開特質滑桿（onMouseUp/onTouchEnd）時自動儲存」的體驗。
+- **發現的問題**：
+  1. **React 狀態更新競爭條件 (Race Condition)**：`refreshData` 是一個非同步更新 React state 的過程。當 900ms 後觸發 `onVerifySuccess` 時，`adminCodes` state 可能還沒完成更新，導致 `App.tsx` 中的邏輯判定 `adminCodes.includes(code)` 為 `false`，將管理員誤判為紳士代碼，卡在 Loading。
+  2. **Vite 靜態資源快取**：當未執行生產建置 `npm run build` 時，ViteExpress 可能仍在使用 `dist/` 中帶有舊「儲存按鈕」的舊版靜態資源，因此即使重啟服務，瀏覽器上仍然顯示舊按鈕。
+- **修改內容**：
+  - `VerificationScreen.tsx`：
+    - 在 `onVerifySuccess` 回調中新增並傳遞 server 權威返回的 `role` 參數，不依賴異步的本地 `adminCodes` state。
+  - `App.tsx`：
+    - 更新 `handleVerifySuccess` 接收並優先採用 `role` 來判斷管理員，徹底解決 Loading 卡死。
+  - `AdminEditScreen.tsx`：
+    - `handleSync` 移除 `prompt` 輸入框，改為直接使用記憶體中已登入的 `adminCodes[0]`。
+    - 移除原本表單的 Submit 儲存按鈕及 `<form onSubmit>`。
+    - 所有輸入欄位加裝 `onBlur={() => void handleAutoSave()}`。
+    - 特質滑桿加裝 `onMouseUp` 和 `onTouchEnd` 以實作放開時自動儲存。
+    - 配對資格切換開關改為點擊後立即觸發自動儲存。
+    - 引進樂觀更新 `setOptimisticData` 於儲存成功時立刻更新本地 state，避免後續 15 秒背景 polling 將狀態閃回。
+- **驗證命令和結果**：
+  - 執行 `npm run build`：成功編譯打包出最新 `index-D276varD.js` 包。
+  - 執行 `pm2 restart yuanyu`：重啟服務後，確認按鈕已消失，onBlur 自動儲存工作正常。
+- **提交哈希**：40d30c3f972b88b9f60f5dcde8a2a0be83d52333 (amended)
+- **是否已經收斂**：是。
+
+
