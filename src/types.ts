@@ -11,6 +11,7 @@ export interface Profile {
   idealMatch: string;
   contactLineUrl: string;
   imageUrls?: string[];
+  isAcceptingMatches?: boolean;
 }
 
 export interface PersonalityMetrics {
@@ -34,4 +35,19 @@ export interface PersonalityMetrics {
   DecisionSpeed: number;         // 決策速度
   ConflictResolution: number;    // 衝突處理能力
   LongTermCommitment: number;    // 長期關係投入度
+}
+
+export interface LadyProfile {
+  code: string;
+  name: string;
+  isVerified: boolean;
+  photoUrl: string;
+  quizTaken: boolean;
+  matchedGentlemanCode: string | null;
+  quizMetrics: PersonalityMetrics;
+  membershipLevel?: string;
+  assetVerified?: string;
+  unlockedGentlemanCodes?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }

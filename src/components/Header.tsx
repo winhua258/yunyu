@@ -1,4 +1,5 @@
-import { Lock, ShieldCheck, Heart } from "lucide-react";
+import { Lock, ShieldCheck, Heart, User, LogOut } from "lucide-react";
+import { useAuth } from "./AuthContext";
 
 interface HeaderProps {
   onBackToVerify?: () => void;
@@ -7,6 +8,9 @@ interface HeaderProps {
 }
 
 export default function Header({ onBackToVerify, showBack = false, onSoulMatchClick }: HeaderProps) {
+  const { loggedInLadyCode, logout, ladyProfiles } = useAuth();
+  const currentLady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
+
   return (
     <nav className="h-20 px-2 sm:px-6 md:px-12 flex items-center justify-between border-b border-brand-border bg-brand-beige select-none w-full">
       {/* Brand Logo - auto adjusts to fit screens */}
@@ -36,14 +40,34 @@ export default function Header({ onBackToVerify, showBack = false, onSoulMatchCl
             className="flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 xs:px-2.5 xs:py-1.5 sm:px-4 sm:py-2 bg-brand-olive text-white hover:bg-[#4d4d36] text-[9px] xs:text-[10px] sm:text-xs font-bold rounded-full transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer hover:scale-105 active:scale-98 shrink-0 whitespace-nowrap"
           >
             <Heart className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-brand-accent fill-current animate-pulse shrink-0" />
-            <span className="whitespace-nowrap">AI配對</span>
+            <span className="whitespace-nowrap">
+              {currentLady?.quizTaken ? "查看我的配對" : "AI配對"}
+            </span>
           </button>
         )}
       </div>
 
       {/* Action / Security Badge */}
       <div className="flex items-center shrink-0 ml-1 sm:ml-3">
-        {showBack && onBackToVerify ? (
+        {currentLady ? (
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-olive">
+              <User className="w-4 h-4 text-brand-accent" />
+              <span>麗人 {loggedInLadyCode}</span>
+            </div>
+            <button
+              onClick={() => {
+                if (window.confirm("您確定要登出嗎？")) {
+                  logout();
+                }
+              }}
+              className="p-1.5 rounded-full text-brand-light hover:bg-brand-border/40 hover:text-brand-dark transition-colors"
+              title="登出"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : showBack && onBackToVerify ? (
           <button
             onClick={onBackToVerify}
             className="flex items-center gap-1 px-2 py-1 xs:px-2.5 xs:py-1.5 sm:px-4 sm:py-2 border border-brand-olive text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full hover:bg-brand-olive hover:text-white transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap"

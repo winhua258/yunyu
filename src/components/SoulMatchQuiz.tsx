@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { HelpCircle, ArrowRight, ArrowLeft, RefreshCw, X, ShieldCheck, Heart, User } from "lucide-react";
 import { Profile, PersonalityMetrics } from "../types";
-import { PROFILES, METRICS } from "../data";
+import { TEMPLATE_EXCLUDED_CODES, saveLadyQuizResult } from "../data";
+import { useAuth } from "./AuthContext";
+import { useData } from "./DataContext";
 
 interface SoulMatchQuizProps {
   onClose: () => void;
@@ -44,41 +46,77 @@ const METRIC_LABELS: Record<keyof PersonalityMetrics, string> = {
   LongTermCommitment: "長期關係投入"
 };
 
+// Codes to be excluded from matching
+const RESERVED_MATCH_CODES = ['888', '999', '666', '520'];
+
+const QUIZ_PROGRESS_KEY = "yuanyu_quiz_progress";
+
+const defaultUserMetrics: PersonalityMetrics = {
+  Rationality: 50,
+  Spontaneity: 50,
+  Adventure: 50,
+  Hedonism: 50,
+  Dominance: 50,
+  Extroversion: 50,
+  SecurityNeed: 50,
+  EmotionalDependency: 50,
+  GrowthMindset: 50,
+  FamilyOrientation: 50,
+  ConsumptionTendency: 50,
+  FinancialMaturity: 50,
+  CommunicationEfficiency: 50,
+  RitualNeed: 50,
+  QualityOfLife: 50,
+  FreedomNeed: 50,
+  Responsibility: 50,
+  DecisionSpeed: 50,
+  ConflictResolution: 50,
+  LongTermCommitment: 50
+};
+
 export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQuizProps) {
+  const { profiles, metrics } = useData();
+  const { loggedInLadyCode: ladyCode, ladyProfiles, updateLadyProfile } = useAuth(); // 從 Context 獲取用戶編號
   const [currentStep, setCurrentStep] = useState<"intro" | "quiz" | "calculating" | "result">("intro");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userMetrics, setUserMetrics] = useState<PersonalityMetrics>({
-    Rationality: 50,
-    Spontaneity: 50,
-    Adventure: 50,
-    Hedonism: 50,
-    Dominance: 50,
-    Extroversion: 50,
-    SecurityNeed: 50,
-    EmotionalDependency: 50,
-    GrowthMindset: 50,
-    FamilyOrientation: 50,
-    ConsumptionTendency: 50,
-    FinancialMaturity: 50,
-    CommunicationEfficiency: 50,
-    RitualNeed: 50,
-    QualityOfLife: 50,
-    FreedomNeed: 50,
-    Responsibility: 50,
-    DecisionSpeed: 50,
-    ConflictResolution: 50,
-    LongTermCommitment: 50
-  });
+  const [userMetrics, setUserMetrics] = useState<PersonalityMetrics>(() => ({ ...defaultUserMetrics }));
   
   // History stack of metric changes for the Back button
   const [metricHistory, setMetricHistory] = useState<PersonalityMetrics[]>([]);
-  const [matchedCode, setMatchedCode] = useState<string>(() => Object.keys(PROFILES)[0] || "520");
+  const firstNonTemplate = Object.keys(profiles).find(c => !TEMPLATE_EXCLUDED_CODES.includes(c)) || Object.keys(profiles)[0] || "monkeyB";
+  const [matchedCode, setMatchedCode] = useState<string>(() => firstNonTemplate);
   const [matchPercentage, setMatchPercentage] = useState<number>(93);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [calculationMessage, setCalculationMessage] = useState("初始化人格採集器...");
 
   // Top 3 personality tags highlighted for the user
   const [topTags, setTopTags] = useState<{ label: string; val: number }[]>([]);
+
+  // 檢查女性用戶是否已完成測驗
+  useEffect(() => {
+    if (ladyCode && ladyProfiles[ladyCode]?.quizTaken) {
+      onMatchComplete(ladyProfiles[ladyCode].matchedGentlemanCode || firstNonTemplate);
+      return;
+    }
+
+    // 自動恢復上次的測驗進度
+    const savedProgressRaw = localStorage.getItem(QUIZ_PROGRESS_KEY);
+    if (savedProgressRaw) {
+      try {
+        const savedProgress = JSON.parse(savedProgressRaw);
+        if (savedProgress.userMetrics && typeof savedProgress.currentQuestionIndex === 'number' && savedProgress.currentQuestionIndex < questions.length) {
+          setUserMetrics(savedProgress.userMetrics);
+          setCurrentQuestionIndex(savedProgress.currentQuestionIndex);
+          setMetricHistory(savedProgress.metricHistory || []);
+          setCurrentStep("quiz"); // 直接跳到測驗畫面
+        }
+      } catch (e) {
+        console.error("無法解析測驗進度，將重新開始。", e);
+        localStorage.removeItem(QUIZ_PROGRESS_KEY);
+      }
+    }
+
+  }, [ladyCode, onMatchComplete, firstNonTemplate, profiles, ladyProfiles]); // Add profiles & ladyProfiles to dependency
 
   const questions: Question[] = [
     {
@@ -265,21 +303,32 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
     }
   ];
 
-  const handleStartQuiz = () => {
-    // Reset metrics to default
-    const defaults: PersonalityMetrics = {
-      Rationality: 50, Spontaneity: 50, Adventure: 50, Hedonism: 50, Dominance: 50,
-      Extroversion: 50, SecurityNeed: 50, EmotionalDependency: 50, GrowthMindset: 50, FamilyOrientation: 50,
-      ConsumptionTendency: 50, FinancialMaturity: 50, CommunicationEfficiency: 50, RitualNeed: 50, QualityOfLife: 50,
-      FreedomNeed: 50, Responsibility: 50, DecisionSpeed: 50, ConflictResolution: 50, LongTermCommitment: 50
-    };
-    setUserMetrics(defaults);
-    setMetricHistory([]);
-    setCurrentQuestionIndex(0);
-    setCurrentStep("quiz");
+  const handleStartQuiz = async () => {
+    // This function is now just for transitioning from intro to quiz.
+    // The actual reset logic is in handleRestartQuiz.
+
+    // 檢查女性用戶是否已完成測驗
+    if (ladyCode && ladyProfiles[ladyCode]?.quizTaken) {
+      alert("您已完成測驗，無法重複作答。將為您顯示上次的配對結果。");
+      onMatchComplete(ladyProfiles[ladyCode].matchedGentlemanCode || firstNonTemplate);
+      onClose(); // 關閉測驗畫面
+    } else {
+      setCurrentStep("quiz");
+    }
   };
 
-  const handleSelectOption = (modifiers: Partial<PersonalityMetrics>) => {
+  const handleRestartQuiz = () => {
+    if (window.confirm("您確定要放棄目前進度，重新開始測驗嗎？")) {
+      localStorage.removeItem(QUIZ_PROGRESS_KEY);
+      setUserMetrics({ ...defaultUserMetrics });
+      setMetricHistory([]);
+      setCurrentQuestionIndex(0);
+      // We stay on the 'quiz' step, just resetting the content.
+      // If called from another step, we might want to setCurrentStep('quiz')
+    }
+  };
+
+  const handleSelectOption = async (modifiers: Partial<PersonalityMetrics>) => {
     // Keep record of current metrics for backtracking
     setMetricHistory((prev) => [...prev, { ...userMetrics }]);
 
@@ -294,7 +343,16 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      // 自動儲存進度
+      const progressToSave = {
+        currentQuestionIndex: currentQuestionIndex + 1,
+        userMetrics: updatedMetrics,
+        metricHistory: [...metricHistory, { ...userMetrics }],
+      };
+      localStorage.setItem(QUIZ_PROGRESS_KEY, JSON.stringify(progressToSave));
     } else {
+      // 測驗完成，清除進度
+      localStorage.removeItem(QUIZ_PROGRESS_KEY);
       // Completed all 7 questions! Calculate vector math matching
       const finalMatchedCode = calculateVectorMatch(updatedMetrics);
       setMatchedCode(finalMatchedCode);
@@ -310,9 +368,17 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
         .slice(0, 3);
       setTopTags(tags);
 
-      // Save complete status and matched code permanently
-      localStorage.setItem("aura_soul_matched_code", finalMatchedCode);
-      localStorage.setItem("aura_soul_matched_percentage", String(matchPercentage));
+      // Ensure we never persist a template code as the matched result
+      const codeToPersist = TEMPLATE_EXCLUDED_CODES.includes(finalMatchedCode) ? firstNonTemplate : finalMatchedCode;
+      if (codeToPersist !== finalMatchedCode) {
+        setMatchedCode(codeToPersist);
+      }
+
+      // 如果是女性用戶，將測驗結果儲存到後端
+      if (ladyCode) {
+        const updatedLady = await saveLadyQuizResult(ladyCode, codeToPersist, updatedMetrics);
+        updateLadyProfile(updatedLady);
+      }
 
       setCurrentStep("calculating");
       setCalculationProgress(0);
@@ -322,13 +388,30 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
   // COSINE SIMILARITY MATCHING ENGINE
   // Mathematically matches the 20-dimensional user vector against all male vectors!
   const calculateVectorMatch = (userVec: PersonalityMetrics): string => {
-    let bestCode = Object.keys(METRICS)[0] || "520";
+    let bestCode = firstNonTemplate || Object.keys(metrics)[0] || "monkeyB";
     let maxSimilarity = -Infinity;
 
     // Convert to arrays of numbers
     const uKeys = Object.keys(userVec) as (keyof PersonalityMetrics)[];
     
-    Object.entries(METRICS).forEach(([code, maleVec]) => {
+    // Filter for gentlemen who are available for matching
+    const availableGentlemenCodes = Object.keys(profiles).filter(code => 
+      !TEMPLATE_EXCLUDED_CODES.includes(code) && 
+      !RESERVED_MATCH_CODES.includes(code) &&
+      (profiles[code]?.isAcceptingMatches ?? true) // Default to true if undefined
+    );
+
+    // If no one is available, fall back to all non-template, non-reserved profiles as a safety measure
+    const targetCodes = availableGentlemenCodes.length > 0 
+      ? availableGentlemenCodes 
+      : Object.keys(profiles).filter(code => 
+          !TEMPLATE_EXCLUDED_CODES.includes(code) && !RESERVED_MATCH_CODES.includes(code)
+        );
+
+    targetCodes.forEach(code => {
+      const maleVec = metrics[code];
+      if (!maleVec) return; // Safety check if metrics for a profile don't exist
+
       // Cosine similarity formula: (U . M) / (||U|| * ||M||)
       let dotProduct = 0;
       let normU = 0;
@@ -350,6 +433,12 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
       }
     });
 
+    // If no non-template profiles were compared, fall back safely
+    if (maxSimilarity === -Infinity) {
+      setMatchPercentage(86);
+      return bestCode;
+    }
+
     // Calculate dynamic matching compatibility percentage based on similarity score
     // Map cosine similarity (usually ~0.8 to 0.99 for these vector configs) to 85% - 99% range
     const basePct = 70 + Math.round(maxSimilarity * 28);
@@ -360,10 +449,22 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
 
   const handleBackQuestion = () => {
     if (currentQuestionIndex > 0 && metricHistory.length > 0) {
-      const prevMetrics = metricHistory[metricHistory.length - 1];
-      setUserMetrics(prevMetrics);
-      setMetricHistory((prev) => prev.slice(0, -1));
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      const lastMetrics = metricHistory[metricHistory.length - 1];
+      const newHistory = metricHistory.slice(0, -1);
+      const newQuestionIndex = currentQuestionIndex - 1;
+
+      // 更新 React 狀態
+      setUserMetrics(lastMetrics);
+      setMetricHistory(newHistory);
+      setCurrentQuestionIndex(newQuestionIndex);
+
+      // 自動儲存返回後的新進度
+      const progressToSave = {
+        currentQuestionIndex: newQuestionIndex,
+        userMetrics: lastMetrics,
+        metricHistory: newHistory,
+      };
+      localStorage.setItem(QUIZ_PROGRESS_KEY, JSON.stringify(progressToSave));
     }
   };
 
@@ -406,7 +507,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
     onMatchComplete(matchedCode);
   };
 
-  const matchedProfile: Profile = PROFILES[matchedCode] || PROFILES[Object.keys(PROFILES)[0]] || PROFILES["520"];
+  const matchedProfile: Profile = profiles[matchedCode] || profiles[Object.keys(profiles)[0]] || profiles["monkeyB"];
 
   return (
     <div id="soul-match-overlay" className="fixed inset-0 flex items-center justify-center z-50 p-4">
@@ -509,9 +610,15 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
                     特質探索對話 // 第 {currentQuestionIndex + 1} / {questions.length} 題
                   </span>
                   
-                  <div className="flex items-center gap-1 text-[11px] md:text-xs text-brand-olive font-serif">
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    <span>AI 聆聽分析中</span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={handleRestartQuiz} className="flex items-center gap-1 text-[10px] text-brand-light hover:text-brand-olive font-semibold transition-colors" title="重新開始測驗">
+                      <RefreshCw className="w-3 h-3" />
+                      <span>重來</span>
+                    </button>
+                    <div className="flex items-center gap-1 text-[11px] md:text-xs text-brand-olive font-serif">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <span>AI 聆聽分析中</span>
+                    </div>
                   </div>
                 </div>
 

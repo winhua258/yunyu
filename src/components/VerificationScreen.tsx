@@ -1,7 +1,32 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, ArrowRight, ShieldCheck, Mail, Phone, MessageSquare, AlertCircle, Heart } from "lucide-react";
-import { PROFILES, getAdminCodes } from "../data";
+import { 
+  Lock, 
+  ArrowRight, 
+  ShieldCheck, 
+  Mail, 
+  Phone, 
+  MessageSquare, 
+  AlertCircle, 
+  Heart, 
+  UserPlus, 
+  Sparkles, 
+  LogOut, 
+  CheckCircle2, 
+  ChevronRight, 
+  Gem, 
+  UploadCloud, 
+  Search, 
+  RefreshCw 
+} from "lucide-react";
+import { useAuth } from "./AuthContext";
+import { useData } from "./DataContext";
+import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES } from "../data";
+import { Profile } from "../types";
+
+
+// 僅在開發環境顯示調試工具（生產環境自動隱藏）
+const IS_DEV = (import.meta as any).env?.DEV === true || (import.meta as any).env?.MODE === "development";
 
 interface VerificationScreenProps {
   onVerifySuccess: (code: string) => void;
@@ -9,15 +34,28 @@ interface VerificationScreenProps {
 }
 
 export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }: VerificationScreenProps) {
+  const { profiles, isDataLoading, refreshData } = useData();
+  const { loggedInLadyCode, login, register, ladyProfiles, logout, simulateAssets } = useAuth();
+  
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [ladyCodeInput, setLadyCodeInput] = useState("");
+  const [ladyError, setLadyError] = useState("");
+  
+  // Dashboard & Unlock states
+  const [gentlemanCodeInput, setGentlemanCodeInput] = useState("");
+  const [unlockError, setUnlockError] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeTargetProfile, setUpgradeTargetProfile] = useState<any>(null);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [simulating, setSimulating] = useState(false);
 
-  // List of valid codes based on requirement
-  const validCodes = [...Object.keys(PROFILES), ...getAdminCodes()];
+  const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
-  const handleVerify = (e?: React.FormEvent) => {
+  // 統一驗證接口
+  const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const sanitizedCode = code.trim();
 
@@ -26,37 +64,168 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       return;
     }
 
-    if (validCodes.includes(sanitizedCode)) {
+    try {
       setError("");
+      const response = await verifyAuthCode(sanitizedCode);
+      
+      // 如果是用戶管理帳號或管理員角色，重新刷入授權資料
+      if (response.role === "admin") {
+        await refreshData(sanitizedCode);
+      }
+      
       setIsSuccess(true);
-      // Brief delay to allow success animation to play elegantly
       setTimeout(() => {
         onVerifySuccess(sanitizedCode);
       }, 900);
-    } else {
-      setError("查無此編號，請確認您的專屬戀人編號是否正確");
+    } catch (err: any) {
+      setError(err.message || "查無此編號，請確認您的編號是否正確");
     }
   };
 
+  const handleLadyRegister = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLadyError("");
+    try {
+      const ladyProfile = await register();
+      alert(`🎉 恭喜您註冊成功！\n您的專屬麗人編號是：${ladyProfile.code}\n請妥善保管此編號，已為您自動登入。`);
+    } catch (err: any) {
+      setLadyError(err.message || "註冊失敗，請稍後再試。");
+    }
+  };
+
+  const handleLadyLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLadyError("");
+    const sanitizedCode = ladyCodeInput.trim();
+    if (!sanitizedCode) {
+      setLadyError("請輸入您的麗人編號。");
+      return;
+    }
+    try {
+      await login(sanitizedCode);
+      setLadyCodeInput("");
+    } catch (err: any) {
+      setLadyError(err.message || "登入失敗，請檢查編號是否正確。");
+    }
+  };
+
+  // 處理自定義輸入紳士代號解鎖
+  const handleUnlockCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUnlockError("");
+    const inputCode = gentlemanCodeInput.trim();
+    if (!inputCode) {
+      setUnlockError("請輸入男生編號");
+      return;
+    }
+
+    const targetProfile = profiles[inputCode];
+    if (!targetProfile) {
+      setUnlockError("查無此編號的紳士資料卡");
+      return;
+    }
+
+    // 排除模板
+    if (TEMPLATE_EXCLUDED_CODES.includes(inputCode)) {
+      setUnlockError("此編號為範本用戶，不可用於匹配");
+      return;
+    }
+
+    executeUnlockFlow(targetProfile);
+  };
+
+  // 執行解鎖判斷與請求
+  const executeUnlockFlow = async (targetProfile: any) => {
+    const inputCode = targetProfile.code;
+    const unlockedList = lady?.unlockedGentlemanCodes || [];
+    const isUnlocked = unlockedList.includes(inputCode) || lady?.matchedGentlemanCode === inputCode;
+
+    if (isUnlocked) {
+      onVerifySuccess(inputCode);
+      return;
+    }
+
+    const level = lady?.membershipLevel || "free";
+    const verified = lady?.assetVerified || "none";
+
+    // 1. VIP 或已驗資成功：直接解鎖
+    if (level === "vip" || verified === "approved") {
+      try {
+        const updatedUnlocked = [...unlockedList, inputCode];
+        await simulateAssets(level, verified, updatedUnlocked);
+        onVerifySuccess(inputCode);
+      } catch (err: any) {
+        setUnlockError("解鎖資料卡失敗，請重試");
+      }
+    } 
+    // 2. 體驗會員：限制解鎖最多 2 位
+    else if (level === "experience") {
+      if (unlockedList.length < 2) {
+        try {
+          const updatedUnlocked = [...unlockedList, inputCode];
+          await simulateAssets(level, verified, updatedUnlocked);
+          onVerifySuccess(inputCode);
+        } catch (err: any) {
+          setUnlockError("解鎖資料卡失敗，請重試");
+        }
+      } else {
+        setUpgradeTargetProfile(targetProfile);
+        setShowUpgradeModal(true);
+      }
+    } 
+    // 3. 免費方案：禁止解鎖配對以外的紳士
+    else {
+      setUpgradeTargetProfile(targetProfile);
+      setShowUpgradeModal(true);
+    }
+  };
+
+  // 測試模擬器接口
+  const handleSimulateChange = async (level: string, verified: string) => {
+    if (!lady) return;
+    setSimulating(true);
+    try {
+      await simulateAssets(level, verified, lady.unlockedGentlemanCodes);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  // 重置 AI 靈魂測試與已解鎖列表用於測試
+  const handleResetLadyState = async () => {
+    if (!lady) return;
+    setSimulating(true);
+    try {
+      await simulateAssets("free", "none", [], false, null);
+      alert("已重置該麗人帳戶至初始狀態（免費、未測驗、零解鎖）！");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  // 檢查某男生代號是否解鎖
+  const checkIsUnlocked = (gentCode: string) => {
+    if (!lady) return false;
+    if (lady.matchedGentlemanCode === gentCode) return true;
+    if (lady.unlockedGentlemanCodes?.includes(gentCode)) return true;
+    if (lady.membershipLevel === "vip" || lady.assetVerified === "approved") return true;
+    return false;
+  };
+
+  // 過濾用：列出全體可配對紳士（排除模板、排除已關閉配對的紳士）
+  const gentlemanList = (Object.values(profiles) as Profile[]).filter(
+    (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code) && (p.isAcceptingMatches !== false)
+  );
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative py-12 px-4 md:px-12 bg-brand-beige overflow-hidden">
-      {/* Decorative Organic Elements mimicking the Natural Tones Style */}
+      {/* Background decoration */}
       <div className="absolute top-[-100px] left-[-100px] w-[300px] md:w-[400px] h-[300px] md:h-[400px] bg-brand-border/40 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-150px] right-[-100px] w-[400px] md:w-[500px] h-[400px] md:h-[500px] bg-brand-border/50 rounded-full blur-3xl pointer-events-none" />
-      
-      {/* Subtle floating abstract shape in the background */}
-      <motion.div
-        animate={{
-          rotate: [0, 10, -10, 0],
-          y: [0, 15, -15, 0],
-        }}
-        transition={{
-          duration: 12,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute right-[10%] top-[15%] w-[180px] h-[260px] bg-brand-border/40 rounded-[100px] border border-brand-border/60 pointer-events-none hidden lg:block"
-      />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -64,8 +233,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="w-full max-w-4xl relative z-10"
       >
-        {/* Intro Tagline */}
-        <div className="text-center mb-10 space-y-3">
+        {/* Intro Header */}
+        <div className="text-center mb-8 space-y-2">
           <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-brand-light font-bold">
             Private Elite Matchmaking // 會員制尊榮媒合
           </span>
@@ -73,159 +242,586 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             緣友 YUAN-YU
           </h1>
           <p className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed px-4">
-            為維護極致安全與互信的尊榮交友生態，本平台實施專屬通道：<br className="hidden md:inline" />
-            紳士須通過資產實力與實名驗核，麗人限時享有免審查配對之推廣福利。
+            為維護極致高端與互信的交友生態，本平台實施尊享隱私通道：<br className="hidden md:inline" />
+            紳士須通過實名驗資，麗人通過 AI 靈魂測驗即可解鎖首位契合伴侶，並依套餐解鎖更多紳士。
           </p>
         </div>
 
-        {/* Main Split Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
-          {/* Decorative center divider for desktop */}
-          <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
+        {isSuccess ? (
+          // Success login animation overlay
+          <div className="bg-white p-12 rounded-[2.5rem] shadow-2xl border border-brand-border/60 text-center space-y-6">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 100 }}
+              className="w-16 h-16 bg-brand-accent/30 text-brand-olive rounded-full flex items-center justify-center mx-auto border border-brand-accent/50"
+            >
+              <ShieldCheck className="w-8 h-8 fill-current" />
+            </motion.div>
+            <h3 className="font-serif text-2xl font-bold text-brand-dark">驗證成功</h3>
+            <p className="text-sm text-brand-muted">正在啟用您專屬的安全媒合通道，請稍後...</p>
+          </div>
+        ) : lady ? (
+          /* ========================================================================= */
+          /* LADY LOGGED IN DASHBOARD (麗人尊榮交友面板) */
+          /* ========================================================================= */
+          <div className="space-y-6">
+            <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-2xl border border-brand-border/60 backdrop-blur-md space-y-6">
+              {/* Lady Card Summary */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 bg-brand-border/10 rounded-2xl border border-brand-border/40 gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <img 
+                      src={lady.photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2"} 
+                      alt={lady.name} 
+                      className="w-14 h-14 rounded-full object-cover border-2 border-brand-olive/40"
+                    />
+                    <div className="absolute -bottom-1 -right-1 bg-brand-accent text-brand-olive p-0.5 rounded-full border border-white">
+                      <Sparkles className="w-3.5 h-3.5 fill-current" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-serif text-lg font-bold text-brand-dark">{lady.name}</h3>
+                      <span className="text-[10px] text-brand-light font-mono font-bold bg-white px-2 py-0.5 rounded">
+                        編號: {lady.code.slice(0, 8)}...
+                      </span>
+                    </div>
 
-          {/* LEFT PANEL: GENTLEMEN (紳士驗資通道) */}
-          <div className="flex flex-col justify-between p-2 md:p-4 space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0">
-                  <Lock className="w-5 h-5" />
+                    <div className="flex gap-2 mt-1.5 flex-wrap">
+                      {/* Subscription package badge */}
+                      {lady.membershipLevel === "vip" ? (
+                        <span className="text-[9px] bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                          <Gem className="w-2.5 h-2.5" /> 尊榮 VIP 會員
+                        </span>
+                      ) : lady.membershipLevel === "experience" ? (
+                        <span className="text-[9px] bg-brand-olive text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5" /> 體驗方案會員
+                        </span>
+                      ) : (
+                        <span className="text-[9px] bg-brand-muted/20 text-brand-light font-bold px-2 py-0.5 rounded-full">
+                          免費體驗方案
+                        </span>
+                      )}
+
+                      {/* Wealth verification badge */}
+                      {lady.assetVerified === "approved" ? (
+                        <span className="text-[9px] bg-[#06C755]/15 text-[#05b04b] border border-[#06C755]/30 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> 已通過官方驗資
+                        </span>
+                      ) : lady.assetVerified === "pending" ? (
+                        <span className="text-[9px] bg-amber-500/15 text-amber-700 border border-amber-500/30 font-bold px-2 py-0.5 rounded-full animate-pulse">
+                          驗資審核中
+                        </span>
+                      ) : (
+                        <span className="text-[9px] bg-brand-light/10 text-brand-light font-bold px-2 py-0.5 rounded-full border border-brand-border/40">
+                          未驗資
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                    紳士專屬驗資通道
-                  </h3>
-                  <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
-                    Gentlemen Verification
-                  </span>
-                </div>
+
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-1.5 py-1.5 px-3 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl text-xs font-bold transition-all"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>登出麗人</span>
+                </button>
               </div>
 
-              <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                為確保交友生態之真實性與傑出素質，紳士會員須提交實名審核與年收、資產實力驗證，通過後由專屬媒合代表人工發放<strong>「戀人編號」</strong>登入。
-              </p>
+              {/* Upper Section: Match and Lookup grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Action 1: AI Soul Match */}
+                <div className="p-5 bg-brand-beige/30 rounded-2xl border border-brand-border/40 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h4 className="font-serif text-base font-bold text-brand-dark flex items-center gap-2">
+                      <Heart className="w-4.5 h-4.5 text-brand-olive fill-current" />
+                      <span>AI 靈魂共鳴配對</span>
+                    </h4>
+                    <p className="text-xs text-brand-muted leading-relaxed mt-2">
+                      透過 20 維度的契合度運算法，獲取最切合您的靈魂伴侶。活動期間完全免費解鎖首張名片。
+                    </p>
+                  </div>
+
+                  {lady.quizTaken && lady.matchedGentlemanCode ? (
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => onVerifySuccess(lady.matchedGentlemanCode!)}
+                        className="w-full py-3 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all shadow hover:shadow-md cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-brand-accent fill-current" />
+                        <span>查看契合紳士 ({lady.matchedGentlemanCode})</span>
+                      </button>
+                      <p className="text-[10px] text-center text-brand-light leading-relaxed italic">
+                        * 每人限測配對一次。重複點擊將直接進入該優質男性資料卡。
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={onSoulMatchClick}
+                      className="w-full py-3 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all shadow hover:shadow-md cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse" />
+                      <span>開啟「AI 靈魂特質探索」</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Action 2: Unlock Card by Code */}
+                <form 
+                  onSubmit={handleUnlockCodeSubmit}
+                  className="p-5 bg-brand-beige/30 rounded-2xl border border-brand-border/40 flex flex-col justify-between space-y-4"
+                >
+                  <div>
+                    <h4 className="font-serif text-base font-bold text-brand-dark flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-brand-olive" />
+                      <span>輸入編號解鎖資料卡</span>
+                    </h4>
+                    <p className="text-xs text-brand-muted leading-relaxed mt-2">
+                      搭配推薦信或付費方案，輸入其他紳士唯一的推薦編號，即可解鎖看對方的全量資料及 LINE。
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={gentlemanCodeInput}
+                        onChange={(e) => {
+                          setGentlemanCodeInput(e.target.value);
+                          setUnlockError("");
+                        }}
+                        placeholder="請輸入男生編號 (如 gent001)"
+                        className="flex-1 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20"
+                      />
+                      <button
+                        type="submit"
+                        className="py-2.5 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>解鎖</span>
+                      </button>
+                    </div>
+                    
+                    {unlockError ? (
+                      <p className="text-[10px] text-red-500 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        <span>{unlockError}</span>
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-brand-light leading-relaxed">
+                        {lady.membershipLevel === "vip" || lady.assetVerified === "approved"
+                          ? "提示：您當前擁有全站解鎖特權，隨意輸入皆可點擊瀏覽。"
+                          : lady.membershipLevel === "experience"
+                          ? `體驗會員解鎖上限為 2 位 (目前已使用 ${lady.unlockedGentlemanCodes?.length || 0} / 2)。`
+                          : "免費方案僅限查閱 AI 配對對象，解鎖全量請升級或驗資。"}
+                      </p>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              {/* Lower Section: Gentleman catalog list */}
+              <div className="space-y-4 pt-2">
+                <div className="border-t border-brand-border/40 pt-6">
+                  <h4 className="font-serif text-lg font-bold text-brand-dark tracking-wide flex items-center gap-2">
+                    <Gem className="w-5 h-5 text-brand-olive" />
+                    <span>緣友高端男賓庫 (GENTLEMAN LIST)</span>
+                  </h4>
+                  <p className="text-xs text-brand-muted leading-relaxed mt-1">
+                    全平台男賓皆已通過實名與千萬級線下資產核對。點擊已解鎖卡片以直接查看或聯絡！
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {gentlemanList.map((p) => {
+                    const isUnlocked = checkIsUnlocked(p.code);
+                    return (
+                      <div
+                        key={p.code}
+                        onClick={() => executeUnlockFlow(p)}
+                        className={`group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-between transition-all duration-300 cursor-pointer ${
+                          isUnlocked
+                            ? "bg-brand-beige/20 hover:bg-brand-beige/50 border-brand-border hover:shadow-md"
+                            : "bg-brand-light/5 border-dashed border-brand-border/60 hover:border-brand-olive/40"
+                        }`}
+                      >
+                        {/* Status Label Overlay */}
+                        <div className="absolute top-2 right-2 z-20 flex gap-1">
+                          {lady.matchedGentlemanCode === p.code && (
+                            <span className="text-[8px] bg-brand-accent text-brand-olive font-bold px-1.5 py-0.5 rounded shadow-sm">
+                              AI 配對
+                            </span>
+                          )}
+                          {isUnlocked ? (
+                            <span className="text-[8px] bg-[#06C755]/10 text-[#05b04b] font-bold px-1.5 py-0.5 rounded">
+                              已解鎖
+                            </span>
+                          ) : (
+                            <span className="text-[8px] bg-brand-light/10 text-brand-light font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              <Lock className="w-2 h-2" /> 鎖定
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Image area */}
+                        <div className="aspect-[4/3] rounded-xl overflow-hidden relative mb-2.5">
+                          <img
+                            src={p.imageUrl}
+                            alt=""
+                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                              isUnlocked ? "" : "blur-md opacity-40"
+                            }`}
+                          />
+                          {!isUnlocked && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Lock className="w-6 h-6 text-brand-olive/60" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Detail text */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-brand-light font-mono font-bold">{p.code}</span>
+                            <span className="text-[10px] text-brand-muted font-bold">{p.age} 歲 · {p.location}</span>
+                          </div>
+                          <h5 className={`font-serif text-sm font-bold ${isUnlocked ? "text-brand-dark" : "text-brand-muted"}`}>
+                            {isUnlocked ? p.name : "未解鎖優質男賓"}
+                          </h5>
+                          <p className="text-[10px] text-brand-light truncate">
+                            {isUnlocked ? p.tagline : "點擊此卡片申請解鎖預覽"}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            {/* Code Input Form */}
-            <form id="form-verification" onSubmit={handleVerify} className="space-y-4 pt-2">
-              <div className="relative">
-                <input
-                  id="input-verification-code"
-                  type="text"
-                  maxLength={12}
-                  value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value);
-                    if (error) setError("");
-                  }}
-                  disabled={isSuccess}
-                  placeholder="請輸入專屬戀人編號"
-                  className={`w-full bg-brand-beige/50 text-center tracking-[0.25em] font-mono text-base font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3.5 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
-                    error 
-                      ? "border-red-400 focus:border-red-500" 
-                      : "border-brand-border focus:border-brand-olive focus:bg-white"
-                  }`}
-                />
+            {/* LADY DEV TEST CONTROLLER - DEV ONLY */}
+            {IS_DEV && (
+              <div className="bg-brand-dark/10 p-5 rounded-3xl border border-brand-border/40">
+                <button
+                  onClick={() => setShowSimulator(!showSimulator)}
+                  className="w-full flex items-center justify-between text-xs font-bold text-brand-dark hover:text-brand-olive transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className={`w-4 h-4 ${simulating ? "animate-spin" : ""}`} />
+                    <span>🧪 [DEV] 測試調試器：快速切換女方套餐或驗資狀態</span>
+                  </div>
+                  <span>{showSimulator ? "收合 [-]" : "展開 [+]"}</span>
+                </button>
+
+                <AnimatePresence>
+                  {showSimulator && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden space-y-4 pt-4 mt-2 border-t border-brand-border/40 text-xs"
+                    >
+                      <p className="text-[11px] text-brand-light">
+                        您可以切換女方的付費套餐與資產驗證，即可體驗「不同套餐對應解鎖多個卡片預覽數」的判定邏輯。
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        {/* Subscription simulation selector */}
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-brand-dark">套餐等級 (Membership Grade)：</label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSimulateChange("free", lady.assetVerified || "none")}
+                              disabled={simulating}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                                lady.membershipLevel === "free" || !lady.membershipLevel
+                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                              }`}
+                            >
+                              免費體驗 (Free)
+                            </button>
+                            <button
+                              onClick={() => handleSimulateChange("experience", lady.assetVerified || "none")}
+                              disabled={simulating}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                                lady.membershipLevel === "experience"
+                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                              }`}
+                            >
+                              體驗方案 (Limit 2)
+                            </button>
+                            <button
+                              onClick={() => handleSimulateChange("vip", lady.assetVerified || "none")}
+                              disabled={simulating}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                                lady.membershipLevel === "vip"
+                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                              }`}
+                            >
+                              尊榮 VIP
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Wealth verification status selector */}
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-brand-dark">驗資審核狀態 (Asset Verified)：</label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSimulateChange(lady.membershipLevel || "free", "none")}
+                              disabled={simulating}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                                lady.assetVerified === "none" || !lady.assetVerified
+                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                              }`}
+                            >
+                              未驗資 (none)
+                            </button>
+                            <button
+                              onClick={() => handleSimulateChange(lady.membershipLevel || "free", "pending")}
+                              disabled={simulating}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                                lady.assetVerified === "pending"
+                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                              }`}
+                            >
+                              審核中 (pending)
+                            </button>
+                            <button
+                              onClick={() => handleSimulateChange(lady.membershipLevel || "free", "approved")}
+                              disabled={simulating}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                                lady.assetVerified === "approved"
+                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                              }`}
+                            >
+                              驗資成功 (approved)
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-brand-border/30 pt-3">
+                        <span>已手動解鎖編號數：<strong>{lady.unlockedGentlemanCodes?.length || 0}</strong></span>
+                        <button
+                          onClick={handleResetLadyState}
+                          disabled={simulating}
+                          className="py-1 px-3 bg-red-600 hover:bg-red-750 text-white rounded text-[10px] font-bold transition-all"
+                        >
+                          重置該麗人 AI 測驗與解鎖 (重頭測試)
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        ) : (
+          // GUEST VIEW: Split verification for Gentlemen + Ladies
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
+            
+            {/* Center vertical line */}
+            <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
+
+            {/* LEFT COLUMN: GENTLEMEN (紳士通道) */}
+            <div className="flex flex-col justify-between p-2 md:p-4 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
+                      紳士專屬驗資通道
+                    </h3>
+                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
+                      Gentlemen Verification
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
+                  為確保交友生態之安全防範與傑出素質，紳士會員須提交實名核驗與資產審核，經理財顧問核准後由專屬專員人工發放<strong>「戀人編號」</strong>登入。
+                </p>
               </div>
 
-              {/* Error Message */}
-              <AnimatePresence>
+              {/* Secure verification code input */}
+              <form id="form-verification" onSubmit={handleVerify} className="space-y-4 pt-2">
+                <div className="relative">
+                  <input
+                    id="input-verification-code"
+                    type="text"
+                    maxLength={36}
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      if (error) setError("");
+                    }}
+                    disabled={isSuccess}
+                    placeholder="請輸入專屬戀人編號"
+                    className={`w-full bg-brand-beige/50 text-center tracking-[0.25em] font-mono text-base font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3.5 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
+                      error 
+                        ? "border-red-400 focus:border-red-500" 
+                        : "border-brand-border focus:border-brand-olive focus:bg-white"
+                    }`}
+                  />
+                </div>
+
                 {error && (
                   <motion.p
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
-                    className="flex items-center justify-center gap-1.5 text-xs text-red-600 font-medium"
+                    className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
                   >
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>{error}</span>
                   </motion.p>
                 )}
-              </AnimatePresence>
 
-              {/* Submit Button */}
-              <button
-                id="btn-verify-submit"
-                type="submit"
-                disabled={isSuccess}
-                className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
-                  isSuccess
-                    ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
-                    : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
-                }`}
-              >
-                <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
-                {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
-              </button>
-            </form>
+                <button
+                  id="btn-verify-submit"
+                  type="submit"
+                  disabled={isSuccess}
+                  className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
+                    isSuccess
+                      ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
+                      : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
+                  }`}
+                >
+                  <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
+                  {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
+                </button>
+              </form>
 
-            <div className="pt-2 text-center">
-              <button
-                id="btn-show-contact-modal"
-                type="button"
-                onClick={() => setShowContactModal(true)}
-                className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
-              >
-                無專屬編號？洽詢專屬客服進行驗資
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Divider */}
-          <div className="block md:hidden h-px bg-gradient-to-r from-transparent via-brand-border to-transparent my-4" />
-
-          {/* RIGHT PANEL: LADIES (麗人限時特許) */}
-          <div className="flex flex-col justify-between p-2 md:p-4 bg-brand-border/10 rounded-2xl md:bg-transparent md:rounded-none space-y-6 relative overflow-hidden">
-            <div className="absolute top-2 right-2 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
-              PROMO 限時福利
+              <div className="pt-2 text-center">
+                <button
+                  id="btn-show-contact-modal"
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
+                >
+                  無專屬編號？洽詢專屬客服進行驗資
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner shrink-0">
-                  <Heart className="w-5 h-5 text-brand-olive fill-current animate-pulse" />
-                </div>
-                <div>
-                  <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                    麗人限時免驗通道
-                  </h3>
-                  <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
-                    Ladies Campaign
-                  </span>
-                </div>
+            {/* RIGHT COLUMN: LADIES (麗人免資產驗證通道) */}
+            <div className="flex flex-col justify-between p-2 md:p-4 bg-brand-border/10 rounded-2xl md:bg-transparent md:rounded-none space-y-6 relative overflow-hidden">
+              <div className="absolute top-2 right-2 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                PROMO 限時特許
               </div>
 
-              <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                目前正值 <strong>緣友 YUAN-YU</strong> 麗人特許福利推廣期，麗人會員限時<strong>免除資產審核</strong>！可直接進行 2 分鐘 AI 靈魂特質探索，自動過濾並發掘與您靈魂高度共鳴的頂級紳士。
-              </p>
-            </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner shrink-0">
+                    <Heart className="w-5 h-5 text-brand-olive fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
+                      麗人限時推廣通道
+                    </h3>
+                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
+                      Ladies Campaign
+                    </span>
+                  </div>
+                </div>
 
-            {/* Ladies Campaign Action Button */}
-            {onSoulMatchClick && (
-              <div className="space-y-4 pt-4 md:pt-0">
-                <button
-                  type="button"
-                  id="btn-soul-match-main"
-                  onClick={onSoulMatchClick}
-                  className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md cursor-pointer hover:scale-102 active:scale-98 flex items-center justify-center gap-2"
-                >
-                  <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse" />
-                  <span>免費開啟「AI 靈魂共鳴測驗」</span>
-                </button>
-
-                <p className="text-[10px] text-brand-light leading-relaxed text-center italic">
-                  * 測試完全匿名，系統將直接為您解鎖高度契合的尊榮推薦對象。
+                <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
+                  適逢推廣期間，麗人免除年收驗資！即可直接登入或註冊，完成 2 分鐘 AI 測試後以分配解鎖一位頂級高品質契合紳士。
                 </p>
               </div>
-            )}
+
+              {/* Login/Registration logic */}
+              <div className="space-y-4 pt-2">
+                <h4 className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-brand-olive flex items-center gap-1.5">
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>麗人登入與建號</span>
+                </h4>
+                
+                {ladyError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="flex items-center gap-1.5 text-xs text-red-650 font-bold"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{ladyError}</span>
+                  </motion.p>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={ladyCodeInput}
+                    onChange={(e) => {
+                      setLadyCodeInput(e.target.value);
+                      setLadyError("");
+                    }}
+                    placeholder="請輸入麗人編號"
+                    className="flex-1 min-w-0 bg-brand-beige/40 border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLadyLogin}
+                    className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
+                  >
+                    登入
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLadyRegister}
+                  className="w-full py-2.5 px-6 bg-brand-accent/20 hover:bg-brand-accent/40 text-brand-dark border border-brand-accent text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-102 active:scale-98 flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4 text-brand-olive fill-current" />
+                  <span>註冊新麗人編號</span>
+                </button>
+
+                {/* Direct Soul Match CTA for guests — most prominent action */}
+                <div className="pt-2 border-t border-brand-border/40">
+                  <p className="text-[9px] text-center text-brand-light uppercase tracking-widest font-bold mb-2">— 或者直接開始 —</p>
+                  <button
+                    id="btn-guest-soul-match-direct"
+                    type="button"
+                    onClick={onSoulMatchClick}
+                    className="w-full py-3 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
+                  >
+                    <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse" />
+                    <span>免費開始 AI 靈魂配對測試</span>
+                  </button>
+                  <p className="text-[9px] text-center text-brand-light mt-1.5 leading-relaxed">
+                    推廣期間免費解鎖首位契合紳士完整資料
+                  </p>
+                </div>
+              </div>
+            </div>
+
           </div>
-        </div>
+        )}
       </motion.div>
 
-      {/* Contact Agent Modal */}
+      {/* ========================================================================= */}
+      {/* CONTACT AGENT MODAL (洽詢客服彈窗) */}
+      {/* ========================================================================= */}
       <AnimatePresence>
         {showContactModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -234,7 +830,6 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               className="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
             />
 
-            {/* Modal Body */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -242,7 +837,6 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               transition={{ type: "spring", duration: 0.5 }}
               className="bg-white rounded-3xl shadow-2xl border border-brand-border w-full max-w-sm overflow-hidden z-10"
             >
-              {/* Header */}
               <div className="p-6 bg-brand-border/30 border-b border-brand-border text-center">
                 <h3 className="font-serif text-lg text-brand-dark font-bold tracking-wide">
                   洽詢您的專屬媒合專員
@@ -252,21 +846,19 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </p>
               </div>
 
-              {/* Body */}
               <div className="p-6 space-y-4">
                 <p className="text-xs text-brand-muted leading-relaxed text-center mb-2">
-                  為維護極致高端且安全的會員制交友生態，編號均採人工發放與單次查核機制。若您尚未獲得專屬戀人編號，請聯絡您的顧問：
+                  閣下尚未獲發編號？為維理安全防波，緣友採全程代表發碼制。請撥打總部電話或加入客服進行資產實力認證登記：
                 </p>
 
                 <div className="space-y-3">
-                  {/* Option 1: LINE */}
                   <div className="flex items-center justify-between p-3 bg-brand-beige/40 rounded-2xl border border-brand-border/40 hover:bg-brand-beige/70 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-[#06C755]">
                         <MessageSquare className="w-4 h-4 fill-current" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-brand-dark">LINE 專屬客服</p>
+                        <p className="text-xs font-semibold text-brand-dark">LINE 專屬客服專員</p>
                         <p className="text-[10px] text-brand-light font-mono">ID: @yuanyu</p>
                       </div>
                     </div>
@@ -281,56 +873,206 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     </a>
                   </div>
 
-                  {/* Option 2: Phone */}
                   <div className="flex items-center justify-between p-3 bg-brand-beige/40 rounded-2xl border border-brand-border/40 hover:bg-brand-beige/70 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-brand-olive/10 flex items-center justify-center text-brand-olive">
                         <Phone className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-brand-dark">台北總部專線</p>
+                        <p className="text-xs font-semibold text-brand-dark">台北總部秘書專線</p>
                         <p className="text-[10px] text-brand-light font-mono">02-2736-8888</p>
                       </div>
                     </div>
                     <a
                       id="link-contact-phone"
                       href="tel:0227368888"
-                      className="text-[10px] bg-brand-olive text-white px-3 py-1.5 rounded-full font-bold hover:opacity-90 transition-all"
+                      className="text-[10px] bg-brand-olive text-white px-3 py-1.5 rounded-full font-bold hover:opacity-90 transition-all font-mono"
                     >
                       撥打電話
-                    </a>
-                  </div>
-
-                  {/* Option 3: Email */}
-                  <div className="flex items-center justify-between p-3 bg-brand-beige/40 rounded-2xl border border-brand-border/40 hover:bg-brand-beige/70 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-olive/10 flex items-center justify-center text-brand-olive">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-brand-dark">客服信箱</p>
-                        <p className="text-[10px] text-brand-light font-mono">vip@yuanyu.net</p>
-                      </div>
-                    </div>
-                    <a
-                      id="link-contact-email"
-                      href="mailto:vip@yuanyu.net"
-                      className="text-[10px] bg-brand-olive text-white px-3 py-1.5 rounded-full font-bold hover:opacity-90 transition-all"
-                    >
-                      寄送郵件
                     </a>
                   </div>
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="p-4 bg-brand-border/20 border-t border-brand-border/50 text-center">
                 <button
                   id="btn-contact-modal-close"
                   onClick={() => setShowContactModal(false)}
-                  className="text-xs font-bold text-brand-olive uppercase tracking-wider hover:opacity-80 transition-opacity"
+                  className="text-xs font-bold text-brand-olive uppercase tracking-wider hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   返回驗證
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PREMIUM UPGRADE + MOCK WEALTH VERIFICATION DIALOG */}
+      <AnimatePresence>
+        {showUpgradeModal && lady && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowUpgradeModal(false);
+                setUpgradeTargetProfile(null);
+              }}
+              className="absolute inset-0 bg-brand-dark/50 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-brand-border w-full max-w-md overflow-hidden z-10 flex flex-col"
+            >
+              {/* Header with gradient theme */}
+              <div className="bg-brand-olive p-6 text-center text-white space-y-1">
+                <Gem className="w-8 h-8 text-brand-accent mx-auto fill-current animate-bounce" />
+                <h3 className="font-serif text-lg font-bold tracking-wide">升級解鎖高端男賓預覽</h3>
+                <p className="text-[10px] text-brand-accent uppercase tracking-widest font-mono">
+                  Upgrade & Unlock Elite Access
+                </p>
+              </div>
+
+              {/* Body details */}
+              <div className="p-6 space-y-4 flex-1">
+                {upgradeTargetProfile && (
+                  <div className="flex items-center gap-3 p-3 bg-brand-beige/50 rounded-2xl border border-brand-border/40">
+                    <img 
+                      src={upgradeTargetProfile.imageUrl} 
+                      alt="" 
+                      className="w-12 h-12 rounded-xl object-cover blur-[4px] opacity-70"
+                    />
+                    <div>
+                      <p className="text-[10px] text-brand-light font-bold">申請解鎖對象：</p>
+                      <h4 className="font-serif text-sm font-bold text-brand-dark">
+                        {upgradeTargetProfile.code} · {upgradeTargetProfile.age} 歲 · {upgradeTargetProfile.location}
+                      </h4>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-brand-muted leading-relaxed">
+                  很抱歉！根據 <strong>緣友 YUAN-YU</strong> 的安全媒合規範，您的麗人帳戶當前受限，無法查閱此位紳士的卡片。<br/>
+                  請上傳資產證明（或點擊下方模擬動作）進行有感解鎖。
+                </p>
+
+                {/* Option Action Grid */}
+                <div className="space-y-2.5 pt-2">
+                  
+                  {/* Option 1: Mock upload asset validation */}
+                  <button
+                    onClick={async () => {
+                      setShowUpgradeModal(false);
+                      try {
+                        const level = lady.membershipLevel || "free";
+                        const updated = await simulateAssets(level, "approved", lady.unlockedGentlemanCodes);
+                        alert("🎉 資料已上報！資產驗證成功模組已啟用！\n您已正式開通全站無限制自由預覽解鎖名額。");
+                        if (upgradeTargetProfile) {
+                          onVerifySuccess(upgradeTargetProfile.code);
+                        }
+                      } catch (e) {
+                        alert("模擬上傳失敗，請重試");
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3 border border-[#06C755]/30 bg-[#06C755]/5 hover:bg-[#06C755]/10 rounded-2xl transition-all text-left"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-[#06C755]">
+                        <UploadCloud className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h5 className="text-xs font-bold text-brand-dark">免費進行「百萬資產驗證」</h5>
+                        <p className="text-[9px] text-[#05b04b]">驗資成功將自動等同 VIP 權限 (永久解鎖)</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-brand-light" />
+                  </button>
+
+                  {/* Option 2: Upgrade to Experience Package */}
+                  <button
+                    onClick={async () => {
+                      setShowUpgradeModal(false);
+                      try {
+                        const verified = lady.assetVerified || "none";
+                        // 前往體驗方案並解鎖此绅士
+                        const updatedUnlocked = [...(lady.unlockedGentlemanCodes || [])];
+                        if (upgradeTargetProfile && !updatedUnlocked.includes(upgradeTargetProfile.code)) {
+                          updatedUnlocked.push(upgradeTargetProfile.code);
+                        }
+                        await simulateAssets("experience", verified, updatedUnlocked);
+                        alert("🎉 付費體驗方案升級成功！\n解鎖上限提升至 2 位！已為您自動扣除 1 個名額解鎖。");
+                        if (upgradeTargetProfile) {
+                          onVerifySuccess(upgradeTargetProfile.code);
+                        }
+                      } catch (e) {
+                        alert("模擬升級失敗，請重試");
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3 border border-brand-olive/30 bg-brand-olive/5 hover:bg-brand-olive/10 rounded-2xl transition-all text-left"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-brand-olive/10 flex items-center justify-center text-brand-olive">
+                        <Sparkles className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h5 className="text-xs font-bold text-brand-dark">購買「體驗媒合套餐」</h5>
+                        <p className="text-[9px] text-brand-muted">解鎖包含靈魂匹配伴侶在內的 2 位名額</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-brand-light" />
+                  </button>
+
+                  {/* Option 3: Upgrade to Full VIP */}
+                  <button
+                    onClick={async () => {
+                      setShowUpgradeModal(false);
+                      try {
+                        const verified = lady.assetVerified || "none";
+                        const updatedUnlocked = [...(lady.unlockedGentlemanCodes || [])];
+                        if (upgradeTargetProfile && !updatedUnlocked.includes(upgradeTargetProfile.code)) {
+                          updatedUnlocked.push(upgradeTargetProfile.code);
+                        }
+                        await simulateAssets("vip", verified, updatedUnlocked);
+                        alert("🥇 尊榮 VIP 套餐開通成功！\n您已自動配享全能解鎖預覽權限。");
+                        if (upgradeTargetProfile) {
+                          onVerifySuccess(upgradeTargetProfile.code);
+                        }
+                      } catch (e) {
+                        alert("模擬升級失敗，請重試");
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 rounded-2xl transition-all text-left"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
+                        <Gem className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h5 className="text-xs font-bold text-brand-dark">升級「尊榮 VIP 奢華套餐」</h5>
+                        <p className="text-[9px] text-brand-muted">全平台男賓無限查看、無限跳聯絡資訊</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-brand-light" />
+                  </button>
+
+                </div>
+              </div>
+
+              {/* Close footer */}
+              <div className="p-4 bg-brand-border/20 border-t border-brand-border/50 text-center">
+                <button
+                  onClick={() => {
+                    setShowUpgradeModal(false);
+                    setUpgradeTargetProfile(null);
+                  }}
+                  className="text-xs font-bold text-brand-light hover:text-brand-dark transition-colors cursor-pointer"
+                >
+                  暫不升級，返回面板
                 </button>
               </div>
             </motion.div>

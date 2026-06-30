@@ -20,19 +20,17 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Lock
+  Lock,
+  RefreshCw
 } from "lucide-react";
 import { Profile, PersonalityMetrics } from "../types";
 import { 
   DEFAULT_PROFILES, 
-  getStoredProfiles, 
-  saveStoredProfiles,
   DEFAULT_METRICS,
-  getStoredMetrics,
-  saveStoredMetrics,
-  getAdminCodes,
-  saveAdminCode
+  syncSharedConfig,
+  resetDatabaseToDefaults,
 } from "../data";
+import { useData } from "./DataContext";
 
 interface AdminEditScreenProps {
   onExit: () => void;
@@ -56,60 +54,59 @@ const METRIC_LABELS: Record<keyof PersonalityMetrics, string> = {
   QualityOfLife: "美學生活品質",
   FreedomNeed: "個人自由需求",
   Responsibility: "擔當與責任感",
-  DecisionSpeed: "決策速度",
+  DecisionSpeed: "果斷決策速度",
   ConflictResolution: "衝突處理能力",
-  LongTermCommitment: "長期關係投入度"
+  LongTermCommitment: "長期關係投入"
 };
+
+// Codes to be excluded from matching, also reserved in admin panel
+const RESERVED_MATCH_CODES = ['888', '999', '666', '520'];
 
 const METRIC_CATEGORIES = [
   {
-    title: "🧠 心智與決策偏好 (Mindset & Decision)",
+    title: "🧠 心智與決策偏好",
     keys: ["Rationality", "Spontaneity", "DecisionSpeed", "GrowthMindset"] as (keyof PersonalityMetrics)[]
   },
   {
-    title: "❤️ 情感與家庭社交 (Emotion & Social)",
+    title: "❤️ 情感與家庭社交",
     keys: ["Extroversion", "EmotionalDependency", "SecurityNeed", "FamilyOrientation"] as (keyof PersonalityMetrics)[]
   },
   {
-    title: "☕ 生活美學與理財 (Life & Spending)",
+    title: "☕ 生活美學與理財",
     keys: ["Hedonism", "ConsumptionTendency", "FinancialMaturity", "QualityOfLife"] as (keyof PersonalityMetrics)[]
   },
   {
-    title: "🏔️ 探索、自由與儀式 (Adventure & Freedom)",
+    title: "🏔️ 探索、自由與儀式",
     keys: ["Adventure", "FreedomNeed", "RitualNeed"] as (keyof PersonalityMetrics)[]
   },
   {
-    title: "🤝 擔當、溝通與維繫 (Responsibility & Connection)",
+    title: "🤝 擔當、溝通與維繫",
     keys: ["Dominance", "Responsibility", "CommunicationEfficiency", "ConflictResolution", "LongTermCommitment"] as (keyof PersonalityMetrics)[]
   }
 ];
 
 export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
-  // Load current dynamic profiles and metrics
-  const [profiles, setProfiles] = useState<Record<string, Profile>>(() => getStoredProfiles());
-  const [allMetrics, setAllMetrics] = useState<Record<string, PersonalityMetrics>>(() => getStoredMetrics());
+  // Load global data from context
+  const { profiles, metrics: allMetrics, adminCodes, refreshData, isDataLoading, setOptimisticData } = useData();
   
   // Currently selected profile to edit
-  const [selectedCode, setSelectedCode] = useState<string>(() => Object.keys(getStoredProfiles())[0] || "520");
+  const [selectedCode, setSelectedCode] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const currentProfile = profiles[selectedCode] || DEFAULT_PROFILES[selectedCode] || Object.values(DEFAULT_PROFILES)[0];
-  const currentMetricSet = allMetrics[selectedCode] || DEFAULT_METRICS[selectedCode] || Object.values(DEFAULT_METRICS)[0];
-
-  // Form states
-  const [customCode, setCustomCode] = useState(currentProfile.code);
-  const [name, setName] = useState(currentProfile.name);
-  const [age, setAge] = useState(currentProfile.age);
-  const [location, setLocation] = useState(currentProfile.location);
-  const [tagline, setTagline] = useState(currentProfile.tagline);
-  const [bio, setBio] = useState(currentProfile.bio);
-  const [lifestyleStr, setLifestyleStr] = useState(currentProfile.lifestyle.join(", "));
-  const [imageUrl, setImageUrl] = useState(currentProfile.imageUrl);
-  const [imageUrls, setImageUrls] = useState<string[]>(() => currentProfile.imageUrls || [currentProfile.imageUrl]);
-  const [cardDetail, setCardDetail] = useState(currentProfile.cardDetail || "");
-  const [idealMatch, setIdealMatch] = useState(currentProfile.idealMatch || "");
-  const [contactLineUrl, setContactLineUrl] = useState(currentProfile.contactLineUrl || "");
+  // Consolidated form state for the selected profile
+  const [editData, setEditData] = useState(() => {
+    if (!profiles || Object.keys(profiles).length === 0) {
+      return { ...Object.values(DEFAULT_PROFILES)[0], lifestyleStr: "" };
+    }
+    const prof = profiles[selectedCode] || DEFAULT_PROFILES[selectedCode] || Object.values(DEFAULT_PROFILES)[0];
+    return {
+      ...prof,
+      lifestyleStr: prof.lifestyle.join(", "),
+      isAcceptingMatches: prof.isAcceptingMatches ?? true, // Default to true
+    };
+  });
 
   // Admin slider preview index
   const [adminPreviewIndex, setAdminPreviewIndex] = useState(0);
@@ -122,59 +119,115 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
   // Admin Custom Login Code states
   const [adminCodeInput, setAdminCodeInput] = useState(() => {
-    const codes = getAdminCodes();
-    const customCode = codes.find(c => !["admin", "8888", "9999"].includes(c));
-    return customCode || "";
+    return adminCodes[0] || "";
   });
   const [adminCodeSuccess, setAdminCodeSuccess] = useState("");
 
   // Local state for editing metrics of the selected profile
-  const [currentMetrics, setCurrentMetrics] = useState<PersonalityMetrics>({ ...currentMetricSet });
+  const [currentMetrics, setCurrentMetrics] = useState<PersonalityMetrics>({});
 
-  // Update form states when selected profile changes
-  const handleSelectProfile = (code: string) => {
-    setSelectedCode(code);
-    const prof = profiles[code] || DEFAULT_PROFILES[code] || Object.values(DEFAULT_PROFILES)[0];
-    const metr = allMetrics[code] || DEFAULT_METRICS[code] || Object.values(DEFAULT_METRICS)[0];
+  // Set initial selected code once data is loaded
+  React.useEffect(() => {
+    if (!isDataLoading && Object.keys(profiles).length > 0 && !selectedCode) {
+      setSelectedCode(Object.keys(profiles)[0] || "monkeyB");
+    }
+    if (adminCodes.length > 0) {
+      setAdminCodeInput(adminCodes[0]);
+    }
+  }, [isDataLoading, profiles, selectedCode, adminCodes]);
+
+  // Update form data when selected profile changes
+  React.useEffect(() => {
+    const prof = profiles[selectedCode] || Object.values(profiles)[0] || DEFAULT_PROFILES[selectedCode] || Object.values(DEFAULT_PROFILES)[0];
+    setEditData({
+      ...prof,
+      lifestyleStr: prof.lifestyle.join(", "),
+      isAcceptingMatches: prof.isAcceptingMatches ?? true,
+    });
     
-    setCustomCode(prof.code);
-    setName(prof.name);
-    setAge(prof.age);
-    setLocation(prof.location);
-    setTagline(prof.tagline);
-    setBio(prof.bio);
-    setLifestyleStr(prof.lifestyle.join(", "));
-    setImageUrl(prof.imageUrl);
-    setImageUrls(prof.imageUrls && prof.imageUrls.length > 0 ? prof.imageUrls : [prof.imageUrl]);
-    setCardDetail(prof.cardDetail || "");
-    setIdealMatch(prof.idealMatch || "");
-    setContactLineUrl(prof.contactLineUrl || "");
-    
-    setAdminPreviewIndex(0);
+    const metr = allMetrics[selectedCode] || DEFAULT_METRICS[selectedCode] || Object.values(DEFAULT_METRICS)[0];
     setCurrentMetrics({ ...metr });
     
+    setAdminPreviewIndex(0);
     setSuccessMessage("");
     setErrorMessage("");
+  }, [selectedCode, profiles, allMetrics]); // Keep dependencies, as they trigger re-sync
+
+  const handleSelectProfile = (code: string) => {
+    setSelectedCode(code);
+    // The useEffect hook will handle updating the form state
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setEditData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value,
+    }));
+  };
+
+  const handleImageUrlsChange = (index: number, value: string) => {
+    const updated = [...editData.imageUrls];
+    updated[index] = value;
+    setEditData(prev => ({ ...prev, imageUrls: updated }));
+  };
+
+  const addImageUrlField = () => {
+    setEditData(prev => ({ ...prev, imageUrls: [...prev.imageUrls, ""] }));
+  };
+
+  const removeImageUrlField = (index: number) => {
+    const updated = editData.imageUrls.filter((_, idx) => idx !== index);
+    setEditData(prev => ({ ...prev, imageUrls: updated }));
+    if (adminPreviewIndex >= updated.length) {
+      setAdminPreviewIndex(Math.max(0, updated.length - 1));
+    }
+  };
+
+  const handleForceRefresh = async () => {
+    setIsRefreshing(true);
+    setSuccessMessage("正在從伺服器強制同步最新資料...");
+    await refreshData();
+    setIsRefreshing(false);
+    setSuccessMessage("強制同步完成！");
+    setTimeout(() => setSuccessMessage(""), 2000);
+  };
+
+  // Securely sync all changes with the backend
+  const handleSync = async (
+    updatedProfiles: Record<string, Profile>,
+    updatedMetrics: Record<string, PersonalityMetrics>,
+    updatedAdminCodes: string[]
+  ): Promise<{ success: boolean; message: string }> => {
+    const adminCode = prompt("為了安全，請輸入您的管理員編號以授權本次儲存：");
+    if (!adminCode) {
+      const msg = "未提供管理員編號，操作已取消。";
+      setErrorMessage(msg);
+      return { success: false, message: msg };
+    }
+
+    const { success, message } = await syncSharedConfig({ profiles: updatedProfiles, metrics: updatedMetrics, adminCodes: updatedAdminCodes }, adminCode);
+    return { success, message };
   };
 
   // Save changes for currently selected profile
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const finalCode = customCode.trim();
+    const finalCode = editData.code.trim();
     if (!finalCode) {
       setErrorMessage("登入編號不可為空");
       return;
     }
 
-    if (!name.trim()) {
+    if (!editData.name.trim()) {
       setErrorMessage("姓名不可為空");
       return;
     }
 
     // System reserved check
-    if (getAdminCodes().map(c => c.toLowerCase()).includes(finalCode.toLowerCase())) {
-      setErrorMessage(`「${finalCode}」為系統保留之管理密碼，請使用其他登入編號`);
+    if (adminCodes.includes(finalCode) || RESERVED_MATCH_CODES.includes(finalCode)) {
+      setErrorMessage(`編號「${finalCode}」為管理員或系統保留編號，請使用其他編號`);
       return;
     }
 
@@ -184,22 +237,23 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       return;
     }
 
-    const cleanImageUrls = imageUrls.map(url => url.trim()).filter(url => url.length > 0);
+    const cleanImageUrls = editData.imageUrls.map(url => url.trim()).filter(url => url.length > 0);
     const mainImageUrl = cleanImageUrls[0] || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800";
 
     const updatedProfile: Profile = {
       code: finalCode,
-      name: name.trim(),
-      age: Number(age) || 25,
-      location: location.trim(),
-      tagline: tagline.trim(),
-      bio: bio.trim(),
-      lifestyle: lifestyleStr.split(",").map(t => t.trim()).filter(t => t.length > 0),
+      name: editData.name.trim(),
+      age: Number(editData.age) || 25,
+      location: editData.location.trim(),
+      tagline: editData.tagline.trim(),
+      bio: editData.bio.trim(),
+      lifestyle: editData.lifestyleStr.split(",").map(t => t.trim()).filter(t => t.length > 0),
       imageUrl: mainImageUrl,
       imageUrls: cleanImageUrls.length > 0 ? cleanImageUrls : [mainImageUrl],
-      cardDetail: cardDetail.trim(),
-      idealMatch: idealMatch.trim(),
-      contactLineUrl: contactLineUrl.trim()
+      cardDetail: editData.cardDetail.trim(),
+      idealMatch: editData.idealMatch.trim(),
+      contactLineUrl: editData.contactLineUrl.trim(),
+      isAcceptingMatches: editData.isAcceptingMatches ?? true,
     };
 
     // 1. Build new profiles
@@ -217,19 +271,23 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     newMetrics[finalCode] = { ...currentMetrics };
 
     // Update states in place
-    setProfiles(newProfiles);
-    setAllMetrics(newMetrics);
-    
-    // Save to local storage
-    saveStoredProfiles(newProfiles);
-    saveStoredMetrics(newMetrics);
-    
+    const result = await handleSync(newProfiles, newMetrics, adminCodes);
+
+    if (!result || !result.success) {
+      setErrorMessage(result?.message || "儲存失敗，請檢查網路或管理員編號。");
+      setSuccessMessage("");
+      return;
+    }
+
+    // Re-fetch the canonical data from the server to ensure consistency
+    await refreshData();
+
     // Set active selection to the new code
     setSelectedCode(finalCode);
     
     setErrorMessage("");
-    setSuccessMessage(`「${name} (${finalCode})」資料與特質指標已成功儲存！登入驗證與測驗配對將立即生效。`);
-    
+    setSuccessMessage(`「${editData.name} (${finalCode})」資料與特質指標已成功儲存！登入驗證與測驗配對將立即生效。`);
+
     // Auto clear success message after 4s
     setTimeout(() => {
       setSuccessMessage("");
@@ -237,13 +295,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   };
 
   // Reset current profile to default values
-  const handleResetToDefault = () => {
+  const handleResetToDefault = async () => {
     // Find the original code key based on index/name or select the best default match
+    const currentProfile = profiles[selectedCode];
     const originalDefaultCode = Object.keys(DEFAULT_PROFILES).find(
       key => DEFAULT_PROFILES[key].name === currentProfile.name
     ) || selectedCode;
 
-    if (window.confirm(`確定要將「${currentProfile.name}」恢復為系統預設值與預設編號 (${originalDefaultCode}) 嗎？`)) {
+    if (window.confirm(`確定要將「${currentProfile?.name}」恢復為系統預設值與預設編號 (${originalDefaultCode}) 嗎？`)) {
       const defaultProf = DEFAULT_PROFILES[originalDefaultCode] || Object.values(DEFAULT_PROFILES)[0];
       const defaultMetr = DEFAULT_METRICS[originalDefaultCode] || Object.values(DEFAULT_METRICS)[0];
       
@@ -258,27 +317,18 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       newProfiles[originalDefaultCode] = defaultProf;
       newMetrics[originalDefaultCode] = defaultMetr;
 
-      setProfiles(newProfiles);
-      setAllMetrics(newMetrics);
-      
-      saveStoredProfiles(newProfiles);
-      saveStoredMetrics(newMetrics);
+      const result = await handleSync(newProfiles, newMetrics, adminCodes);
+      if (!result || !result.success) {
+        setErrorMessage(result?.message || "重設失敗！");
+        setSuccessMessage("");
+        return;
+      }
+
+      // Re-fetch the canonical data from the server
+      await refreshData();
 
       // Select restored profile
       setSelectedCode(originalDefaultCode);
-       setCustomCode(originalDefaultCode);
-      setName(defaultProf.name);
-      setAge(defaultProf.age);
-      setLocation(defaultProf.location);
-      setTagline(defaultProf.tagline);
-      setBio(defaultProf.bio);
-      setLifestyleStr(defaultProf.lifestyle.join(", "));
-      setImageUrl(defaultProf.imageUrl);
-      setImageUrls(defaultProf.imageUrls || [defaultProf.imageUrl]);
-      setCardDetail(defaultProf.cardDetail || "");
-      setIdealMatch(defaultProf.idealMatch || "");
-      setContactLineUrl(defaultProf.contactLineUrl || "");
-      setCurrentMetrics({ ...defaultMetr });
 
       setErrorMessage("");
       setSuccessMessage("已成功恢復該角色的預設檔案與特質設定。");
@@ -287,33 +337,35 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   };
 
   // Reset ALL profiles to system defaults
-  const handleResetAllToDefault = () => {
-    if (window.confirm("確定要將【所有紳士成員與所有 ABCD 屬性】全部恢復為系統最初始預設值嗎？此動作將會清除所有自定義修改，無法復原。")) {
-      setProfiles(DEFAULT_PROFILES);
-      setAllMetrics(DEFAULT_METRICS);
-      
-      saveStoredProfiles(DEFAULT_PROFILES);
-      saveStoredMetrics(DEFAULT_METRICS);
-      
-      // Select first default code
-      const defaultCode = Object.keys(DEFAULT_PROFILES)[0];
-      const defaultProf = DEFAULT_PROFILES[defaultCode];
-      const defaultMetr = DEFAULT_METRICS[defaultCode];
+  const handleResetAllToDefault = async () => {
+    const confirmationMessage = `
+確定要將【所有紳士成員】的資料庫恢復為系統內建的預設值嗎？
 
+此動作將會：
+1. 清除所有您手動新增或修改的紳士資料。
+2. 將紳士資料庫重置為程式碼中的 4 位預設角色。
+3. 您目前設定的管理員登入編號將會被保留。
+
+此操作無法復原，請謹慎操作！`;
+    if (window.confirm(confirmationMessage)) {
+      const adminCode = prompt("為了安全，請輸入您的管理員編號以授權本次重置：");
+      if (!adminCode) {
+        setErrorMessage("未提供管理員編號，操作已取消。");
+        return;
+      }
+
+      const result = await resetDatabaseToDefaults(adminCode, adminCodes);
+      if (!result || !result.success) {
+        setErrorMessage(result?.message || "全部重設失敗！");
+        setSuccessMessage("");
+        return;
+      }
+
+      // Re-fetch the canonical data from the server after reset
+      await refreshData();
+
+      const defaultCode = Object.keys(DEFAULT_PROFILES)[0];
       setSelectedCode(defaultCode);
-      setCustomCode(defaultCode);
-      setName(defaultProf.name);
-      setAge(defaultProf.age);
-      setLocation(defaultProf.location);
-      setTagline(defaultProf.tagline);
-      setBio(defaultProf.bio);
-      setLifestyleStr(defaultProf.lifestyle.join(", "));
-      setImageUrl(defaultProf.imageUrl);
-      setImageUrls(defaultProf.imageUrls || [defaultProf.imageUrl]);
-      setCardDetail(defaultProf.cardDetail || "");
-      setIdealMatch(defaultProf.idealMatch || "");
-      setContactLineUrl(defaultProf.contactLineUrl || "");
-      setCurrentMetrics({ ...defaultMetr });
 
       setErrorMessage("");
       setSuccessMessage("所有角色檔案與特質指標皆已成功重置為系統初始預設值！");
@@ -321,7 +373,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     }
   };
 
-  const handleUpdateAdminCode = () => {
+  const handleUpdateAdminCode = async () => {
     const code = adminCodeInput.trim();
     if (!code) {
       setAdminCodeSuccess("請輸入有效的編號");
@@ -334,12 +386,17 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       return;
     }
 
-    saveAdminCode(code);
+    const result = await handleSync(profiles, allMetrics, [code]);
+    if (!result || !result.success) {
+      setAdminCodeSuccess(`錯誤：${result?.message}`);
+      return;
+    }
+
     setAdminCodeSuccess(`管理員編號已更換為「${code}」！`);
     setTimeout(() => setAdminCodeSuccess(""), 4000);
   };
 
-  const handleAddProfile = (e: React.FormEvent) => {
+  const handleAddProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = newCode.trim();
     const nameVal = newName.trim();
@@ -352,8 +409,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       setAddError("姓名不可為空");
       return;
     }
-    if (getAdminCodes().map(c => c.toLowerCase()).includes(code.toLowerCase())) {
-      setAddError("此編號為系統保留密碼，請使用其他編號");
+    if (adminCodes.includes(code) || RESERVED_MATCH_CODES.includes(code)) {
+      setAddError(`編號「${code}」為管理員或系統保留編號，請使用其他編號`);
       return;
     }
     if (profiles[code]) {
@@ -374,7 +431,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       imageUrls: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800"],
       cardDetail: "品味生活與事業平衡的菁英紳士。",
       idealMatch: "知性優雅、注重精神共鳴的女性。",
-      contactLineUrl: "https://line.me"
+      contactLineUrl: "https://line.me",
+      isAcceptingMatches: true,
     };
 
     // Default metrics (balanced 50 for all fields)
@@ -404,11 +462,13 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     const updatedProfiles = { ...profiles, [code]: newProfile };
     const updatedMetrics = { ...allMetrics, [code]: newMetricSet };
 
-    setProfiles(updatedProfiles);
-    setAllMetrics(updatedMetrics);
-
-    saveStoredProfiles(updatedProfiles);
-    saveStoredMetrics(updatedMetrics);
+    const result = await handleSync(updatedProfiles, updatedMetrics, adminCodes);
+    if (!result || !result.success) {
+      setAddError(result?.message || "新增失敗！");
+      return;
+    }
+    // Re-fetch to get the latest state including the new profile
+    await refreshData();
 
     setShowAddModal(false);
     handleSelectProfile(code);
@@ -416,9 +476,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     setTimeout(() => setSuccessMessage(""), 4000);
   };
 
-  const handleDeleteProfile = (codeToDelete: string) => {
+  const handleDeleteProfile = async (codeToDelete: string) => {
     if (Object.keys(DEFAULT_PROFILES).includes(codeToDelete)) {
-      alert("此為系統內建預設紳士，不允許刪除。");
+      alert("此為系統內建的預設紳士，不允許刪除。");
       return;
     }
     if (window.confirm(`確定要永久刪除紳士成員 「${profiles[codeToDelete]?.name || codeToDelete}」 嗎？此動作無法復原。`)) {
@@ -428,20 +488,28 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       delete updatedProfiles[codeToDelete];
       delete updatedMetrics[codeToDelete];
 
-      setProfiles(updatedProfiles);
-      setAllMetrics(updatedMetrics);
+      const result = await handleSync(updatedProfiles, updatedMetrics, adminCodes);
+      if (!result || !result.success) {
+        setErrorMessage(result?.message || "刪除失敗！");
+        setSuccessMessage("");
+        return;
+      }
 
-      saveStoredProfiles(updatedProfiles);
-      saveStoredMetrics(updatedMetrics);
+      // Re-fetch to get the latest state after deletion
+      await refreshData();
 
       // Select first remaining profile
-      const fallbackCode = Object.keys(updatedProfiles)[0] || "520";
+      const fallbackCode = Object.keys(updatedProfiles)[0] || Object.keys(DEFAULT_PROFILES)[0] || "monkeyB";
       handleSelectProfile(fallbackCode);
 
       setSuccessMessage("該紳士成員已成功移除。");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
+
+  if (isDataLoading) {
+    return <div className="text-center p-20 font-serif text-brand-olive">正在從伺服器同步主控台資料...</div>;
+  }
 
   return (
     <div className="flex-1 flex flex-col bg-brand-beige py-12 px-4 md:px-12 relative overflow-hidden">
@@ -465,15 +533,27 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
             </p>
           </div>
           
-          <button
-            id="btn-admin-exit"
-            type="button"
-            onClick={onExit}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 border border-brand-light/30 rounded-full text-xs font-bold tracking-widest text-brand-light hover:text-brand-accent hover:border-brand-accent hover:bg-brand-olive/20 transition-all duration-300 shrink-0 cursor-pointer hover:scale-103 active:scale-97 self-start md:self-center"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>退出主控台</span>
-          </button>
+          <div className="flex flex-col gap-3 self-start md:self-center shrink-0">
+            <button
+              id="btn-admin-force-refresh"
+              type="button"
+              onClick={handleForceRefresh}
+              disabled={isRefreshing}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 border border-brand-accent/50 rounded-full text-xs font-bold tracking-widest text-brand-accent hover:text-white hover:border-brand-accent hover:bg-brand-accent/80 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? '同步中...' : '強制同步資料'}</span>
+            </button>
+            <button
+              id="btn-admin-exit"
+              type="button"
+              onClick={onExit}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 border border-brand-light/30 rounded-full text-xs font-bold tracking-widest text-brand-light hover:text-brand-accent hover:border-brand-accent hover:bg-brand-olive/20 transition-all duration-300 cursor-pointer hover:scale-103 active:scale-97"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>退出主控台</span>
+            </button>
+          </div>
         </div>
 
         {/* Profile Tabs Selector */}
@@ -535,11 +615,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               </h3>
               
               <div className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-inner border border-brand-border bg-brand-beige/50 group">
-                {imageUrls && imageUrls.length > 0 ? (
+                {editData.imageUrls && editData.imageUrls.length > 0 ? (
                   <>
                     <img
-                      src={imageUrls[adminPreviewIndex] || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800"}
-                      alt={name}
+                      src={editData.imageUrls[adminPreviewIndex] || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800"}
+                      alt={editData.name}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -547,25 +627,25 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       }}
                     />
 
-                    {imageUrls.length > 1 && (
+                    {editData.imageUrls.length > 1 && (
                       <>
                         <button
                           type="button"
-                          onClick={() => setAdminPreviewIndex(prev => prev === 0 ? imageUrls.length - 1 : prev - 1)}
+                          onClick={() => setAdminPreviewIndex(prev => prev === 0 ? editData.imageUrls.length - 1 : prev - 1)}
                           className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-brand-dark p-1.5 rounded-full shadow cursor-pointer transition-opacity opacity-0 group-hover:opacity-100"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
-                          onClick={() => setAdminPreviewIndex(prev => prev === imageUrls.length - 1 ? 0 : prev + 1)}
+                          onClick={() => setAdminPreviewIndex(prev => prev === editData.imageUrls.length - 1 ? 0 : prev + 1)}
                           className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-brand-dark p-1.5 rounded-full shadow cursor-pointer transition-opacity opacity-0 group-hover:opacity-100"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
 
                         <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1">
-                          {imageUrls.map((_, idx) => (
+                          {editData.imageUrls.map((_, idx) => (
                             <div
                               key={idx}
                               className={`w-1.5 h-1.5 rounded-full transition-all ${idx === adminPreviewIndex ? "bg-brand-accent w-3" : "bg-white/50"}`}
@@ -578,7 +658,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-brand-light gap-2">
                     <ImageIcon className="w-8 h-8" />
-                    <span className="text-[10px] font-medium font-mono">No Image URL Selected</span>
+                    <span className="text-[10px] font-medium font-mono">未選擇圖片網址</span>
                   </div>
                 )}
                 
@@ -589,22 +669,22 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               <div className="space-y-1.5 text-center mt-1">
                 <h4 className="font-serif text-lg font-bold text-brand-dark flex items-center justify-center gap-1.5">
-                  <span>{name || "未命名"}</span>
-                  <span className="text-sm text-brand-muted">({age || "—"}歲)</span>
+                  <span>{editData.name || "未命名"}</span>
+                  <span className="text-sm text-brand-muted">({editData.age || "—"}歲)</span>
                 </h4>
                 <div className="flex items-center justify-center gap-1 text-[11px] text-brand-light font-bold">
                   <MapPin className="w-3 h-3 text-brand-olive" />
-                  <span>{location || "未知"}</span>
+                  <span>{editData.location || "未知"}</span>
                 </div>
                 <p className="text-xs text-brand-muted italic px-2 pt-1 line-clamp-2">
-                  &ldquo;{tagline || "尚未設定形象標籤..."}&rdquo;
+                  &ldquo;{editData.tagline || "尚未設定形象標籤..."}&rdquo;
                 </p>
               </div>
 
               <div className="mt-2 bg-brand-border/20 p-3 rounded-xl border border-brand-border/40 space-y-1.5">
                 <div className="text-[9px] text-brand-light font-bold uppercase tracking-wider">風格標籤：</div>
                 <div className="flex flex-wrap gap-1">
-                  {lifestyleStr.split(",").map((t, idx) => {
+                  {editData.lifestyleStr.split(",").map((t, idx) => {
                     const cleanTag = t.trim();
                     if (!cleanTag) return null;
                     return (
@@ -613,7 +693,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </span>
                     );
                   })}
-                  {!lifestyleStr.trim() && <span className="text-[9px] text-brand-light italic">無標籤</span>}
+                  {!editData.lifestyleStr.trim() && <span className="text-[9px] text-brand-light italic">無標籤</span>}
                 </div>
               </div>
             </div>
@@ -706,7 +786,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               
               <h3 className="font-serif text-lg font-bold text-brand-dark tracking-wider uppercase border-b border-brand-border pb-4 flex items-center gap-2 mb-6">
                 <Sparkles className="w-5 h-5 text-brand-olive" />
-                <span>編輯資料與 A-D 屬性：{name} ({selectedCode})</span>
+                <span>編輯資料與 A-D 屬性：{editData.name} ({selectedCode})</span>
               </h3>
 
               <AnimatePresence mode="wait">
@@ -749,10 +829,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </label>
                       <input
                         id="admin-input-code"
+                        name="code"
                         type="text"
                         required
-                        value={customCode}
-                        onChange={(e) => setCustomCode(e.target.value.trim())}
+                        value={editData.code}
+                        onChange={handleFormChange}
                         placeholder="例如：520"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -764,10 +845,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </label>
                       <input
                         id="admin-input-name"
+                        name="name"
                         type="text"
                         required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={editData.name}
+                        onChange={handleFormChange}
                         placeholder="例如：彥廷"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -779,12 +861,13 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </label>
                       <input
                         id="admin-input-age"
+                        name="age"
                         type="number"
                         required
                         min={18}
                         max={99}
-                        value={age}
-                        onChange={(e) => setAge(Number(e.target.value))}
+                        value={editData.age}
+                        onChange={handleFormChange}
                         placeholder="例如：27"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
@@ -796,14 +879,42 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </label>
                       <input
                         id="admin-input-location"
+                        name="location"
                         type="text"
                         required
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
+                        value={editData.location}
+                        onChange={handleFormChange}
                         placeholder="例如：台北市"
                         className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                       />
                     </div>
+                  </div>
+                  {/* Matching Availability Toggle */}
+                  <div className="pt-4">
+                    <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-2">
+                      配對資格
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditData(prev => ({ ...prev, isAcceptingMatches: !(prev.isAcceptingMatches ?? true) }))}
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-olive ${
+                          (editData.isAcceptingMatches ?? true) ? 'bg-brand-olive' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ${
+                            (editData.isAcceptingMatches ?? true) ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className="text-xs font-semibold text-brand-dark">
+                        {(editData.isAcceptingMatches ?? true) ? '開啟：此紳士可被配對' : '關閉：此紳士暫不參與配對'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-brand-light block mt-1.5 italic">
+                      提示：關閉後，麗人進行「AI 靈魂共鳴測驗」時將不會配對到此位紳士。
+                    </span>
                   </div>
                 </div>
 
@@ -811,13 +922,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider">
-                      形象照圖片集 (Multiple Image URLs) <span className="text-red-500">*</span>
+                      形象照圖片集 <span className="text-red-500">*</span>
                     </label>
                     <button
                       type="button"
-                      onClick={() => {
-                        setImageUrls([...imageUrls, ""]);
-                      }}
+                      onClick={addImageUrlField}
                       className="flex items-center gap-1 text-[10px] font-bold text-brand-olive hover:text-brand-dark bg-brand-border/40 hover:bg-brand-border px-2 py-1 rounded transition-colors"
                     >
                       <Plus className="w-3 h-3" />
@@ -826,7 +935,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </div>
                   
                   <div className="space-y-2">
-                    {imageUrls.map((url, index) => (
+                    {editData.imageUrls.map((url, index) => (
                       <div key={index} className="flex gap-2 items-center">
                         <span className="text-[10px] font-mono font-bold text-brand-light shrink-0 w-5">
                           #{index + 1}
@@ -835,24 +944,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           type="url"
                           required
                           value={url}
-                          onChange={(e) => {
-                            const updated = [...imageUrls];
-                            updated[index] = e.target.value;
-                            setImageUrls(updated);
-                          }}
+                          onChange={(e) => handleImageUrlsChange(index, e.target.value)}
                           placeholder="請輸入 Unsplash 圖片網址或任何公開圖片 CDN 連結"
                           className="flex-1 bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                         />
-                        {imageUrls.length > 1 && (
+                        {editData.imageUrls.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => {
-                              const updated = imageUrls.filter((_, idx) => idx !== index);
-                              setImageUrls(updated);
-                              if (adminPreviewIndex >= updated.length) {
-                                setAdminPreviewIndex(Math.max(0, updated.length - 1));
-                              }
-                            }}
+                            onClick={() => removeImageUrlField(index)}
                             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors shrink-0 cursor-pointer"
                             title="刪除此張照片"
                           >
@@ -874,10 +973,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </label>
                   <input
                     id="admin-input-tagline"
+                    name="tagline"
                     type="text"
                     required
-                    value={tagline}
-                    onChange={(e) => setTagline(e.target.value)}
+                    value={editData.tagline}
+                    onChange={handleFormChange}
                     placeholder="例如：溫柔沉穩、追求空間與生活美學的室內設計師"
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
@@ -890,10 +990,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </label>
                   <textarea
                     id="admin-input-bio"
+                    name="bio"
                     rows={3}
                     required
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
+                    value={editData.bio}
+                    onChange={handleFormChange}
                     placeholder="介紹他的工作背景、個性特質、愛好等詳細內容..."
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all leading-relaxed"
                   />
@@ -906,10 +1007,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </label>
                   <input
                     id="admin-input-lifestyle"
+                    name="lifestyleStr"
                     type="text"
                     required
-                    value={lifestyleStr}
-                    onChange={(e) => setLifestyleStr(e.target.value)}
+                    value={editData.lifestyleStr}
+                    onChange={handleFormChange}
                     placeholder="例如：室內設計, 黑膠唱片, 古典音樂, 咖啡美學"
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
@@ -922,10 +1024,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </label>
                   <textarea
                     id="admin-input-card"
+                    name="cardDetail"
                     rows={2}
                     required
-                    value={cardDetail}
-                    onChange={(e) => setCardDetail(e.target.value)}
+                    value={editData.cardDetail}
+                    onChange={handleFormChange}
                     placeholder="描述他理想中的第一次約會場景或渴望的心動互動..."
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all leading-relaxed"
                   />
@@ -938,10 +1041,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </label>
                   <textarea
                     id="admin-input-ideal"
+                    name="idealMatch"
                     rows={2}
                     required
-                    value={idealMatch}
-                    onChange={(e) => setIdealMatch(e.target.value)}
+                    value={editData.idealMatch}
+                    onChange={handleFormChange}
                     placeholder="描述他對女方性格、生活態度或頻率的深度期許..."
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all leading-relaxed"
                   />
@@ -954,10 +1058,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </label>
                   <input
                     id="admin-input-line"
+                    name="contactLineUrl"
                     type="url"
                     required
-                    value={contactLineUrl}
-                    onChange={(e) => setContactLineUrl(e.target.value)}
+                    value={editData.contactLineUrl}
+                    onChange={handleFormChange}
                     placeholder="例如：https://line.me/R/ti/p/@yuanyu_v520"
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
@@ -978,7 +1083,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
                   {/* One-click style presets */}
                   <div className="bg-brand-olive/[0.04] border border-brand-olive/20 rounded-2xl p-4 md:p-5 mb-6 space-y-3.5">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
                       <span className="text-xs font-bold text-brand-olive uppercase tracking-wider flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 animate-pulse text-brand-accent" />
                         <span>快捷設定：一鍵套用 A-D 風格屬性預設值</span>
@@ -992,61 +1097,61 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       <button
                         type="button"
                         onClick={() => {
-                          if (DEFAULT_METRICS["520"]) {
-                            setCurrentMetrics({ ...DEFAULT_METRICS["520"] });
-                            setSuccessMessage("已成功套用「A 類風格：雅緻美學型 (彥廷)」的屬性指標！請記得點選最下方儲存。");
+                          if (DEFAULT_METRICS["huaA"]) {
+                            setCurrentMetrics({ ...DEFAULT_METRICS["huaA"] });
+                            setSuccessMessage("已成功套用「策略操盤手 (鄭永昌)」的屬性指標！請記得點選最下方儲存。");
                             setTimeout(() => setSuccessMessage(""), 5000);
                           }
                         }}
                         className="py-2.5 px-3 bg-white hover:bg-brand-beige border border-brand-border rounded-xl text-left transition-all duration-300 shadow-sm hover:shadow active:scale-97 cursor-pointer"
                       >
-                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">A 類風格</div>
-                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">雅緻美學 (彥廷)</div>
+                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">風格預設 1</div>
+                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">策略操盤手 (鄭永昌)</div>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
-                          if (DEFAULT_METRICS["888"]) {
-                            setCurrentMetrics({ ...DEFAULT_METRICS["888"] });
-                            setSuccessMessage("已成功套用「B 類風格：感性暖男型 (冠宇)」的屬性指標！請記得點選最下方儲存。");
+                          if (DEFAULT_METRICS["monkeyB"]) {
+                            setCurrentMetrics({ ...DEFAULT_METRICS["monkeyB"] });
+                            setSuccessMessage("已成功套用「新能源執行長 (葉家銘)」的屬性指標！請記得點選最下方儲存。");
                             setTimeout(() => setSuccessMessage(""), 5000);
                           }
                         }}
                         className="py-2.5 px-3 bg-white hover:bg-brand-beige border border-brand-border rounded-xl text-left transition-all duration-300 shadow-sm hover:shadow active:scale-97 cursor-pointer"
                       >
-                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">B 類風格</div>
-                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">感性暖男 (冠宇)</div>
+                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">風格預設 2</div>
+                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">新能源執行長 (葉家銘)</div>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
-                          if (DEFAULT_METRICS["666"]) {
-                            setCurrentMetrics({ ...DEFAULT_METRICS["666"] });
-                            setSuccessMessage("已成功套用「C 類風格：陽光冒險型 (柏翰)」的屬性指標！請記得點選最下方儲存。");
+                          if (DEFAULT_METRICS["daiC"]) {
+                            setCurrentMetrics({ ...DEFAULT_METRICS["daiC"] });
+                            setSuccessMessage("已成功套用「工程經理 (吴建铭)」的屬性指標！請記得點選最下方儲存。");
                             setTimeout(() => setSuccessMessage(""), 5000);
                           }
                         }}
                         className="py-2.5 px-3 bg-white hover:bg-brand-beige border border-brand-border rounded-xl text-left transition-all duration-300 shadow-sm hover:shadow active:scale-97 cursor-pointer"
                       >
-                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">C 類風格</div>
-                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">陽光冒險 (柏翰)</div>
+                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">風格預設 3</div>
+                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">工程經理 (吴建铭)</div>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
-                          if (DEFAULT_METRICS["999"]) {
-                            setCurrentMetrics({ ...DEFAULT_METRICS["999"] });
-                            setSuccessMessage("已成功套用「D 類風格：知性主導型 (若謙)」的屬性指標！請記得點選最下方儲存。");
+                          if (DEFAULT_METRICS["deerD"]) {
+                            setCurrentMetrics({ ...DEFAULT_METRICS["deerD"] });
+                            setSuccessMessage("已成功套用「科技公司創辦人 (陳界衡)」的屬性指標！請記得點選最下方儲存。");
                             setTimeout(() => setSuccessMessage(""), 5000);
                           }
                         }}
                         className="py-2.5 px-3 bg-white hover:bg-brand-beige border border-brand-border rounded-xl text-left transition-all duration-300 shadow-sm hover:shadow active:scale-97 cursor-pointer"
                       >
-                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">D 類風格</div>
-                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">知性主導 (若謙)</div>
+                        <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">風格預設 4</div>
+                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">科技公司創辦人 (陳界衡)</div>
                       </button>
                     </div>
                   </div>

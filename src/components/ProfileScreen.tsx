@@ -84,7 +84,37 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
 
   const confirmRedirect = () => {
     setShowRedirectModal(false);
-    window.open(profile.contactLineUrl, "_blank", "noopener,noreferrer");
+    const greetingMsg = "Hello 我來自緣友通過靈魂配對，你是最契合我的異性";
+
+    // 嘗試從 contactLineUrl 中提取 LINE ID，構建帶入問候語的 URL
+    // LINE URL Scheme: https://line.me/R/oaMessage/{LINE_ID}/?{encodedMessage}
+    // 適用於 LINE Official Account；個人帳號 line://msg/text/{msg} 可作為備用
+    let targetUrl = profile.contactLineUrl;
+    try {
+      // 如果是 line.me/ti/p/ 格式的個人帳號連結，嘗試附加訊息
+      if (targetUrl.includes("line.me/ti/p/") || targetUrl.includes("line.me/R/ti/p/")) {
+        // 個人 LINE 無法直接預填訊息，但可嘗試 line://msg/text/ scheme
+        const encodedMsg = encodeURIComponent(greetingMsg);
+        // 備用：複製到剪貼簿並提示用戶貼上
+        navigator.clipboard.writeText(greetingMsg).catch(() => {});
+      } else if (targetUrl.includes("@")) {
+        // 如果是官方帳號格式 (@xxxx)，使用 oaMessage 帶入訊息
+        const lineId = targetUrl.match(/@[\w.-]+/)?.[0]?.replace("@", "");
+        if (lineId) {
+          const encodedMsg = encodeURIComponent(greetingMsg);
+          targetUrl = `https://line.me/R/oaMessage/${lineId}/?${encodedMsg}`;
+        }
+      } else {
+        // 其他格式，直接使用原始 URL，並複製到剪貼簿
+        navigator.clipboard.writeText(greetingMsg).catch(() => {});
+      }
+    } catch (e) {
+      // 解析失敗時，保留原始 URL 並複製到剪貼簿
+      navigator.clipboard.writeText(greetingMsg).catch(() => {});
+      console.warn("LINE URL parse failed, using original URL", e);
+    }
+
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -348,7 +378,8 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 </p>
 
                 <p className="text-[11px] text-brand-light leading-relaxed bg-brand-beige/50 p-3 rounded-xl border border-brand-border/40">
-                  ⚠️ <strong>安全提示：</strong> 此通道由您的專屬顧問與推薦人共同守護。在對談過程中，請保持尊重、誠實的互動，共同維護優質會員體系。
+                  🎁 <strong>專屬提示：</strong> 點擊跳轉後，系統將自動開啟與對方的 LINE 對話，並<strong>預填入專屬問候語</strong>（個人帳號將自動複製至剪貼簿）：<br/>
+                  <strong className="text-brand-dark italic block mt-1 text-center font-serif">「Hello 我來自緣友通過靈魂配對，你是最契合我的異性」</strong>
                 </p>
               </div>
 
