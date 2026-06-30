@@ -59,7 +59,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (finalAdminCodes.length > 0) {
         setAdminCodes(finalAdminCodes);
       } else if (adminCode) {
-        setAdminCodes([]); // 管理員登入下傳回空才是真空
+        // 伺服器 /api/admin/config 的 adminCodes 來自 DB（非 .env root 密碼），
+        // 若 DB 中沒有額外密碼，傳回空陣列是正常的。
+        // 此時必須保留剛剛用於認證的 adminCode 在記憶體中，否則 App.tsx 認不出管理員。
+        setAdminCodes(prev => {
+          if (prev.includes(adminCode)) return prev; // 已包含，無需更新
+          return [...prev, adminCode];
+        });
       }
       console.log("✅ [DataContext] 成功從伺服器載入並刷新了線上設定。");
     } catch (error) {
