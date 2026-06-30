@@ -10,28 +10,34 @@ import { useAuth } from "./components/AuthContext";
 import { useData } from "./components/DataContext";
 
 export default function App() {
-  const { loggedInLadyCode, ladyProfiles, login, logout } = useAuth();
+  const { loggedInLadyCode, ladyProfiles, login, logout, register } = useAuth();
   const { profiles, adminCodes, isDataLoading } = useData();
   const [verifiedCode, setVerifiedCode] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [hasInitializedLady, setHasInitializedLady] = useState(false);
 
   useEffect(() => {
-    // 這個 effect 專門處理「麗人」登入後的邏輯
-    if (loggedInLadyCode && ladyProfiles[loggedInLadyCode]) {
+    // 這個 effect 專門處理「麗人」登入後的邏輯，僅在剛登入且尚未初始化時執行一次，防止更新 profiles 導致重複導向
+    if (loggedInLadyCode) {
       const lady = ladyProfiles[loggedInLadyCode];
-      setVerifiedCode(null); // 確保沒有紳士檔案被顯示
-      setShowAdmin(false); // 確保後台是關閉的
-      if (lady.quizTaken && lady.matchedGentlemanCode) {
-        // 如果已完成測驗，顯示配對的紳士
-        setVerifiedCode(lady.matchedGentlemanCode);
-        setShowQuiz(false);
-      } else {
-        // 如果未完成測驗，顯示測驗畫面
-        setShowQuiz(true);
+      if (lady && !hasInitializedLady) {
+        setHasInitializedLady(true);
+        setVerifiedCode(null); // 確保沒有紳士檔案被顯示
+        setShowAdmin(false); // 確保後台是關閉的
+        if (lady.quizTaken && lady.matchedGentlemanCode) {
+          // 如果已完成測驗，顯示配對的紳士
+          setVerifiedCode(lady.matchedGentlemanCode);
+          setShowQuiz(false);
+        } else {
+          // 如果未完成測驗，顯示測驗畫面
+          setShowQuiz(true);
+        }
       }
+    } else {
+      setHasInitializedLady(false);
     }
-  }, [loggedInLadyCode, ladyProfiles]);
+  }, [loggedInLadyCode, ladyProfiles, hasInitializedLady]);
 
   const handleVerifySuccess = async (code: string) => {
     // 這個函式現在只處理紳士和管理員的驗證
@@ -41,7 +47,7 @@ export default function App() {
       if (loggedInLadyCode) logout();
     } else {
       setVerifiedCode(code);
-      if (loggedInLadyCode) logout();
+      // 麗人查看或解鎖紳士時，不執行自動登出，保留其麗人登入狀態
     }
   };
 
@@ -49,11 +55,12 @@ export default function App() {
     setVerifiedCode(null);
   };
 
-  const handleSoulMatchTrigger = () => {
+  const handleSoulMatchTrigger = async () => {
     // 如果是已登入的女性用戶，檢查是否已完成測驗
     if (loggedInLadyCode && ladyProfiles && ladyProfiles[loggedInLadyCode]) {
-      if (ladyProfiles[loggedInLadyCode].quizTaken && ladyProfiles[loggedInLadyCode].matchedGentlemanCode) {
-        setVerifiedCode(ladyProfiles[loggedInLadyCode].matchedGentlemanCode); // 顯示已配對的紳士
+      const lady = ladyProfiles[loggedInLadyCode];
+      if (lady.quizTaken && lady.matchedGentlemanCode) {
+        setVerifiedCode(lady.matchedGentlemanCode); // 顯示已配對的紳士
         setShowQuiz(false);
       } else {
         setShowQuiz(true); // 尚未測驗，允許測驗
@@ -61,7 +68,14 @@ export default function App() {
     } else if (verifiedCode) { // 如果是紳士登入，則不允許觸發測驗
       // do nothing, or show an error
     } else {
-      setShowQuiz(true);
+      // 訪客點擊 AI 測試時，自動為其註冊麗人帳號，以確保「每人只能測驗一次」
+      try {
+        await register();
+        // 註冊成功後，上方 useEffect 偵測到登入狀態，會自動開啟 Quiz 測驗
+      } catch (e) {
+        console.error("自動註冊麗人失敗:", e);
+        setShowQuiz(true);
+      }
     }
   };
 
