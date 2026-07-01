@@ -28,6 +28,81 @@ import { Profile } from "../types";
 // 僅在開發環境顯示調試工具（生產環境自動隱藏）
 const IS_DEV = (import.meta as any).env?.DEV === true || (import.meta as any).env?.MODE === "development";
 
+const PLACEHOLDER_PROFILES = [
+  {
+    code: "Y-8201",
+    name: "張*維",
+    age: 39,
+    location: "臺北市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-3914",
+    name: "林*廷",
+    age: 43,
+    location: "新竹市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-1082",
+    name: "陳*翔",
+    age: 36,
+    location: "臺中市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-7482",
+    name: "黃*華",
+    age: 45,
+    location: "桃園市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-5529",
+    name: "李*誠",
+    age: 41,
+    location: "臺南市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1500048993953-d23a436266cf?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-6691",
+    name: "王*澤",
+    age: 38,
+    location: "高雄市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-2810",
+    name: "謝*宇",
+    age: 44,
+    location: "臺北市",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  },
+  {
+    code: "Y-9034",
+    name: "周*豪",
+    age: 37,
+    location: "宜蘭縣",
+    tagline: "...",
+    imageUrl: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=300",
+    isPlaceholder: true,
+  }
+];
+
 interface VerificationScreenProps {
   onVerifySuccess: (code: string, role?: string) => void;
   onSoulMatchClick?: () => void;
@@ -137,6 +212,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
   // 執行解鎖判斷與請求
   const executeUnlockFlow = async (targetProfile: any) => {
+    if (targetProfile.isPlaceholder) {
+      alert("🔒 此為高密級隱私特約男賓，無線上公開資料。請透過『一鍵 LINE 聯絡』聯繫客服人員為您安排人工配對。");
+      return;
+    }
     const inputCode = targetProfile.code;
     const unlockedList = lady?.unlockedGentlemanCodes || [];
     const isUnlocked = unlockedList.includes(inputCode) || lady?.matchedGentlemanCode === inputCode;
@@ -199,7 +278,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     if (!lady) return;
     setSimulating(true);
     try {
-      await simulateAssets("free", "none", [], false, null);
+      await simulateAssets("experience", "none", [], false, null);
       alert("已重置該麗人帳戶至初始狀態（免費、未測驗、零解鎖）！");
     } catch (e) {
       console.error(e);
@@ -213,14 +292,16 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     if (!lady) return false;
     if (lady.matchedGentlemanCode === gentCode) return true;
     if (lady.unlockedGentlemanCodes?.includes(gentCode)) return true;
-    if (lady.membershipLevel === "vip" || lady.assetVerified === "approved") return true;
     return false;
   };
 
   // 過濾用：列出全體可配對紳士（排除模板、排除已關閉配對的紳士）
-  const gentlemanList = (Object.values(profiles) as Profile[]).filter(
-    (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code) && (p.isAcceptingMatches !== false)
-  );
+  const gentlemanList = [
+    ...(Object.values(profiles) as Profile[]).filter(
+      (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code) && (p.isAcceptingMatches !== false)
+    ),
+    ...PLACEHOLDER_PROFILES
+  ];
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative py-12 px-4 md:px-12 bg-brand-beige overflow-hidden">
@@ -487,7 +568,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         {/* Detail text */}
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-brand-light font-mono font-bold">{p.code}</span>
+                            <span className="text-[10px] text-brand-light font-mono font-bold">
+                              {isUnlocked ? p.code : "編號: ****"}
+                            </span>
                             <span className="text-[10px] text-brand-muted font-bold">{p.age} 歲 · {p.location}</span>
                           </div>
                           <h5 className={`font-serif text-sm font-bold ${isUnlocked ? "text-brand-dark" : "text-brand-muted"}`}>
@@ -971,7 +1054,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       setShowUpgradeModal(false);
                       try {
                         const level = lady.membershipLevel || "free";
-                        const updated = await simulateAssets(level, "approved", lady.unlockedGentlemanCodes);
+                        const updatedUnlocked = [...(lady.unlockedGentlemanCodes || [])];
+                        if (upgradeTargetProfile && !updatedUnlocked.includes(upgradeTargetProfile.code)) {
+                          updatedUnlocked.push(upgradeTargetProfile.code);
+                        }
+                        await simulateAssets(level, "approved", updatedUnlocked);
                         alert("🎉 資料已上報！資產驗證成功模組已啟用！\n您已正式開通全站無限制自由預覽解鎖名額。");
                         if (upgradeTargetProfile) {
                           onVerifySuccess(upgradeTargetProfile.code);
