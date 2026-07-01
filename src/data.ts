@@ -399,12 +399,12 @@ export async function loginLady(code: string): Promise<LadyProfile> {
  * @param matchedGentlemanCode - The code of the matched gentleman.
  * @param quizMetrics - The lady's personality metrics from the quiz.
  */
-export async function saveLadyQuizResult(ladyCode: string, matchedGentlemanCode: string, quizMetrics: PersonalityMetrics): Promise<LadyProfile> {
+export async function saveLadyQuizResult(ladyCode: string, matchedGentlemanCode: string, quizMetrics: PersonalityMetrics, quizAnswers?: number[]): Promise<LadyProfile> {
   try {
     const response = await fetch(`/api/lady/${ladyCode}/quiz-result`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matchedGentlemanCode, quizMetrics }),
+      body: JSON.stringify({ matchedGentlemanCode, quizMetrics, quizAnswers }),
     });
     if (!response.ok) {
       const errorData = await response.json();

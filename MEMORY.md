@@ -430,3 +430,30 @@
 - **驗證命令 and 結果**：`npm run build` 編譯通過；`pm2 restart yuanyu` 重啟成功，功能完美運作。
 - **提交哈希**：1417ee08dff01e18507e9f2681e1186ebb84a8a1
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第二十輪：麗人編輯審核彈窗新增答題選項細節與特質雷達深度分析報告
+
+- **本輪目標**：在主控台「編輯麗人與審核彈窗」中，新增展示該麗人測驗答題紀錄與核心特質的雷達深度分析面板，確保主控端能直觀審計每位女賓的答題與特質詳情。
+- **發現的問題**：
+  - 目前麗人完成測驗後，主控編輯彈窗中只能看到匹配的男賓編號，無法查看該麗人是怎樣回答 7 道性格特質測驗問題的，也無法看到具體 16 維度的人格分數與強弱特質分析，限制了主控對麗人畫像進行人工審核和針對性備註的能力。
+- **修改內容**：
+  - `server.js`：
+    - `LadyProfileSchema` 新增 `quizAnswers: { type: [Number], default: [] }` 欄位，用來儲存麗人測驗時所選填的 A-D 選項索引（0-3）。
+    - 儲存測驗結果路由 `POST /api/lady/:code/quiz-result` 支援在 request body 中接收 `quizAnswers` 陣列並寫入資料庫。
+  - `src/types.ts`：
+    - `LadyProfile` 介面增加可選屬性 `quizAnswers?: number[]`。
+  - `src/data.ts`：
+    - 前端 `saveLadyQuizResult` API 串接參數調整，加入可選的 `quizAnswers?: number[]` 參數並隨 fetch Body 傳送給後端儲存。
+  - `src/components/SoulMatchQuiz.tsx`：
+    - 新增 `selectedAnswers` 狀態陣列，在作答時同步紀錄麗人所點選的選項索引。
+    - 支援與 `QUIZ_PROGRESS_KEY` localStorage 自動進度儲存/還原邏輯同步，當麗人點擊「返回上一題`時，自動從狀態與 local cache 中 pop 移去最後一個選項索引。
+    - 在作答完成後，調用 `saveLadyQuizResult` 將 7 道題的選項紀錄（如 `[0, 1, 2, 0, 1, 3, 2]`）提交存檔。
+  - `src/components/AdminEditScreen.tsx`：
+    - 在麗人編輯 Modal 中的配對區塊下方，增加「**測驗答題與特質分析**」板塊。
+    - **雷達特質分析**：提取麗人 `quizMetrics` 的 16 維數值，在前端以視覺化進度條排序展示（大於 70% 綠色高亮，小於 30% 紅色警告，中間色為橄欖綠）。自動分析並篩選出大於 65% 的「強項特質特徵」與小於 35% 的「弱項特質特徵」解讀標籤，直接生成麗人性格解析報告。
+    - **答題細節展示**：如為新完成答題之麗人（含有 `quizAnswers` 資料），列出 7 道經典測驗題的題目與選項內文，高亮標註該麗人真實選填的答案；如果是舊版歷史資料（不含作答選項陣列），則展示防呆通知提示，並呈現基於 metrics 的特質分析，提供完美的前後相容性。
+- **驗證命令 and 結果**：`npm run build` 打包編譯無誤；`pm2 restart yuanyu` 重啟正常上線。
+- **提交哈希**：eae93ab23be1c6e1a263d34ef52ac5d8ef8ff19d
+- **是否已經收斂**：是。

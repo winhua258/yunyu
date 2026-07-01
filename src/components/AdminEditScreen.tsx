@@ -2254,7 +2254,10 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               {/* Match & Unlock Details */}
               <div className="border-t border-brand-border/40 pt-3 space-y-2">
-                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">配對與已解鎖資訊</h4>
+                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider flex items-center gap-1">
+                  <Crown className="w-3.5 h-3.5 text-brand-olive" />
+                  配對與已解鎖資訊
+                </h4>
                 <div className="bg-white p-2.5 rounded-xl border border-brand-border/50 text-[10px] space-y-2">
                   <div>
                     <span className="font-semibold text-brand-light">AI 匹配對象：</span>
@@ -2281,6 +2284,157 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Quiz Answers & Personality Analysis Section */}
+              <div className="border-t border-brand-border/40 pt-3 space-y-2">
+                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-brand-olive" />
+                  測驗答題與特質分析
+                </h4>
+                
+                {editLady.quizTaken ? (
+                  <div className="space-y-2">
+                    {/* 1. Radar-like Analysis Cards */}
+                    <div className="bg-white p-3 rounded-xl border border-brand-border/50 space-y-2">
+                      <div className="text-[10px] font-bold text-brand-dark pb-1 border-b border-brand-border/30">
+                        📊 人格特質深度分析
+                      </div>
+                      
+                      {/* Metric Progress Bars */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[9px]">
+                        {Object.entries(editLady.quizMetrics || {})
+                          .map(([key, value]) => ({
+                            key,
+                            label: METRIC_LABELS[key as keyof PersonalityMetrics] || key,
+                            val: Math.round(value as number)
+                          }))
+                          .sort((a, b) => b.val - a.val) // Sort desc to show top traits first
+                          .map((metric) => (
+                            <div key={metric.key} className="space-y-1">
+                              <div className="flex justify-between text-brand-dark font-medium">
+                                <span>{metric.label}</span>
+                                <span className={metric.val >= 70 ? "text-emerald-700 font-bold" : metric.val <= 30 ? "text-red-700" : "text-brand-muted"}>
+                                  {metric.val}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-brand-beige rounded-full h-1.5 overflow-hidden">
+                                <div 
+                                  className={`h-1.5 rounded-full ${
+                                    metric.val >= 70 ? "bg-emerald-600" :
+                                    metric.val <= 30 ? "bg-red-500" :
+                                    "bg-brand-olive"
+                                  }`}
+                                  style={{ width: `${metric.val}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+                      
+                      {/* Highlight Top Core Character Traits */}
+                      <div className="text-[10px] space-y-1 pt-1 border-t border-brand-border/20">
+                        <span className="font-semibold text-brand-light block">💡 核心特質解讀：</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {Object.entries(editLady.quizMetrics || {})
+                            .filter(([_, val]) => (val as number) >= 65)
+                            .map(([key]) => {
+                              const label = METRIC_LABELS[key as keyof PersonalityMetrics];
+                              return (
+                                <span key={key} className="inline-flex items-center px-1.5 py-0.5 bg-emerald-50 text-emerald-800 text-[8px] font-bold rounded border border-emerald-200/50">
+                                  強：{label}
+                                </span>
+                              );
+                            })
+                          }
+                          {Object.entries(editLady.quizMetrics || {})
+                            .filter(([_, val]) => (val as number) <= 35)
+                            .map(([key]) => {
+                              const label = METRIC_LABELS[key as keyof PersonalityMetrics];
+                              return (
+                                <span key={key} className="inline-flex items-center px-1.5 py-0.5 bg-red-50 text-red-800 text-[8px] font-bold rounded border border-red-200/50">
+                                  弱：{label}
+                                </span>
+                              );
+                            })
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Question-by-Question Answers */}
+                    <div className="bg-white p-3 rounded-xl border border-brand-border/50 space-y-2">
+                      <div className="text-[10px] font-bold text-brand-dark pb-1 border-b border-brand-border/30">
+                        📝 測驗作答選項詳情
+                      </div>
+                      
+                      {editLady.quizAnswers && editLady.quizAnswers.length === 7 ? (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                          {[
+                            {
+                              q: "第 1 題：城市氛圍偏好",
+                              text: "如果可以隨心所欲選擇，妳最希望生活在怎樣的城市氛圍裡呢？",
+                              options: ["A. 北歐精緻都會 (治安極佳、安全、高效優雅)", "B. 南法藝術小鎮 (浪漫、自由、驚喜)", "C. 紐西蘭自然露營區 (擁抱自然、極致開闊與平靜)", "D. 紐約金融核心區 (繁華、頂尖資源與自我實現)"]
+                            },
+                            {
+                              q: "第 2 題：十萬獎金假期規劃",
+                              text: "假設今天突然多了一筆十萬元的特別獎金，且有三天臨時假期，妳直覺最想怎麼規劃呢？",
+                              options: ["A. 穩定累積與精緻享受 (理財帳戶，只撥出一小部分消費)", "B. 當下行樂，說走就走 (立刻出發海島，完全花在當下幸福)", "C. 投入熱愛，升級裝備 (購入頂級戶外裝備探尋未知風景)", "D. 自我增值，謀劃未來 (報名成長大師班，升級自我生產力)"]
+                            },
+                            {
+                              q: "第 3 題：旅行移動相處氛圍",
+                              text: "跟伴侶出門小旅行，妳最嚮往以下哪種移動時的相處氛圍呢？",
+                              options: ["A. 乾淨平穩，井然有序 (德系座駕，聽爵士樂聊長遠規劃)", "B. 感性陪伴，溫馨分享 (高鐵火車上分食點心聊心情故事)", "C. 越野探險，隨性流浪 (四驅越野，開窗吹風去秘境冒險)", "D. 奢華尊崇，由他掌控 (加速極強超跑，他打理一切直奔預約制私廚)"]
+                            },
+                            {
+                              q: "第 4 題：新家裝潢風格分歧",
+                              text: "當兩人搬進新家在裝潢上有不同意見時，妳直覺會怎麼處理呢？",
+                              options: ["A. 理性數據，折衷最優 (做優缺點對比表，客觀理性平衡)", "B. 情緒和緩，以愛退讓 (先吃大餐撒嬌表達，包容彼此差異)", "C. 輕鬆自在，隨心混搭 (各退一步混搭就好，相處舒服最重要)", "D. 信任全權，果斷跟隨 (極信任他品味，由他全權負責規劃)"]
+                            },
+                            {
+                              q: "第 5 題：工作與生活平衡觀",
+                              text: "妳如何看待工作與生活的平衡關係呢？",
+                              options: ["A. 按部就班，構築安穩 (工作是為了累積堅實的財務安全)", "B. 下班萬歲，豐富體驗 (藝術課/聚餐為生活核心，極大化體驗)", "C. 彈性自由，無拘無束 (追求靈魂自由，想說走就走去旅行)", "D. 追求卓越，成就不凡 (渴望自我實現與晉升，投入高強度努力)"]
+                            },
+                            {
+                              q: "第 6 題：器物與晚餐品味哲學",
+                              text: "在挑選日常晚餐或是生活隨身器物時，妳更傾向以下哪一種品味哲學呢？",
+                              options: ["A. 高質簡約，注重本質 (注重實用健康與信譽，成分天然)", "B. 視覺美感，氛圍拉滿 (高顏值設計網紅款，儀式感燈光氣氛)", "C. 在地煙火，自在舒服 (愛街頭美食，不拘束，隨意小店暢聊)", "D. 尊榮極致，高效到位 (時間成本為重，買最好的頂級私廚服務)"]
+                            },
+                            {
+                              q: "第 7 題：認定對方的安全感瞬間",
+                              text: "當關係走到穩定階段，最能帶給妳「這輩子就是他了」的瞬間是？",
+                              options: ["A. 規劃清晰，重諾踐行 (承諾均落地，理財規劃為成家做準備)", "B. 情緒依託，無比溫馨 (受挫大哭時他推掉工作，全心抱緊陪伴)", "C. 絕對信任，自由無壓 (同空間不說話也無壓，不查崗情勒)", "D. 指點迷津，強大避風 (重大抉擇低潮時，他以卓越實力指引保護)"]
+                            }
+                          ].map((question, qIdx) => {
+                            const selectedIdx = editLady.quizAnswers![qIdx];
+                            const selectedOptionText = question.options[selectedIdx] ?? `未知選項 (代號: ${selectedIdx})`;
+                            return (
+                              <div key={qIdx} className="space-y-0.5 border-b border-brand-border/10 pb-2 last:border-0 last:pb-0">
+                                <div className="font-bold text-[9px] text-brand-dark flex justify-between">
+                                  <span>{question.q}</span>
+                                </div>
+                                <div className="text-[8.5px] text-brand-light font-medium italic">「{question.text}」</div>
+                                <div className="text-[9px] bg-brand-beige/40 border border-brand-border/30 rounded p-1.5 font-semibold text-brand-dark">
+                                  選擇了：<span className="text-brand-olive">{selectedOptionText}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-brand-light bg-brand-beige/30 p-2 rounded-lg border border-brand-border/30 leading-relaxed">
+                          ⚠️ 此帳號為早期註冊測驗（歷史存量資料），未記錄各題原始選填答案。上方已為您展示基於其計算出之 16 維人格特質深度分析百分比與核心解讀。
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white p-3 rounded-xl border border-brand-border/50 text-[10px] text-center text-brand-muted font-bold">
+                    該麗人尚未完成測驗答題。
+                  </div>
+                )}
               </div>
 
               {ladyEditMsg && (

@@ -50,6 +50,7 @@ export interface LadyProfile {
   membershipLevel?: string;
   assetVerified?: string;
   unlockedGentlemanCodes?: string[];
+  quizAnswers?: number[];
   deviceId?: string;
   ipAddress?: string;
   userAgent?: string;

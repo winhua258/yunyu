@@ -63,6 +63,7 @@ const LadyProfileSchema = new mongoose.Schema({
   membershipLevel: { type: String, default: "free" },
   assetVerified: { type: String, default: "none" },
   unlockedGentlemanCodes: { type: [String], default: [] },
+  quizAnswers: { type: [Number], default: [] }, // 各題作答選項索引 (0-3)
   deviceId: { type: String, default: "" },
   ipAddress: { type: String, default: "" },
   userAgent: { type: String, default: "" }, // 裝置 User-Agent
@@ -441,7 +442,7 @@ app.post("/api/lady/:code/update-name", async (req, res) => {
 app.post("/api/lady/:code/quiz-result", async (req, res) => {
   try {
     const { code } = req.params;
-    const { matchedGentlemanCode, quizMetrics } = req.body;
+    const { matchedGentlemanCode, quizMetrics, quizAnswers } = req.body;
 
     const lady = await LadyProfile.findOne({ code });
     if (!lady) {
@@ -454,6 +455,9 @@ app.post("/api/lady/:code/quiz-result", async (req, res) => {
     lady.quizTaken = true;
     lady.matchedGentlemanCode = matchedGentlemanCode;
     lady.quizMetrics = quizMetrics;
+    if (quizAnswers) {
+      lady.quizAnswers = quizAnswers;
+    }
     
     // 將配對到的男生代碼自動加入已解鎖列表
     if (matchedGentlemanCode && !lady.unlockedGentlemanCodes.includes(matchedGentlemanCode)) {

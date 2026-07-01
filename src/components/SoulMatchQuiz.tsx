@@ -80,6 +80,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
   const [currentStep, setCurrentStep] = useState<"intro" | "quiz" | "calculating" | "result">("intro");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userMetrics, setUserMetrics] = useState<PersonalityMetrics>(() => ({ ...defaultUserMetrics }));
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   
   // History stack of metric changes for the Back button
   const [metricHistory, setMetricHistory] = useState<PersonalityMetrics[]>([]);
@@ -108,6 +109,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
           setUserMetrics(savedProgress.userMetrics);
           setCurrentQuestionIndex(savedProgress.currentQuestionIndex);
           setMetricHistory(savedProgress.metricHistory || []);
+          setSelectedAnswers(savedProgress.selectedAnswers || []);
           setCurrentStep("quiz"); // 直接跳到測驗畫面
         }
       } catch (e) {
@@ -328,9 +330,12 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
     }
   };
 
-  const handleSelectOption = async (modifiers: Partial<PersonalityMetrics>) => {
+  const handleSelectOption = async (modifiers: Partial<PersonalityMetrics>, optionIdx: number) => {
     // Keep record of current metrics for backtracking
     setMetricHistory((prev) => [...prev, { ...userMetrics }]);
+
+    const nextAnswers = [...selectedAnswers, optionIdx];
+    setSelectedAnswers(nextAnswers);
 
     // Update user metrics dynamically based on choice, bounding values between 10 and 100
     const updatedMetrics = { ...userMetrics };
@@ -348,6 +353,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
         currentQuestionIndex: currentQuestionIndex + 1,
         userMetrics: updatedMetrics,
         metricHistory: [...metricHistory, { ...userMetrics }],
+        selectedAnswers: nextAnswers,
       };
       localStorage.setItem(QUIZ_PROGRESS_KEY, JSON.stringify(progressToSave));
     } else {
@@ -376,7 +382,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
 
       // 如果是女性用戶，將測驗結果儲存到後端
       if (ladyCode) {
-        const updatedLady = await saveLadyQuizResult(ladyCode, codeToPersist, updatedMetrics);
+        const updatedLady = await saveLadyQuizResult(ladyCode, codeToPersist, updatedMetrics, nextAnswers);
         updateLadyProfile(updatedLady);
       }
 
@@ -452,17 +458,20 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
       const lastMetrics = metricHistory[metricHistory.length - 1];
       const newHistory = metricHistory.slice(0, -1);
       const newQuestionIndex = currentQuestionIndex - 1;
+      const nextAnswers = selectedAnswers.slice(0, -1);
 
       // 更新 React 狀態
       setUserMetrics(lastMetrics);
       setMetricHistory(newHistory);
       setCurrentQuestionIndex(newQuestionIndex);
+      setSelectedAnswers(nextAnswers);
 
       // 自動儲存返回後的新進度
       const progressToSave = {
         currentQuestionIndex: newQuestionIndex,
         userMetrics: lastMetrics,
         metricHistory: newHistory,
+        selectedAnswers: nextAnswers,
       };
       localStorage.setItem(QUIZ_PROGRESS_KEY, JSON.stringify(progressToSave));
     }
@@ -643,7 +652,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
                     <button
                       key={idx}
                       id={`btn-quiz-option-${idx}`}
-                      onClick={() => handleSelectOption(option.modifiers)}
+                      onClick={() => handleSelectOption(option.modifiers, idx)}
                       className="w-full text-left p-2.5 md:p-4 bg-white border border-brand-border hover:border-brand-olive rounded-xl md:rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer group active:scale-98"
                     >
                       <div className="flex flex-col gap-0.5 md:gap-1">
