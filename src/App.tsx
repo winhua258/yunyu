@@ -35,6 +35,9 @@ export default function App() {
         }
       }
     } else {
+      if (hasInitializedLady) {
+        setVerifiedCode(null);
+      }
       setHasInitializedLady(false);
     }
   }, [loggedInLadyCode, ladyProfiles, hasInitializedLady]);

@@ -150,5 +150,21 @@
 - **提交哈希**：6cdd23c6fe5d40a50f49caa7fd1f0bb3c5357864 (amended)
 - **是否已經收斂**：是。
 
+## 2026-07-01 第六輪麗人卡片退出後重定向與首頁清空記錄
+
+- **本輪目標**：修復女性用戶（麗人）進行 AI 性格測驗配對成功進入紳士卡片後，點擊右上角「退出」登出按鈕，頁面仍卡在紳士卡片，需要再次點擊「返回驗證」才能退回主頁的體驗 Bug。
+- **發現的問題**：
+  - 點擊右上角退出時，`Header.tsx` 觸發 `useAuth` 的 `logout()` 函數，這成功清空了 `loggedInLadyCode` 使其為 `null`，但 `App.tsx` 中的 `verifiedCode`（儲存當前展示紳士代碼）狀態並未被同步清空。
+  - 由於 `verifiedCode !== null` 仍然成立，`App.tsx` 的 `<AnimatePresence>` 仍然渲染 `<ProfileScreen>`，且由於此時已登出，Header 右上角再次轉換為訪客用的「返回驗證」按鈕，造成需要操作兩次登出的邏輯混亂。
+- **修改內容**：
+  - `App.tsx`：
+    - 在處理登入狀態的 `useEffect` 中，當檢測到 `loggedInLadyCode` 為空，且代表已完成登入初始化的 `hasInitializedLady` 為 `true` 時（說明發生了麗人登出行為），自動將 `verifiedCode` 設置為 `null`。
+    - 藉此讓女性用戶在點擊「退出」時，頁面狀態自動重設，一步直接退回到主頁（VerificationScreen）。
+- **驗證命令和結果**：
+  - 執行 `npm run build` 並以 `pm2 restart yuanyu` 重啟：編譯打包完成並成功部署生效，經邏輯審查，狀態清空與首頁返回工作正常。
+- **提交哈希**：030f4a55523486d8e0ec8e9aaaba34257c668e93 (amended)
+- **是否已經收斂**：是。
+
+
 
 
