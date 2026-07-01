@@ -617,3 +617,20 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，重新命名編號後不再產生重複角色。
 - **提交哈希**：9a6599c4eba0c0357d4af4e4491a8156ce101e75
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第三十輪：實作專屬 React Alert 彈窗取代原生 alert() 解決手機 WebView 禁用問題
+
+- **本輪目標**：修復「已註冊麗人於手機端 WebView（如 LINE 內置瀏覽器）再次點擊註冊時無任何提示彈窗」的 Bug，改為由 React 實作的緣友專屬優雅 Alert 彈窗。
+- **發現的問題**：
+  - 行動端瀏覽器 WebView（特別是 LINE 內置瀏覽器）為防止釣魚視窗鎖死網頁，通常會直接禁用或攔截 JavaScript 原生的 `window.alert()`。
+  - 這導致先前在 `handleLadyRegister` 成功判定老用戶自動載入時呼叫的 `alert(...)` 在手機端完全不顯示，使用戶覺得點擊後無反應。
+- **修改內容**：
+  - `src/components/VerificationScreen.tsx`：
+    - 新增 `showLadyAlertModal`、`ladyAlertTitle`、`ladyAlertMessage`、`ladyAlertCode` 與 `ladyAlertCopied` 狀態。
+    - 在 `handleLadyRegister` 註冊/登入成功時，不再呼叫原生的 `alert()`，而是將狀態寫入上述 state 並將 `showLadyAlertModal` 設為 `true`。
+    - 在頁面底部渲染專屬彈窗。彈窗採用優雅的杏色配底、Sparkles 圖標飾頂、並設計了 **「UUID 一鍵複製按鈕」**，點擊複製後動態轉為 `已複製 ✓`，提供極佳的行動端用戶體驗。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機與電腦端均能流暢彈出高質感對話框。
+- **提交哈希**：caba87f7a168fcf152d7d10f33239ce1b1862a8b
+- **是否已經收斂**：是。

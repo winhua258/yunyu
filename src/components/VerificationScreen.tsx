@@ -132,6 +132,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [photoUploading, setPhotoUploading] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameInput, setEditNameInput] = useState("");
+  const [showLadyAlertModal, setShowLadyAlertModal] = useState(false);
+  const [ladyAlertTitle, setLadyAlertTitle] = useState("");
+  const [ladyAlertMessage, setLadyAlertMessage] = useState("");
+  const [ladyAlertCode, setLadyAlertCode] = useState("");
+  const [ladyAlertCopied, setLadyAlertCopied] = useState(false);
 
   const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
@@ -240,11 +245,16 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     setLadyError("");
     try {
       const { lady, isNew } = await register();
+      setLadyAlertCode(lady.code);
+      setLadyAlertCopied(false);
       if (isNew) {
-        alert(`🌸 歡迎加入緣友！\n您的專屬麗人編號已成功建立：\n\n${lady.code}\n\n請截圖保存此編號，以便日後換設備時恢復帳戶。已為您自動登入，祝您找到心儀的另一半 ✨`);
+        setLadyAlertTitle("🌸 歡迎加入緣友！");
+        setLadyAlertMessage("您的專屬麗人編號已成功建立。請截圖或複製保存此編號，以便日後更換設備時恢復帳戶。系統已為您自動登入，祝您找到心儀的另一半 ✨");
       } else {
-        alert(`✅ 歡迎回來！\n我們偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。\n\n您的麗人編號：${lady.code}\n\n如需查看配對結果，請繼續完成靈魂測驗 💫`);
+        setLadyAlertTitle("✅ 歡迎回來！");
+        setLadyAlertMessage("我們偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。如需查看配對結果，請繼續完成靈魂測驗 💫");
       }
+      setShowLadyAlertModal(true);
     } catch (err: any) {
       setLadyError(err.message || "註冊失敗，請稍後再試。");
     }
@@ -1294,6 +1304,73 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   暫不升級，返回面板
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* LADY REGISTRATION / AUTO-LOGIN ALERT DIALOG */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {showLadyAlertModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLadyAlertModal(false)}
+              className="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="bg-brand-beige rounded-3xl shadow-2xl border border-brand-border w-full max-w-sm overflow-hidden z-10 flex flex-col p-6 text-center space-y-4"
+            >
+              <div className="flex justify-center">
+                <div className="w-12 h-12 rounded-full bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner">
+                  <Sparkles className="w-6 h-6 text-brand-olive fill-current" />
+                </div>
+              </div>
+
+              <h3 className="font-serif text-lg text-brand-dark font-bold tracking-wide">
+                {ladyAlertTitle}
+              </h3>
+
+              <p className="text-xs text-brand-muted leading-relaxed">
+                {ladyAlertMessage}
+              </p>
+
+              {ladyAlertCode && (
+                <div className="space-y-1.5 text-left">
+                  <span className="text-[10px] font-bold text-brand-light uppercase tracking-wider block">您的專屬麗人編號</span>
+                  <div className="bg-white p-3 rounded-2xl border border-brand-border/60 flex items-center justify-between gap-2 shadow-inner">
+                    <span className="text-xs text-brand-dark font-mono font-bold break-all select-all">{ladyAlertCode}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(ladyAlertCode).catch(() => {});
+                        setLadyAlertCopied(true);
+                        setTimeout(() => setLadyAlertCopied(false), 2000);
+                      }}
+                      className="py-1 px-3 bg-brand-olive hover:bg-[#4d4d36] text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer shrink-0"
+                    >
+                      {ladyAlertCopied ? "已複製 ✓" : "複製"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowLadyAlertModal(false)}
+                className="w-full py-2.5 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-wider uppercase rounded-xl transition-all shadow cursor-pointer"
+              >
+                開始探索
+              </button>
             </motion.div>
           </div>
         )}
