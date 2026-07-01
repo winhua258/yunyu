@@ -209,7 +209,7 @@ export async function getAllLadyProfiles(): Promise<Record<string, LadyProfile>>
 }
 
 // Profiles that should be excluded from SoulMatch pairing
-export const TEMPLATE_EXCLUDED_CODES = ["monkeyB", "daiC", "deerD", "huaA"];
+export const TEMPLATE_EXCLUDED_CODES: string[] = [];
 
 /**
  * Updates the entire application configuration on the server.
