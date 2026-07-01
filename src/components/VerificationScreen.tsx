@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useData } from "./DataContext";
-import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES } from "../data";
+import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES, requestPhotoChange } from "../data";
 import { Profile } from "../types";
 
 
@@ -110,7 +110,7 @@ interface VerificationScreenProps {
 
 export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }: VerificationScreenProps) {
   const { profiles, isDataLoading, refreshData } = useData();
-  const { loggedInLadyCode, login, register, ladyProfiles, logout, simulateAssets } = useAuth();
+  const { loggedInLadyCode, login, register, ladyProfiles, logout, simulateAssets, updateLadyProfile } = useAuth();
   
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -126,8 +126,41 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [upgradeTargetProfile, setUpgradeTargetProfile] = useState<any>(null);
   const [showSimulator, setShowSimulator] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
+
+  const handleAvatarClick = () => {
+    if (!lady) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert("圖片大小不可超過 2MB！");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        setPhotoUploading(true);
+        try {
+          const updatedLady = await requestPhotoChange(lady.code, reader.result as string);
+          updateLadyProfile(updatedLady);
+          alert("🎉 頭像變更申請已提交！待主控核驗通過後即會更換。");
+        } catch (err: any) {
+          alert(err.message || "上傳頭像申請失敗，請重試。");
+        } finally {
+          setPhotoUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
 
   // 統一驗證接口
   const handleVerify = async (e?: React.FormEvent) => {
@@ -354,15 +387,20 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               {/* Lady Card Summary */}
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 bg-brand-border/10 rounded-2xl border border-brand-border/40 gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="relative">
+                  <div className="relative cursor-pointer group" onClick={handleAvatarClick} title="點擊上傳新頭像">
                     <img 
                       src={lady.photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2"} 
                       alt={lady.name} 
-                      className="w-14 h-14 rounded-full object-cover border-2 border-brand-olive/40"
+                      className="w-14 h-14 rounded-full object-cover border-2 border-brand-olive/40 group-hover:opacity-85 transition-all"
                     />
                     <div className="absolute -bottom-1 -right-1 bg-brand-accent text-brand-olive p-0.5 rounded-full border border-white">
                       <Sparkles className="w-3.5 h-3.5 fill-current" />
                     </div>
+                    {photoUploading && (
+                      <div className="absolute inset-0 bg-brand-dark/50 rounded-full flex items-center justify-center">
+                        <RefreshCw className="w-4 h-4 text-white animate-spin" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -370,6 +408,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <span className="text-[10px] text-brand-light font-mono font-bold bg-white px-2 py-0.5 rounded">
                         編號: {lady.code.slice(0, 8)}...
                       </span>
+                      {lady.pendingPhotoUrl && (
+                        <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                          頭像審核中
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex gap-2 mt-1.5 flex-wrap">

@@ -344,9 +344,32 @@
   - IP 地區解析基於靜態前綴映射，精確度有限。若需精確到城市，需引入 `geoip-lite` 庫（後端服務）。
   - 「今日訪客」口徑為「今日新增麗人數」，非真實訪問日誌。若需精確訪問日誌，需在 server.js 中加請求記錄表。
 
+---
 
+## 2026-07-01 第十七輪：麗人頭像上傳審核 + 麗人管理面板增強 + 降級驗資自動收回卡片
 
-
-
-
-
+- **本輪目標**：支援麗人自主上傳新頭像進入待審核狀態，強化主控麗人管理功能（支援設置內部備註、查看答題後已匹配/已解鎖的男生編號與名字、審核頭像），並解決降級驗資狀態時麗人仍可看多個解鎖卡片的 Bug。
+- **發現的問題**：
+  - 麗人無法自主申請變更頭像；
+  - 主控無法註記備註資訊，且無法查看麗人當前已解鎖/匹配男生的詳細對象（只有代碼列表，不方便主控服務人工排對）；
+  - 當把麗人的驗資狀態從「已驗資 (approved)」降級為「未驗資 (none/pending)」時，麗人的 `unlockedGentlemanCodes` 並不會自動清空，使得她們依舊能看先前解鎖的所有卡片。
+- **修改內容**：
+  - `server.js`：
+    - `LadyProfileSchema` 新增 `pendingPhotoUrl`（待審核頭像 URL）和 `notes`（主控內部備註）欄位。
+    - 新增 `POST /api/lady/:code/photo-request` 供麗人上傳頭像並進入審核佇列。
+    - 修改 `POST /api/admin/lady/:code/update` 管理端更新路由，支援 `notes`、`photoUrl`（批准頭像）、`pendingPhotoUrl`（拒絕/更新頭像狀態）寫入。
+  - `src/types.ts` & `src/data.ts`：
+    - `LadyProfile` 介面補齊 `pendingPhotoUrl` 與 `notes` 欄位型別。
+    - `updateLadyByAdmin` 參數型別更新，並新增 `requestPhotoChange(code, base64Photo)` 前端 API 函數。
+  - `src/components/VerificationScreen.tsx`：
+    - 麗人後台頭像改為可點擊，觸發檔案選擇器將圖片轉為 base64 送出頭像申請；如在審核中，顯示「頭像審核中」動態呼吸徽章。
+  - `src/components/AdminEditScreen.tsx`：
+    - 麗人列表列中如有「待核頭像」，以紅色閃爍徽章顯著提示。
+    - 麗人編輯 Modal 重構：
+      - 「頭像審核區」：若有申請，左右對比展示「當前頭像」與「待審核新頭像」，提供一鍵「批准並更換」與「拒絕更換」按鈕。
+      - 「驗資狀態」降級（或未通過 approved 時）提供「同時清空該麗人已解鎖的男生名單」核取方塊（預設勾選，解決卡片殘留漏洞）。
+      - 「內部紀錄」：新增主控備註輸入框。
+      - 「配對與已解鎖資訊」：即時自 `profiles` 查詢並渲染該麗人匹配的男生名字/代碼，以及她已解鎖的所有男生名單。
+- **驗證命令和結果**：`npm run build` 編譯成功，`pm2 restart yuanyu` 部署重啟完成。
+- **提交哈希**：425dcc3f901ae86210e146f0889901d522cf369e
+- **是否已經收斂**：是。

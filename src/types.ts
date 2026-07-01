@@ -42,6 +42,8 @@ export interface LadyProfile {
   name: string;
   isVerified: boolean;
   photoUrl: string;
+  pendingPhotoUrl?: string;
+  notes?: string;
   quizTaken: boolean;
   matchedGentlemanCode: string | null;
   quizMetrics: PersonalityMetrics;

@@ -51,18 +51,20 @@ const ConfigSchema = new mongoose.Schema({
 });
 
 const LadyProfileSchema = new mongoose.Schema({
-  code: { type: String, required: true, unique: true }, // 女性用戶的唯一編號
-  name: { type: String, default: "未命名麗人" }, // 實名資訊 (模擬)
-  isVerified: { type: Boolean, default: true }, // 模擬已驗證
-  photoUrl: { type: String, default: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800" }, // 模擬照片
-  quizTaken: { type: Boolean, default: false }, // 是否已完成測驗
-  matchedGentlemanCode: { type: String, default: null }, // 配對到的紳士編號
-  quizMetrics: { type: MetricsSchema, default: {} }, // 測驗時的女性用戶指標
-  membershipLevel: { type: String, default: "free" }, // 新增：付費套餐等級 (free, experience, vip)
-  assetVerified: { type: String, default: "none" }, // 新增：驗資審查狀態 (none, pending, approved)
-  unlockedGentlemanCodes: { type: [String], default: [] }, // 新增：已解鎖的男方編號名單
-  deviceId: { type: String, default: "" }, // 設備指紋/辨識碼
-  ipAddress: { type: String, default: "" }, // 註冊時的 IP 位址
+  code: { type: String, required: true, unique: true },
+  name: { type: String, default: "未命名麗人" },
+  isVerified: { type: Boolean, default: true },
+  photoUrl: { type: String, default: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800" },
+  pendingPhotoUrl: { type: String, default: "" }, // 待審核頭像 URL（麗人提交，主控批准後才替換）
+  notes: { type: String, default: "" }, // 主控備注
+  quizTaken: { type: Boolean, default: false },
+  matchedGentlemanCode: { type: String, default: null },
+  quizMetrics: { type: MetricsSchema, default: {} },
+  membershipLevel: { type: String, default: "free" },
+  assetVerified: { type: String, default: "none" },
+  unlockedGentlemanCodes: { type: [String], default: [] },
+  deviceId: { type: String, default: "" },
+  ipAddress: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -336,6 +338,32 @@ app.post("/api/lady/login", async (req, res) => {
   }
 });
 
+// POST /api/lady/:code/photo-request: 申請變更麗人頭像（待主控核驗）
+app.post("/api/lady/:code/photo-request", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { pendingPhotoUrl } = req.body;
+    
+    if (!pendingPhotoUrl) {
+      return res.status(400).json({ message: "未提供頭像圖片資料。" });
+    }
+
+    const lady = await LadyProfile.findOne({ code });
+    if (!lady) {
+      return res.status(404).json({ message: "查無此麗人帳號。" });
+    }
+
+    lady.pendingPhotoUrl = pendingPhotoUrl;
+    lady.updatedAt = new Date();
+    await lady.save();
+
+    res.json({ message: "已提交頭像變更申請，等待主控核驗。", lady });
+  } catch (error) {
+    console.error("Error requesting photo change:", error);
+    res.status(500).json({ message: "提交變更申請失敗。" });
+  }
+});
+
 // POST /api/lady/:code/quiz-result: 儲存女性用戶測驗結果
 app.post("/api/lady/:code/quiz-result", async (req, res) => {
   try {
@@ -420,7 +448,7 @@ app.get("/api/admin/ladies", adminAuth, async (req, res) => {
 app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
   try {
     const { code } = req.params;
-    const { membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode } = req.body;
+    const { membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode, notes, photoUrl, pendingPhotoUrl } = req.body;
 
     const lady = await LadyProfile.findOne({ code });
     if (!lady) {
@@ -432,6 +460,11 @@ app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
     if (unlockedGentlemanCodes !== undefined) lady.unlockedGentlemanCodes = unlockedGentlemanCodes;
     if (quizTaken !== undefined) lady.quizTaken = quizTaken;
     if (matchedGentlemanCode !== undefined) lady.matchedGentlemanCode = matchedGentlemanCode;
+    if (notes !== undefined) lady.notes = notes;
+    // 管理員批准頭像：直接更新 photoUrl 並清空 pendingPhotoUrl
+    if (photoUrl !== undefined) { lady.photoUrl = photoUrl; lady.pendingPhotoUrl = ""; }
+    // 管理員拒絕頭像或手動清空 pending
+    if (pendingPhotoUrl !== undefined) lady.pendingPhotoUrl = pendingPhotoUrl;
 
     lady.updatedAt = new Date();
     await lady.save();

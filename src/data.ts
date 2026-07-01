@@ -428,6 +428,9 @@ export async function updateLadyByAdmin(
     unlockedGentlemanCodes?: string[];
     quizTaken?: boolean;
     matchedGentlemanCode?: string | null;
+    notes?: string;
+    photoUrl?: string;
+    pendingPhotoUrl?: string;
   },
   adminCode: string
 ): Promise<LadyProfile> {
@@ -456,4 +459,21 @@ export async function deleteLadyByAdmin(code: string, adminCode: string): Promis
     const errorData = await response.json();
     throw new Error(errorData.message || "刪除失敗。");
   }
+}
+
+/**
+ * Lady: Request changing avatar photo (requires admin approval).
+ */
+export async function requestPhotoChange(code: string, base64Photo: string): Promise<LadyProfile> {
+  const response = await fetch(`/api/lady/${code}/photo-request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pendingPhotoUrl: base64Photo }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "提交頭像變更申請失敗。");
+  }
+  const { lady } = await response.json();
+  return lady;
 }

@@ -111,6 +111,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [editLady, setEditLady] = useState<LadyProfile | null>(null);
   const [ladyEditMembership, setLadyEditMembership] = useState("");
   const [ladyEditAsset, setLadyEditAsset] = useState("");
+  const [ladyEditNotes, setLadyEditNotes] = useState("");
+  const [clearUnlockedOnDowngrade, setClearUnlockedOnDowngrade] = useState(true);
   const [ladyEditSaving, setLadyEditSaving] = useState(false);
   const [ladyEditMsg, setLadyEditMsg] = useState("");
 
@@ -138,6 +140,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     setEditLady(lady);
     setLadyEditMembership(lady.membershipLevel || "free");
     setLadyEditAsset(lady.assetVerified || "none");
+    setLadyEditNotes(lady.notes || "");
+    setClearUnlockedOnDowngrade(true);
     setLadyEditMsg("");
   };
 
@@ -145,9 +149,20 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     if (!editLady || !adminCodes[0]) return;
     setLadyEditSaving(true);
     try {
+      let unlockedGentlemanCodes = editLady.unlockedGentlemanCodes || [];
+      const isDowngradingAsset = (ladyEditAsset === "none" || ladyEditAsset === "pending") && (editLady.assetVerified === "approved");
+      if (isDowngradingAsset && clearUnlockedOnDowngrade) {
+        unlockedGentlemanCodes = [];
+      }
+
       const updated = await updateLadyByAdmin(
         editLady.code,
-        { membershipLevel: ladyEditMembership, assetVerified: ladyEditAsset },
+        { 
+          membershipLevel: ladyEditMembership, 
+          assetVerified: ladyEditAsset, 
+          notes: ladyEditNotes,
+          unlockedGentlemanCodes
+        },
         adminCodes[0]
       );
       setLadies(prev => prev.map(l => l.code === updated.code ? updated : l));
@@ -155,6 +170,44 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       setTimeout(() => { setEditLady(null); setLadyEditMsg(""); }, 1200);
     } catch (e: unknown) {
       setLadyEditMsg(e instanceof Error ? e.message : "儲存失敗");
+    } finally {
+      setLadyEditSaving(false);
+    }
+  };
+
+  const handleApprovePhoto = async () => {
+    if (!editLady || !adminCodes[0] || !editLady.pendingPhotoUrl) return;
+    setLadyEditSaving(true);
+    try {
+      const updated = await updateLadyByAdmin(
+        editLady.code,
+        { photoUrl: editLady.pendingPhotoUrl },
+        adminCodes[0]
+      );
+      setEditLady(updated);
+      setLadies(prev => prev.map(l => l.code === updated.code ? updated : l));
+      setLadyEditMsg("頭像申請已批准！");
+    } catch (e: unknown) {
+      setLadyEditMsg(e instanceof Error ? e.message : "批准失敗");
+    } finally {
+      setLadyEditSaving(false);
+    }
+  };
+
+  const handleRejectPhoto = async () => {
+    if (!editLady || !adminCodes[0]) return;
+    setLadyEditSaving(true);
+    try {
+      const updated = await updateLadyByAdmin(
+        editLady.code,
+        { pendingPhotoUrl: "" },
+        adminCodes[0]
+      );
+      setEditLady(updated);
+      setLadies(prev => prev.map(l => l.code === updated.code ? updated : l));
+      setLadyEditMsg("已拒絕頭像更換申請");
+    } catch (e: unknown) {
+      setLadyEditMsg(e instanceof Error ? e.message : "拒絕失敗");
     } finally {
       setLadyEditSaving(false);
     }
@@ -1399,7 +1452,16 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     {ladies.map((lady, idx) => (
                       <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
                         <td className="px-4 py-3 font-mono text-brand-dark">{lady.code.slice(0, 8)}…</td>
-                        <td className="px-4 py-3 font-semibold text-brand-dark">{lady.name || "未命名"}</td>
+                        <td className="px-4 py-3 font-semibold text-brand-dark">
+                          <div className="flex items-center gap-1.5">
+                            <span>{lady.name || "未命名"}</span>
+                            {lady.pendingPhotoUrl && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-medium bg-red-100 text-red-800 animate-pulse">
+                                待核頭像
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-brand-muted hidden md:table-cell">{lady.ipAddress || "—"}</td>
                         <td className="px-4 py-3 font-mono text-brand-muted hidden lg:table-cell">{lady.deviceId ? lady.deviceId.slice(0, 14) + "…" : "—"}</td>
                         <td className="px-4 py-3">
@@ -1639,15 +1701,58 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-brand-beige w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-brand-border/80 space-y-5"
+              className="bg-brand-beige w-full max-w-md rounded-3xl p-6 shadow-2xl border border-brand-border/80 space-y-4 max-h-[90vh] overflow-y-auto text-left"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-serif text-base font-bold text-brand-dark">編輯麗人會員資格</h3>
+                <h3 className="font-serif text-base font-bold text-brand-dark">編輯麗人與審核面板</h3>
                 <button type="button" onClick={() => setEditLady(null)} className="p-1.5 rounded-full hover:bg-brand-border/40 transition-colors cursor-pointer"><X className="w-4 h-4" /></button>
               </div>
               <div className="text-xs text-brand-muted font-mono bg-white px-3 py-2 rounded-xl border border-brand-border/50">
                 UUID: {editLady.code}
               </div>
+
+              {/* Photo Audit Section */}
+              <div className="bg-white p-3 rounded-xl border border-brand-border/50 space-y-3">
+                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">頭像審核 / 狀態</h4>
+                {editLady.pendingPhotoUrl ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-3 text-center">
+                      <div>
+                        <div className="text-[9px] text-brand-light mb-1">當前頭像</div>
+                        <img src={editLady.photoUrl} alt="" className="w-20 h-20 rounded-full object-cover mx-auto border border-brand-border" />
+                      </div>
+                      <div>
+                        <div className="text-[9px] text-red-500 font-bold mb-1 animate-pulse">待審核新頭像</div>
+                        <img src={editLady.pendingPhotoUrl} alt="" className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-amber-500" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => void handleRejectPhoto()}
+                        disabled={ladyEditSaving}
+                        className="flex-1 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                      >
+                        拒絕更換
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleApprovePhoto()}
+                        disabled={ladyEditSaving}
+                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-all shadow cursor-pointer"
+                      >
+                        批准並更換
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <img src={editLady.photoUrl} alt="" className="w-12 h-12 rounded-full object-cover border border-brand-border" />
+                    <span className="text-[10px] text-brand-light">當前無待審核的頭像變更申請</span>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">會員等級</label>
@@ -1672,10 +1777,68 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     <option value="pending">審核中 (pending)</option>
                     <option value="approved">已驗資 (approved)</option>
                   </select>
+                  {/* Option to clear unlocked cards when downgrading */}
+                  {ladyEditAsset !== "approved" && (editLady.unlockedGentlemanCodes?.length || 0) > 0 && (
+                    <div className="flex items-center gap-2 mt-2 bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+                      <input
+                        type="checkbox"
+                        id="chk-clear-unlocked"
+                        checked={clearUnlockedOnDowngrade}
+                        onChange={e => setClearUnlockedOnDowngrade(e.target.checked)}
+                        className="rounded text-brand-olive focus:ring-brand-olive cursor-pointer"
+                      />
+                      <label htmlFor="chk-clear-unlocked" className="text-[10px] font-semibold text-amber-800 cursor-pointer">
+                        同時清空該麗人已解鎖的男生名單 ({editLady.unlockedGentlemanCodes?.length} 位)
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">主控備注 (內部紀錄)</label>
+                  <textarea
+                    value={ladyEditNotes}
+                    onChange={e => setLadyEditNotes(e.target.value)}
+                    placeholder="在此輸入對該用戶的註記或內部紀錄..."
+                    rows={2}
+                    className="w-full bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive resize-none"
+                  />
                 </div>
               </div>
+
+              {/* Match & Unlock Details */}
+              <div className="border-t border-brand-border/40 pt-3 space-y-2">
+                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">配對與已解鎖資訊</h4>
+                <div className="bg-white p-2.5 rounded-xl border border-brand-border/50 text-[10px] space-y-2">
+                  <div>
+                    <span className="font-semibold text-brand-light">AI 匹配對象：</span>
+                    {editLady.matchedGentlemanCode ? (
+                      <span className="font-bold text-brand-olive">
+                        {editLady.matchedGentlemanCode} ({profiles[editLady.matchedGentlemanCode]?.name || "未知"})
+                      </span>
+                    ) : (
+                      <span className="text-brand-muted">無匹配對象</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-brand-light block mb-1">已解鎖名單 ({editLady.unlockedGentlemanCodes?.length || 0})：</span>
+                    {editLady.unlockedGentlemanCodes && editLady.unlockedGentlemanCodes.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 bg-brand-border/10 rounded-lg">
+                        {editLady.unlockedGentlemanCodes.map(code => (
+                          <span key={code} className="inline-flex items-center px-1.5 py-0.5 bg-brand-beige text-brand-dark rounded font-mono text-[9px]">
+                            {code} ({profiles[code]?.name || "未知"})
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-brand-muted">尚未解鎖任何男生</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {ladyEditMsg && (
-                <div className={`text-xs px-3 py-2 rounded-xl font-semibold ${ladyEditMsg === "已儲存！" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+                <div className={`text-xs px-3 py-2 rounded-xl font-semibold ${ladyEditMsg.includes("成功") || ladyEditMsg.includes("已批准") || ladyEditMsg === "已儲存！" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
                   {ladyEditMsg}
                 </div>
               )}
