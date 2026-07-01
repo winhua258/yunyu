@@ -134,7 +134,12 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
       console.warn("LINE URL parse failed, using original URL", e);
     }
 
-    window.open(targetUrl, "_blank", "noopener,noreferrer");
+    // 行動裝置（如手機/平板）使用 window.location.href 直接轉跳以避開彈出式視窗阻擋與 Deep-link 失敗問題
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      window.location.href = targetUrl;
+    } else {
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (

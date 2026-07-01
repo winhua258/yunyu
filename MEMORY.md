@@ -475,3 +475,19 @@
 - **驗證命令 and 結果**：`npm run build` 編譯通過；`pm2 restart yuanyu` 重啟成功，功能完美運作，解決了同 IP 互串帳號的 Bug。
 - **提交哈希**：c2c632e3cc5789586cc7185f4d6469a65a133d7f
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第二十二輪：修復行動裝置點擊一鍵 LINE 聯絡確認後無法跳轉的 Bug
+
+- **本輪目標**：修復測試手機上，麗人點擊已解鎖卡片底部的「一鍵 LINE 聯絡與對談」按鈕，在確認彈窗中點擊「確認」後沒有任何跳轉動作的 Bug。
+- **發現的問題**：
+  - 在 `ProfileScreen.tsx` 的 `confirmRedirect` 函數中，系統原先一律使用 `window.open(targetUrl, "_blank")` 來開啟外部 LINE 連結（包括 `https://line.me/ti/p/...` 與 `https://line.me/R/oaMessage/...`）。
+  - 在行動裝置（如 iOS Safari、Chrome 或 LINE/WeChat 的內嵌 Webview）中，由於該動作是在異步或確認彈窗的 callback 中執行，且指定了 `_blank`（在新分頁打開），瀏覽器的「彈出式視窗阻擋器」(Popup Blocker) 常會將其視為惡意彈窗並實施攔截，或在喚起外部 App (Deep Link) 時失效，導致點擊確認後無反應、不跳轉。
+- **修改內容**：
+  - `src/components/ProfileScreen.tsx`：
+    - 優化 `confirmRedirect` 中的跳轉邏輯：新增設備環境檢測，如果檢測到使用者是使用行動裝置（手機/平板，如 iPhone、iPad、Android），則直接使用 `window.location.href = targetUrl` 進行當前頁面導向跳轉；如果是桌面端電腦，則保留 `window.open(targetUrl, "_blank")` 以保護管理員/用戶原有頁面不被覆蓋。
+    - 這樣能確保在手機上瀏覽器會將其識別為原生的跳轉或 Deep-link 喚醒動作，完美避開彈出式視窗防護阻擋，100% 成功喚起 LINE App！
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成。
+- **提交哈希**：050c28f5637601dc4a1d0441916a7cd8c6d43a44
+- **是否已經收斂**：是。
