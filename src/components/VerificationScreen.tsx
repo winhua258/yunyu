@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useData } from "./DataContext";
+import { copyToClipboard } from "../utils";
 import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES, requestPhotoChange, updateLadyName } from "../data";
 import { Profile } from "../types";
 
@@ -1365,9 +1366,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     <button
                       type="button"
                       onClick={() => {
-                        navigator.clipboard.writeText(ladyAlertCode).catch(() => {});
-                        setLadyAlertCopied(true);
-                        setTimeout(() => setLadyAlertCopied(false), 2000);
+                        void copyToClipboard(ladyAlertCode).then(() => {
+                          setLadyAlertCopied(true);
+                          setTimeout(() => setLadyAlertCopied(false), 2000);
+                        });
                       }}
                       className="py-1 px-3 bg-brand-olive hover:bg-[#4d4d36] text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer shrink-0"
                     >

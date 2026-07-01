@@ -673,3 +673,23 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機主控台所有刪除、重置按鈕皆能正常呼叫高質感確認對話框，輸入授權並流暢執行！
 - **提交哈希**：10de0d07e50291f6dde821278892b2edd0dc1dbc
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第三十三輪：分析 HTTP/HTTPS 安全上下文差異，導入相容剪貼簿複製工具
+
+- **本輪目標**：分析 HTTP 與 HTTPS 安全上下文的差異，處理非安全 HTTP 環境下 `navigator.clipboard` 為 `undefined` 導致前端複製崩潰的隱患。
+- **發現的問題**：
+  - 現代瀏覽器規定 `navigator.clipboard` API 僅能在「安全上下文（Secure Context）」（即 HTTPS 或 localhost）下使用。
+  - 當用戶或開發者透過普通 `http://ip` 或未配置 SSL 的 `http://domain` 訪問網頁時，`navigator.clipboard` 為 `undefined`。此時若執行 `.writeText(...)` 會丟出 TypeError 崩潰，導致複製功能失效。
+- **修改內容**：
+  - `src/utils.ts` [NEW]：
+    - 建立 `copyToClipboard(text)` 導出函數。
+    - 採用漸進式增強策略：若 `navigator.clipboard` 可用則優先使用；若在 HTTP 非安全上下文環境，則自動降級（fallback）到建立臨時 `textarea` 並使用傳統 `document.execCommand('copy')` 的相容方案。
+  - `src/components/VerificationScreen.tsx`：
+    - 導入並採用 `copyToClipboard` 來替代原先的 UUID 一鍵複製程式碼，避免 LINE 等 HTTP 訪問時出錯。
+  - `src/components/ProfileScreen.tsx`：
+    - 導入並將 3 處複製問候語的 `navigator.clipboard.writeText(...)` 修改為 `copyToClipboard(...)` 呼叫。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，於 HTTP 與 HTTPS 模式下測試一鍵複製，均能完美運作並跳出複製成功提示。
+- **提交哈希**：47a6963f240beb137b83ffee2cecd35a81ea537b
+- **是否已經收斂**：是。

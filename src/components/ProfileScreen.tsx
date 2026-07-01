@@ -25,6 +25,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Profile } from "../types";
+import { copyToClipboard } from "../utils";
 
 interface ProfileScreenProps {
   profile: Profile;
@@ -126,7 +127,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
         // 個人 LINE 無法直接預填訊息，但可嘗試 line://msg/text/ scheme
         const encodedMsg = encodeURIComponent(greetingMsg);
         // 備用：複製到剪貼簿並提示用戶貼上
-        navigator.clipboard.writeText(greetingMsg).catch(() => {});
+        void copyToClipboard(greetingMsg);
       } else if (targetUrl.includes("@")) {
         // 如果是官方帳號格式 (@xxxx)，使用 oaMessage 帶入訊息
         const lineId = targetUrl.match(/@[\w.-]+/)?.[0]?.replace("@", "");
@@ -136,11 +137,11 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
         }
       } else {
         // 其他格式，直接使用原始 URL，並複製到剪貼簿
-        navigator.clipboard.writeText(greetingMsg).catch(() => {});
+        void copyToClipboard(greetingMsg);
       }
     } catch (e) {
       // 解析失敗時，保留原始 URL 並複製到剪貼簿
-      navigator.clipboard.writeText(greetingMsg).catch(() => {});
+      void copyToClipboard(greetingMsg);
       console.warn("LINE URL parse failed, using original URL", e);
     }
 
