@@ -35,14 +35,17 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
   const [showRedirectModal, setShowRedirectModal] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
 
-  const images = profile.imageUrls && profile.imageUrls.length > 0
+  const images = (profile.imageUrls && profile.imageUrls.length > 0
     ? profile.imageUrls
-    : [profile.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800"];
+    : [profile.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800"]
+  ).map(url => encodeURI(url));
 
   React.useEffect(() => {
     setCurrentImageIndex(0);
     setImageLoaded(false);
+    setIsDetailsExpanded(false); // Reset to collapsed when switching profiles
   }, [profile]);
 
   const handlePrevImage = (e: React.MouseEvent) => {
@@ -222,7 +225,17 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
           className="lg:col-span-5 relative flex items-center justify-center py-8 md:py-0"
         >
           {/* Organic Rounded Picture Container */}
-          <div className="w-[280px] sm:w-[340px] md:w-[380px] h-[400px] sm:h-[480px] md:h-[520px] bg-brand-border rounded-[200px] overflow-hidden shadow-2xl border-4 border-white relative group">
+          <div 
+            className="w-[280px] sm:w-[340px] md:w-[380px] h-[400px] sm:h-[480px] md:h-[520px] bg-brand-border rounded-[200px] overflow-hidden shadow-2xl border-4 border-white relative group"
+            style={{
+              isolation: 'isolate',
+              WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+              WebkitBackfaceVisibility: 'hidden',
+              WebkitTransform: 'translate3d(0, 0, 0)',
+              backfaceVisibility: 'hidden',
+              transform: 'translate3d(0, 0, 0)'
+            }}
+          >
             
             {/* Shimmer/Skeleton placeholder */}
             {!imageLoaded && (
@@ -237,9 +250,17 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
               src={images[currentImageIndex]}
               alt={profile.name}
               onLoad={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)}
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out transform group-hover:scale-105 ${
                 imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }`}
+              style={{
+                willChange: 'transform, opacity',
+                WebkitBackfaceVisibility: 'hidden',
+                WebkitTransform: 'translate3d(0, 0, 0)',
+                backfaceVisibility: 'hidden',
+                transform: 'translate3d(0, 0, 0)'
+              }}
             />
 
             {/* Carousel Controls */}
@@ -301,20 +322,38 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
 
           {/* Floating Detail Card over the photo */}
           <motion.div
+            layout
+            onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="absolute bottom-[-10px] left-[-10px] sm:left-[-30px] bg-white p-6 rounded-3xl shadow-xl w-64 border border-brand-border/60 backdrop-blur-sm z-20"
+            className={`absolute bottom-[-10px] left-[-10px] sm:left-[-30px] bg-white rounded-3xl shadow-xl border border-brand-border/60 backdrop-blur-sm z-20 cursor-pointer transition-all duration-300 select-none ${
+              isDetailsExpanded ? "p-6 w-64" : "p-3.5 w-40 flex items-center justify-center hover:scale-105"
+            }`}
           >
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-olive">
-                理想的生活細節
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed text-brand-muted">
-              {profile.cardDetail}
-            </p>
+            {isDetailsExpanded ? (
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-olive font-serif">
+                      理想的生活細節
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-brand-light font-bold hover:text-brand-olive">收合</span>
+                </div>
+                <p className="text-xs leading-relaxed text-brand-muted">
+                  {profile.cardDetail}
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 justify-center w-full">
+                <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse shrink-0" />
+                <span className="text-xs font-bold text-brand-olive tracking-wider whitespace-nowrap font-serif">
+                  理想生活細節
+                </span>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       </div>
@@ -363,7 +402,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 <div className="flex justify-center my-2">
                   <div className="relative w-16 h-16">
                     <img 
-                      src={profile.imageUrl} 
+                      src={encodeURI(profile.imageUrl || "")} 
                       alt="" 
                       className="w-16 h-16 rounded-full object-cover border-2 border-brand-olive shadow"
                     />
