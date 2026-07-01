@@ -328,7 +328,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className={`absolute bottom-[-10px] left-[-10px] sm:left-[-30px] bg-white rounded-3xl shadow-xl border border-brand-border/60 backdrop-blur-sm z-20 cursor-pointer transition-all duration-300 select-none ${
-              isDetailsExpanded ? "p-6 w-64" : "p-3.5 w-40 flex items-center justify-center hover:scale-105"
+              isDetailsExpanded ? "p-6 w-64" : "p-3 sm:p-3.5 w-52 sm:w-56 flex items-center hover:scale-105"
             }`}
           >
             {isDetailsExpanded ? (
@@ -347,10 +347,10 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 </p>
               </div>
             ) : (
-              <div className="flex items-center gap-2 justify-center w-full">
+              <div className="flex items-center gap-2 w-full text-left overflow-hidden min-w-0">
                 <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse shrink-0" />
-                <span className="text-xs font-bold text-brand-olive tracking-wider whitespace-nowrap font-serif">
-                  理想生活細節
+                <span className="text-xs font-medium text-brand-olive truncate font-serif select-none">
+                  理想：{profile.cardDetail ? (profile.cardDetail.length > 10 ? profile.cardDetail.slice(0, 10) + "..." : profile.cardDetail) : "生活細節..."}
                 </span>
               </div>
             )}
