@@ -1,4 +1,4 @@
-import { Lock, ShieldCheck, Heart, User, LogOut } from "lucide-react";
+import { Lock, ShieldCheck, Heart, User, LogOut, ArrowLeft } from "lucide-react";
 import { useAuth } from "./AuthContext";
 
 interface HeaderProps {
@@ -49,40 +49,44 @@ export default function Header({ onBackToVerify, showBack = false, onSoulMatchCl
 
       {/* Action / Security Badge */}
       <div className="flex items-center shrink-0 ml-1 sm:ml-3">
-        {currentLady ? (
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-olive">
-              <User className="w-4 h-4 text-brand-accent" />
-              <span>麗人 {loggedInLadyCode}</span>
-            </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {showBack && onBackToVerify && (
             <button
-              onClick={() => {
-                if (window.confirm("您確定要登出嗎？")) {
-                  logout();
-                }
-              }}
-              className="p-1.5 rounded-full text-brand-light hover:bg-brand-border/40 hover:text-brand-dark transition-colors"
-              title="登出"
+              onClick={onBackToVerify}
+              className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 border border-brand-olive text-brand-olive text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-full hover:bg-brand-olive hover:text-white transition-all duration-300 shadow-sm cursor-pointer shrink-0"
             >
-              <LogOut className="w-4 h-4" />
+              <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span>{currentLady ? "返回" : "返回驗證"}</span>
             </button>
-          </div>
-        ) : showBack && onBackToVerify ? (
-          <button
-            onClick={onBackToVerify}
-            className="flex items-center gap-1 px-2 py-1 xs:px-2.5 xs:py-1.5 sm:px-4 sm:py-2 border border-brand-olive text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full hover:bg-brand-olive hover:text-white transition-all duration-300 shadow-sm shrink-0 whitespace-nowrap"
-          >
-            <Lock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span className="whitespace-nowrap">返回驗證</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-1 bg-brand-border/40 p-1 sm:px-3 sm:py-1.5 rounded-full border border-brand-border/60 shrink-0">
-            <ShieldCheck className="w-3.5 h-3.5 text-brand-accent animate-pulse shrink-0" />
-            <span className="hidden xs:inline text-[8px] sm:text-[10px] font-bold text-brand-olive uppercase tracking-wider whitespace-nowrap">
-              Secure
-            </span>
-          </div>
-        )}
+          )}
+
+          {currentLady ? (
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-brand-olive">
+                <User className="w-4 h-4 text-brand-accent" />
+                <span>麗人 {loggedInLadyCode}</span>
+              </div>
+              <button
+                onClick={() => {
+                  if (window.confirm("您確定要登出嗎？")) {
+                    logout();
+                  }
+                }}
+                className="p-1.5 rounded-full text-brand-light hover:bg-brand-border/40 hover:text-brand-dark transition-colors"
+                title="登出"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : !showBack && (
+            <div className="flex items-center gap-1 bg-brand-border/40 p-1 sm:px-3 sm:py-1.5 rounded-full border border-brand-border/60 shrink-0">
+              <ShieldCheck className="w-3.5 h-3.5 text-brand-accent animate-pulse shrink-0" />
+              <span className="hidden xs:inline text-[8px] sm:text-[10px] font-bold text-brand-olive uppercase tracking-wider whitespace-nowrap">
+                Secure
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
