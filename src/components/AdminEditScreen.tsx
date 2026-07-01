@@ -2137,10 +2137,10 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-brand-beige w-full max-w-md rounded-3xl p-6 shadow-2xl border border-brand-border/80 space-y-4 max-h-[90vh] overflow-y-auto text-left"
+              className="bg-brand-beige w-full max-w-2xl rounded-3xl p-7 shadow-2xl border border-brand-border/80 space-y-5 max-h-[92vh] overflow-y-auto text-left"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-serif text-base font-bold text-brand-dark">編輯麗人與審核面板</h3>
+                <h3 className="font-serif text-lg font-bold text-brand-dark">編輯麗人與審核面板</h3>
                 <button type="button" onClick={() => setEditLady(null)} className="p-1.5 rounded-full hover:bg-brand-border/40 transition-colors cursor-pointer"><X className="w-4 h-4" /></button>
               </div>
               <div className="text-xs text-brand-muted font-mono bg-white px-3 py-2 rounded-xl border border-brand-border/50">
@@ -2148,17 +2148,17 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               </div>
 
               {/* Photo Audit Section */}
-              <div className="bg-white p-3 rounded-xl border border-brand-border/50 space-y-3">
-                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">頭像審核 / 狀態</h4>
+              <div className="bg-white p-4 rounded-xl border border-brand-border/50 space-y-3">
+                <h4 className="text-xs font-bold text-brand-muted uppercase tracking-wider">頭像審核 / 狀態</h4>
                 {editLady.pendingPhotoUrl ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-3 text-center">
                       <div>
-                        <div className="text-[9px] text-brand-light mb-1">當前頭像</div>
+                        <div className="text-[10px] text-brand-light mb-1">當前頭像</div>
                         <img src={editLady.photoUrl} alt="" className="w-20 h-20 rounded-full object-cover mx-auto border border-brand-border" />
                       </div>
                       <div>
-                        <div className="text-[9px] text-red-500 font-bold mb-1 animate-pulse">待審核新頭像</div>
+                        <div className="text-[10px] text-red-500 font-bold mb-1 animate-pulse">待審核新頭像</div>
                         <img src={editLady.pendingPhotoUrl} alt="" className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-amber-500" />
                       </div>
                     </div>
@@ -2191,7 +2191,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">麗人姓名</label>
+                  <label className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">麗人姓名</label>
                   <input
                     type="text"
                     value={ladyEditName}
@@ -2201,7 +2201,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">會員等級</label>
+                  <label className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">會員等級</label>
                   <select
                     value={ladyEditMembership}
                     onChange={e => setLadyEditMembership(e.target.value)}
@@ -2213,7 +2213,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">驗資狀態</label>
+                  <label className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">驗資狀態</label>
                   <select
                     value={ladyEditAsset}
                     onChange={e => setLadyEditAsset(e.target.value)}
@@ -2241,7 +2241,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">主控備注 (內部紀錄)</label>
+                  <label className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">主控備注 (內部紀錄)</label>
                   <textarea
                     value={ladyEditNotes}
                     onChange={e => setLadyEditNotes(e.target.value)}
@@ -2254,7 +2254,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               {/* Match & Unlock Details */}
               <div className="border-t border-brand-border/40 pt-3 space-y-2">
-                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-brand-muted uppercase tracking-wider flex items-center gap-1">
                   <Crown className="w-3.5 h-3.5 text-brand-olive" />
                   配對與已解鎖資訊
                 </h4>
@@ -2274,7 +2274,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     {editLady.unlockedGentlemanCodes && editLady.unlockedGentlemanCodes.length > 0 ? (
                       <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 bg-brand-border/10 rounded-lg">
                         {editLady.unlockedGentlemanCodes.map(code => (
-                          <span key={code} className="inline-flex items-center px-1.5 py-0.5 bg-brand-beige text-brand-dark rounded font-mono text-[9px]">
+                          <span key={code} className="inline-flex items-center px-1.5 py-0.5 bg-brand-beige text-brand-dark rounded font-mono text-[10px]">
                             {code} ({profiles[code]?.name || "未知"})
                           </span>
                         ))}
@@ -2288,7 +2288,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               {/* Quiz Answers & Personality Analysis Section */}
               <div className="border-t border-brand-border/40 pt-3 space-y-2">
-                <h4 className="text-[11px] font-bold text-brand-muted uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-brand-muted uppercase tracking-wider flex items-center gap-1">
                   <Check className="w-3.5 h-3.5 text-brand-olive" />
                   測驗答題與特質分析
                 </h4>
@@ -2296,13 +2296,13 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 {editLady.quizTaken ? (
                   <div className="space-y-2">
                     {/* 1. Radar-like Analysis Cards */}
-                    <div className="bg-white p-3 rounded-xl border border-brand-border/50 space-y-2">
+                    <div className="bg-white p-4 rounded-xl border border-brand-border/50 space-y-2">
                       <div className="text-[10px] font-bold text-brand-dark pb-1 border-b border-brand-border/30">
                         📊 人格特質深度分析
                       </div>
                       
                       {/* Metric Progress Bars */}
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[9px]">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
                         {Object.entries(editLady.quizMetrics || {})
                           .map(([key, value]) => ({
                             key,
@@ -2364,7 +2364,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     </div>
 
                     {/* 2. Question-by-Question Answers */}
-                    <div className="bg-white p-3 rounded-xl border border-brand-border/50 space-y-2">
+                    <div className="bg-white p-4 rounded-xl border border-brand-border/50 space-y-2">
                       <div className="text-[10px] font-bold text-brand-dark pb-1 border-b border-brand-border/30">
                         📝 測驗作答選項詳情
                       </div>
@@ -2412,11 +2412,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                             const selectedOptionText = question.options[selectedIdx] ?? `未知選項 (代號: ${selectedIdx})`;
                             return (
                               <div key={qIdx} className="space-y-0.5 border-b border-brand-border/10 pb-2 last:border-0 last:pb-0">
-                                <div className="font-bold text-[9px] text-brand-dark flex justify-between">
+                                <div className="font-bold text-[10px] text-brand-dark flex justify-between">
                                   <span>{question.q}</span>
                                 </div>
                                 <div className="text-[8.5px] text-brand-light font-medium italic">「{question.text}」</div>
-                                <div className="text-[9px] bg-brand-beige/40 border border-brand-border/30 rounded p-1.5 font-semibold text-brand-dark">
+                                <div className="text-[10px] bg-brand-beige/40 border border-brand-border/30 rounded p-1.5 font-semibold text-brand-dark">
                                   選擇了：<span className="text-brand-olive">{selectedOptionText}</span>
                                 </div>
                               </div>
@@ -2424,14 +2424,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           })}
                         </div>
                       ) : (
-                        <div className="text-[9px] text-brand-light bg-brand-beige/30 p-2 rounded-lg border border-brand-border/30 leading-relaxed">
+                        <div className="text-[10px] text-brand-light bg-brand-beige/30 p-2 rounded-lg border border-brand-border/30 leading-relaxed">
                           ⚠️ 此帳號為早期註冊測驗（歷史存量資料），未記錄各題原始選填答案。上方已為您展示基於其計算出之 16 維人格特質深度分析百分比與核心解讀。
                         </div>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white p-3 rounded-xl border border-brand-border/50 text-[10px] text-center text-brand-muted font-bold">
+                  <div className="bg-white p-4 rounded-xl border border-brand-border/50 text-[10px] text-center text-brand-muted font-bold">
                     該麗人尚未完成測驗答題。
                   </div>
                 )}
@@ -2493,7 +2493,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               <form onSubmit={handleAddProfile} className="space-y-4">
                 <div>
-                  <label htmlFor="new-code-input" className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="new-code-input" className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">
                     1. 登入與配對編號 (必須為唯一) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -2514,7 +2514,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 </div>
 
                 <div>
-                  <label htmlFor="new-name-input" className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="new-name-input" className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">
                     2. 紳士姓名 / 稱呼 <span className="text-red-500">*</span>
                   </label>
                   <input
