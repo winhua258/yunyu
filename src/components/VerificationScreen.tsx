@@ -213,7 +213,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   // 執行解鎖判斷與請求
   const executeUnlockFlow = async (targetProfile: any) => {
     if (targetProfile.isPlaceholder) {
-      alert("🔒 此為高密級隱私特約男賓，無線上公開資料。請透過『一鍵 LINE 聯絡』聯繫客服人員為您安排人工配對。");
+      // 特約隱私男賓：顯示升級面板，三個選項均為暫不支持
+      setUpgradeTargetProfile(targetProfile);
+      setShowUpgradeModal(true);
       return;
     }
     const inputCode = targetProfile.code;
