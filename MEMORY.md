@@ -400,3 +400,33 @@
 - **驗證命令和結果**：`npm run build` 編譯成功，`pm2 restart yuanyu` 部署重啟完成。
 - **提交哈希**：369de4f6eb2a597fd2c989a1cb3dd4951937795c
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第十九輪：上傳頭像防呆提示優化 + 主控配對與已解鎖男生列及篩選搜尋 + IP描述列與友善設備名稱顯示
+
+- **本輪目標**：優化麗人端頭像上傳的非圖片格式與錯誤提示；在主控麗人列表搬移並多加一列「配對與解鎖」男生詳情；新增搜尋關鍵字與按會員、驗資方案篩選功能；將 IP 位址與靜態地區描述結合為單一列展示；並回答有關設備能否顯示文字名稱的問題（已利用 User-Agent 解析實現）。
+- **發現的問題**：
+  - 麗人端如果選擇非圖片檔案，先前直接依賴 `FileReader` 出錯會彈出英文編程提示或不友善的提示；
+  - 配對與已解鎖男生資訊原本只隱藏在編輯彈窗中，主控在列表頁面無法一目了然，需要逐個點擊編輯才可得知；
+  - 主控無法進行麗人關鍵字搜尋或按狀態篩選，資料多時極不方便；
+  - 列表頁面中 IP 地址與地區描述分開，資訊分散；且設備 ID 只有隨機的 UUID 雜湊字串，無法看出裝置型號（例如 iPhone、Android 手機、Windows 等）。
+- **修改內容**：
+  - `server.js`：
+    - `LadyProfileSchema` 新增 `userAgent: { type: String, default: "" }` 欄位。
+    - 註冊 `POST /api/lady/register` 路由中，自 HTTP headers 自動獲取並儲存 `userAgent` 資訊。
+  - `src/types.ts`：
+    - `LadyProfile` 介面補齊 `userAgent` 可選欄位。
+  - `src/components/VerificationScreen.tsx`：
+    - 優化 `handleAvatarClick` 中的檔案變更檢查：如果上傳的 `file.type` 不以 `image/` 開頭，即時阻攔並提示中文警告：「⚠️ 上傳失敗：請選擇正確的圖片檔案（例如 JPG、PNG 格式的自拍照）！」
+    - 將 `FileReader` 的 `catch` 區塊中的英文出錯訊息，統一替換為貼心友善的中文防呆訊息。
+  - `src/components/AdminEditScreen.tsx`：
+    - 新增友善設備名稱解析函數 `getFriendlyDevice(ua)` 與 IP 描述格式化函數 `getIpDescription(ip)`。
+    - 在麗人管理 Tab 的頂部加入「搜尋與篩選列」：支援關鍵字搜尋（自動模糊比對 UUID、姓名、備註、IP、配對與已解鎖男生代碼），以及「會員等級方案篩選」和「驗資狀態篩選」兩大下拉式選單。
+    - 重構麗人管理列表格，增加「配對與解鎖」一列，可即時查看麗人的 AI 配對男生以及解鎖名單中的編號與名字（與 `profiles` 自助關聯）。
+    - 調整 IP 地址列為「IP 描述」列，直接將 IP 地址與解析後的描述結合為 `192.168.1.1 [本地開發]` 格式。
+    - 調整設備 ID 列為「設備型號 + ID」，在上方顯示經過 User-Agent 解析後的友好設備名稱（如 `iPhone (LINE)`、`Windows 電腦`），下方顯示 truncated 雜湊值，方便主控直接辨識麗人使用的硬體裝置。
+    - 將列表 `colSpan` 升級為 `11` 以相容全新的欄位。
+- **驗證命令 and 結果**：`npm run build` 編譯通過；`pm2 restart yuanyu` 重啟成功，功能完美運作。
+- **提交哈希**：90a6556e85f6823155d6bfb1d1c294c381cfa24a
+- **是否已經收斂**：是。

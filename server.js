@@ -65,6 +65,7 @@ const LadyProfileSchema = new mongoose.Schema({
   unlockedGentlemanCodes: { type: [String], default: [] },
   deviceId: { type: String, default: "" },
   ipAddress: { type: String, default: "" },
+  userAgent: { type: String, default: "" }, // 裝置 User-Agent
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -310,7 +311,8 @@ app.post("/api/lady/register", async (req, res) => {
       isVerified: true, // 模擬已驗證
       photoUrl: photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800",
       deviceId: deviceId || "",
-      ipAddress: clientIp || ""
+      ipAddress: clientIp || "",
+      userAgent: req.headers["user-agent"] || ""
     });
     await newLady.save();
     res.status(201).json({ message: "女性用戶註冊成功！", lady: newLady });

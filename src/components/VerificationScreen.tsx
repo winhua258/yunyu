@@ -149,8 +149,13 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       const file = e.target.files?.[0];
       if (!file) return;
 
+      if (!file.type.startsWith("image/")) {
+        alert("⚠️ 上傳失敗：請選擇正確的圖片檔案（例如 JPG、PNG 格式的自拍照）！");
+        return;
+      }
+
       if (file.size > 2 * 1024 * 1024) {
-        alert("圖片大小不可超過 2MB！");
+        alert("⚠️ 上傳失敗：自拍照檔案大小不能超過 2MB，請壓縮或更換小於 2MB 的圖片！");
         return;
       }
 
@@ -160,9 +165,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         try {
           const updatedLady = await requestPhotoChange(lady.code, reader.result as string);
           updateLadyProfile(updatedLady);
-          alert("🎉 自拍頭像變更申請已提交！待主控核驗通過後即會更換。");
+          alert("🎉 自拍頭像已成功提交審核！請靜候主控核驗，核驗通過後您的頭像將會自動更換。");
         } catch (err: any) {
-          alert(err.message || "上傳頭像申請失敗，請重試。");
+          alert("⚠️ 頭像提交審核失敗！請確保圖片格式正確且網絡連線正常，或請稍後再試。");
         } finally {
           setPhotoUploading(false);
         }

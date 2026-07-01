@@ -52,6 +52,7 @@ export interface LadyProfile {
   unlockedGentlemanCodes?: string[];
   deviceId?: string;
   ipAddress?: string;
+  userAgent?: string;
   createdAt?: string;
   updatedAt?: string;
 }

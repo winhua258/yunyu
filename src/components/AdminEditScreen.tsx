@@ -42,6 +42,41 @@ import {
 } from "../data";
 import { useData } from "./DataContext";
 
+// 解析 User Agent 獲取友善的設備文字名稱
+function getFriendlyDevice(ua: string | undefined): string {
+  if (!ua) return "未知裝置";
+  const lower = ua.toLowerCase();
+  
+  // 檢測 Line 內置瀏覽器
+  const isLine = lower.includes("line/");
+  let browserLabel = "";
+  if (isLine) browserLabel = " (LINE)";
+
+  if (lower.includes("iphone")) return `iPhone${browserLabel}`;
+  if (lower.includes("ipad")) return `iPad${browserLabel}`;
+  if (lower.includes("android")) {
+    if (lower.includes("mobile")) return `Android 手機${browserLabel}`;
+    return `Android 平板${browserLabel}`;
+  }
+  if (lower.includes("macintosh") || lower.includes("mac os x")) return `Mac 電腦${browserLabel}`;
+  if (lower.includes("windows")) return `Windows 電腦${browserLabel}`;
+  if (lower.includes("linux")) return `Linux 電腦${browserLabel}`;
+  return `其他裝置${browserLabel}`;
+}
+
+// 根據 IP 回傳結合文字描述的字串
+function getIpDescription(ip: string | undefined): string {
+  if (!ip) return "—";
+  const regionMap: Record<string, string> = {
+    "202.160": "台灣（中華電信）", "61.": "台灣（台灣大哥大）", "114.": "台灣（遠傳）",
+    "218.": "台灣（亞太）", "223.": "台灣（台灣之星）", "1.": "台灣（台灣固網）",
+    "211.": "香港", "210.": "香港", "103.": "香港/東南亞",
+    "65.181": "美國/VPN", "192.168": "本地（開發）", "127.": "本地（開發）",
+  };
+  const region = Object.entries(regionMap).find(([prefix]) => ip.startsWith(prefix))?.[1] ?? "其他地區";
+  return `${ip} [${region}]`;
+}
+
 interface AdminEditScreenProps {
   onExit: () => void;
 }
@@ -116,6 +151,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [clearUnlockedOnDowngrade, setClearUnlockedOnDowngrade] = useState(true);
   const [ladyEditSaving, setLadyEditSaving] = useState(false);
   const [ladyEditMsg, setLadyEditMsg] = useState("");
+  const [ladySearchQuery, setLadySearchQuery] = useState("");
+  const [ladyFilterMembership, setLadyFilterMembership] = useState("all");
+  const [ladyFilterAsset, setLadyFilterAsset] = useState("all");
 
   const loadLadies = React.useCallback(async () => {
     if (!adminCodes[0]) return;
@@ -1436,7 +1474,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     <tr className="bg-brand-beige/60 border-b border-brand-border/40">
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">UUID</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">名稱</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">IP</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">配對與解鎖</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">IP 描述</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden lg:table-cell">設備 ID</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">會員</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">答題</th>
@@ -1447,82 +1486,145 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {ladiesLoading && (
-                      <tr><td colSpan={10} className="text-center py-10 text-brand-muted">載入中...</td></tr>
-                    )}
-                    {!ladiesLoading && ladies.length === 0 && (
-                      <tr><td colSpan={10} className="text-center py-10 text-brand-muted">尚無已註冊的麗人</td></tr>
-                    )}
-                    {ladies.map((lady, idx) => (
-                      <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
-                        <td className="px-4 py-3 font-mono text-brand-dark">{lady.code.slice(0, 8)}…</td>
-                        <td className="px-4 py-3 font-semibold text-brand-dark">
-                          <div className="flex items-center gap-1.5">
-                            <span>{lady.name || "未命名"}</span>
-                            {lady.pendingPhotoUrl && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-medium bg-red-100 text-red-800 animate-pulse">
-                                待核頭像
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-brand-muted hidden md:table-cell">{lady.ipAddress || "—"}</td>
-                        <td className="px-4 py-3 font-mono text-brand-muted hidden lg:table-cell">{lady.deviceId ? lady.deviceId.slice(0, 14) + "…" : "—"}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
-                            lady.membershipLevel === "vip" ? "bg-amber-100 text-amber-700" :
-                            lady.membershipLevel === "experience" ? "bg-blue-100 text-blue-700" :
-                            "bg-gray-100 text-gray-600"
-                          }`}>
-                            {lady.membershipLevel === "vip" ? <Crown className="w-3 h-3" /> : null}
-                            {lady.membershipLevel || "free"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {lady.quizTaken
-                            ? <span className="text-emerald-600 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5" />是</span>
-                            : <span className="text-brand-muted">否</span>
+                    {(() => {
+                      const filteredLadies = ladies.filter(lady => {
+                        // Filter by membership
+                        if (ladyFilterMembership !== "all" && lady.membershipLevel !== ladyFilterMembership) {
+                          return false;
+                        }
+                        // Filter by asset verification
+                        if (ladyFilterAsset !== "all" && lady.assetVerified !== ladyFilterAsset) {
+                          return false;
+                        }
+                        // Search keyword
+                        if (ladySearchQuery.trim()) {
+                          const query = ladySearchQuery.toLowerCase();
+                          const uuidMatch = lady.code.toLowerCase().includes(query);
+                          const nameMatch = (lady.name || "").toLowerCase().includes(query);
+                          const ipMatch = (lady.ipAddress || "").toLowerCase().includes(query);
+                          const noteMatch = (lady.notes || "").toLowerCase().includes(query);
+                          const matchMatch = (lady.matchedGentlemanCode || "").toLowerCase().includes(query);
+                          const unlockMatch = (lady.unlockedGentlemanCodes || []).some(code => code.toLowerCase().includes(query));
+
+                          if (!uuidMatch && !nameMatch && !ipMatch && !noteMatch && !matchMatch && !unlockMatch) {
+                            return false;
                           }
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <span className={`font-semibold ${
-                            lady.assetVerified === "approved" ? "text-emerald-600" :
-                            lady.assetVerified === "pending" ? "text-amber-600" :
-                            "text-brand-muted"
-                          }`}>
-                            {lady.assetVerified === "approved" ? "✓已驗資" : lady.assetVerified === "pending" ? "審核中" : "未驗資"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-brand-light truncate max-w-[150px] hidden md:table-cell" title={lady.notes}>
-                          {lady.notes || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-brand-muted hidden lg:table-cell">
-                          {lady.createdAt ? new Date(lady.createdAt as string).toLocaleDateString("zh-TW") : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 justify-end">
-                            <button
-                              id={`btn-lady-edit-${idx}`}
-                              type="button"
-                              onClick={() => handleOpenEditLady(lady)}
-                              className="p-1.5 rounded-lg text-brand-olive hover:bg-brand-olive/10 transition-colors cursor-pointer"
-                              title="編輯會員資格"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              id={`btn-lady-delete-${idx}`}
-                              type="button"
-                              onClick={() => void handleDeleteLady(lady.code, lady.name || "未命名")}
-                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                              title="刪除帳號"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                        }
+                        return true;
+                      });
+
+                      if (ladiesLoading) {
+                        return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">載入中...</td></tr>;
+                      }
+                      if (filteredLadies.length === 0) {
+                        return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">無符合篩選條件的麗人帳號</td></tr>;
+                      }
+
+                      return filteredLadies.map((lady, idx) => (
+                        <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
+                          <td className="px-4 py-3 font-mono text-brand-dark">{lady.code.slice(0, 8)}…</td>
+                          <td className="px-4 py-3 font-semibold text-brand-dark">
+                            <div className="flex items-center gap-1.5">
+                              <span>{lady.name || "未命名"}</span>
+                              {lady.pendingPhotoUrl && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-medium bg-red-100 text-red-800 animate-pulse">
+                                  待核頭像
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          {/* Match & Unlocked Column */}
+                          <td className="px-4 py-3 hidden md:table-cell text-[10px]">
+                            <div className="space-y-1">
+                              <div>
+                                <span className="text-brand-light font-bold">配對：</span>
+                                {lady.matchedGentlemanCode ? (
+                                  <span className="font-mono text-brand-dark font-bold bg-brand-accent/30 px-1.5 py-0.5 rounded">
+                                    {lady.matchedGentlemanCode} ({profiles[lady.matchedGentlemanCode]?.name || "未知"})
+                                  </span>
+                                ) : (
+                                  <span className="text-brand-muted">—</span>
+                                )}
+                              </div>
+                              <div>
+                                <span className="text-brand-light font-bold">已解鎖：</span>
+                                {lady.unlockedGentlemanCodes && lady.unlockedGentlemanCodes.length > 0 ? (
+                                  <span className="text-brand-olive font-semibold break-all">
+                                    {lady.unlockedGentlemanCodes.map(code => `${code}(${profiles[code]?.name || "未知"})`).join(", ")}
+                                  </span>
+                                ) : (
+                                  <span className="text-brand-muted">無</span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          {/* IP Description Column */}
+                          <td className="px-4 py-3 text-brand-muted hidden md:table-cell font-mono">
+                            {getIpDescription(lady.ipAddress)}
+                          </td>
+                          {/* Device Friendly Description + Fingerprint */}
+                          <td className="px-4 py-3 hidden lg:table-cell">
+                            <div className="font-semibold text-brand-dark text-[11px]">{getFriendlyDevice(lady.userAgent)}</div>
+                            <div className="font-mono text-[9px] text-brand-light truncate max-w-[120px]" title={lady.deviceId}>
+                              {lady.deviceId || "—"}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                              lady.membershipLevel === "vip" ? "bg-amber-100 text-amber-700" :
+                              lady.membershipLevel === "experience" ? "bg-blue-100 text-blue-700" :
+                              "bg-gray-100 text-gray-600"
+                            }`}>
+                              {lady.membershipLevel === "vip" ? <Crown className="w-3 h-3" /> : null}
+                              {lady.membershipLevel || "free"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {lady.quizTaken
+                              ? <span className="text-emerald-600 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5" />是</span>
+                              : <span className="text-brand-muted">否</span>
+                            }
+                          </td>
+                          <td className="px-4 py-3 hidden md:table-cell font-semibold">
+                            <span className={
+                              lady.assetVerified === "approved" ? "text-emerald-600" :
+                              lady.assetVerified === "pending" ? "text-amber-600" :
+                              "text-brand-muted"
+                            }>
+                              {lady.assetVerified === "approved" ? "✓已驗資" : lady.assetVerified === "pending" ? "審核中" : "未驗資"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-brand-light truncate max-w-[150px] hidden md:table-cell" title={lady.notes}>
+                            {lady.notes || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-brand-muted hidden lg:table-cell">
+                            {lady.createdAt ? new Date(lady.createdAt as string).toLocaleDateString("zh-TW") : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5 justify-end">
+                              <button
+                                id={`btn-lady-edit-${idx}`}
+                                type="button"
+                                onClick={() => handleOpenEditLady(lady)}
+                                className="p-1.5 rounded-lg text-brand-olive hover:bg-brand-olive/10 transition-colors cursor-pointer"
+                                title="編輯會員與審核"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                id={`btn-lady-delete-${idx}`}
+                                type="button"
+                                onClick={() => void handleDeleteLady(lady.code, lady.name || "未命名")}
+                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                                title="刪除帳號"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
