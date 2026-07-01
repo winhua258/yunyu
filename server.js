@@ -93,19 +93,21 @@ async function synchronizeDefaultData() {
       needsSave = true;
     } else {
       // Case 2: 設定已存在，檢查並智慧同步預設角色
-      // 這能確保程式碼中的變更可以反映到資料庫，同時不影響手動新增的角色
+      // 僅在資料庫中該預設編號依然存在時才更新，防止已被管理員改編號或刪除的角色被重複建回
       for (const code of Object.keys(DEFAULT_PROFILES)) {
         const profileFromDB = config.profiles.get(code);
-        const metricsFromDB = config.metrics.get(code);
-        const profileFromCode = DEFAULT_PROFILES[code];
-        const metricsFromCode = DEFAULT_METRICS[code];
+        if (profileFromDB) {
+          const metricsFromDB = config.metrics.get(code);
+          const profileFromCode = DEFAULT_PROFILES[code];
+          const metricsFromCode = DEFAULT_METRICS[code];
 
-        // 使用 JSON.stringify 進行簡單的比對，判斷資料是否需要更新
-        if (JSON.stringify(profileFromDB) !== JSON.stringify(profileFromCode) || JSON.stringify(metricsFromDB) !== JSON.stringify(metricsFromCode)) {
-          config.profiles.set(code, profileFromCode);
-          config.metrics.set(code, metricsFromCode);
-          needsSave = true;
-          console.log(`🔄 Synchronizing default profile: ${code}`);
+          // 使用 JSON.stringify 進行簡單的比對，判斷資料是否需要更新
+          if (JSON.stringify(profileFromDB) !== JSON.stringify(profileFromCode) || JSON.stringify(metricsFromDB) !== JSON.stringify(metricsFromCode)) {
+            config.profiles.set(code, profileFromCode);
+            config.metrics.set(code, metricsFromCode);
+            needsSave = true;
+            console.log(`🔄 Synchronizing default profile: ${code}`);
+          }
         }
       }
     }
