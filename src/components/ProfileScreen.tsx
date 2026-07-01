@@ -328,14 +328,14 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className={`absolute bottom-[-10px] left-[-10px] sm:left-[-30px] bg-white rounded-3xl shadow-xl border border-brand-border/60 backdrop-blur-sm z-20 cursor-pointer transition-all duration-300 select-none ${
-              isDetailsExpanded ? "p-6 w-64" : "p-3 sm:p-3.5 w-52 sm:w-56 flex items-center hover:scale-105"
+              isDetailsExpanded ? "p-6 w-64 animate-none" : "p-4 w-56 sm:w-60 flex items-start hover:scale-105"
             }`}
           >
             {isDetailsExpanded ? (
               <div className="w-full">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-brand-accent animate-pulse animate-duration-1000" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-brand-olive font-serif">
                       理想的生活細節
                     </span>
@@ -347,11 +347,14 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 </p>
               </div>
             ) : (
-              <div className="flex items-center gap-2 w-full text-left overflow-hidden min-w-0">
-                <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse shrink-0" />
-                <span className="text-xs font-medium text-brand-olive truncate font-serif select-none">
-                  理想：{profile.cardDetail ? (profile.cardDetail.length > 10 ? profile.cardDetail.slice(0, 10) + "..." : profile.cardDetail) : "生活細節..."}
-                </span>
+              <div className="flex items-start gap-2 w-full text-left overflow-hidden min-w-0">
+                <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse shrink-0 mt-1.5" />
+                <div className="text-xs leading-relaxed text-brand-olive font-serif min-w-0 select-none">
+                  <span className="font-bold">理想生活細節：</span>
+                  <span className="text-brand-muted line-clamp-2">
+                    {profile.cardDetail || "暫無細節說明..."}
+                  </span>
+                </div>
               </div>
             )}
           </motion.div>
