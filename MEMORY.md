@@ -403,30 +403,30 @@
 
 ---
 
-## 2026-07-01 第十九輪：上傳頭像防呆提示優化 + 主控配對與已解鎖男生列及篩選搜尋 + IP描述列與友善設備名稱顯示
+## 2026-07-01 第十九輪：上傳防呆優化 + 雙重篩選與排序（含列並列篩選與配對篩選） + 精確設備型號偵測與顯示 (如 iPhone 11, Oppo Find X5)
 
-- **本輪目標**：優化麗人端頭像上傳的非圖片格式與錯誤提示；在主控麗人列表搬移並多加一列「配對與解鎖」男生詳情；新增搜尋關鍵字與按會員、驗資方案篩選功能；將 IP 位址與靜態地區描述結合為單一列展示；並回答有關設備能否顯示文字名稱的問題（已利用 User-Agent 解析實現）。
+- **本輪目標**：優化麗人端頭像上傳防呆提示；在主控新增全域搜尋與列並列同步篩選功能（在表格次首行提供各列專用輸入框）；支援點擊各列標題在 `asc` / `desc` 之間進行雙向排序與指示小箭頭；支援從客戶端取得精確設備型號名稱（如 iPhone 11 / XR、Oppo Find X5 等）並在主控端高亮展示。
 - **發現的問題**：
-  - 麗人端如果選擇非圖片檔案，先前直接依賴 `FileReader` 出錯會彈出英文編程提示或不友善的提示；
-  - 配對與已解鎖男生資訊原本只隱藏在編輯彈窗中，主控在列表頁面無法一目了然，需要逐個點擊編輯才可得知；
-  - 主控無法進行麗人關鍵字搜尋或按狀態篩選，資料多時極不方便；
-  - 列表頁面中 IP 地址與地區描述分開，資訊分散；且設備 ID 只有隨機的 UUID 雜湊字串，無法看出裝置型號（例如 iPhone、Android 手機、Windows 等）。
+  - 麗人端上傳非圖片格式會報英文編譯或程式碼出錯，不夠友善；
+  - 單一搜尋框無法做到多個不同列的同時、並列篩選（例如同時選 VIP 會員 + 配對包含某男賓 + 備註包含某關鍵字）；
+  - 主控無法對麗人表格按各個列進行排序，無法將特定配對或註冊時間的帳號排到最前；
+  - 傳統 HTTP `User-Agent` 在 iOS / Android 上因安全原因不直接發送具體硬體型號（如 iPhone 11、Oppo Find X5），只發送 Apple/Android 行動設備，主控無法直接知道麗人具體的手機型號。
 - **修改內容**：
   - `server.js`：
-    - `LadyProfileSchema` 新增 `userAgent: { type: String, default: "" }` 欄位。
-    - 註冊 `POST /api/lady/register` 路由中，自 HTTP headers 自動獲取並儲存 `userAgent` 資訊。
+    - `LadyProfileSchema` 增加 `deviceModel: { type: String, default: "" }` 欄位。
+    - `POST /api/lady/register` 與 `POST /api/lady/login` 端點支援從 body 中讀取客戶端傳入的 `deviceModel`；並在登入或自動登入時，自動同步/校正現有帳號的設備型號、UA 與最新的 IP 位址。
   - `src/types.ts`：
-    - `LadyProfile` 介面補齊 `userAgent` 可選欄位。
+    - `LadyProfile` 介面增加可選欄位 `deviceModel?: string`。
+  - `src/data.ts`：
+    - 新增非同步偵測精確型號函數 `detectPreciseDeviceModel()`：組合使用現代高熵特徵 API `userAgentData`（精確抓取 Oppo 等 Android 手機）、iOS 螢幕長寬與像素密度映射比對（精確識別如 iPhone 11 / XR、iPhone 14 Pro 等），以及 Android UA 解析。
+    - 修改 `registerLady` 與 `loginLady` 前端 API 函數，使其在註冊與登入/同步時，自動回傳偵測到的精確型號至伺服器保存。
   - `src/components/VerificationScreen.tsx`：
-    - 優化 `handleAvatarClick` 中的檔案變更檢查：如果上傳的 `file.type` 不以 `image/` 開頭，即時阻攔並提示中文警告：「⚠️ 上傳失敗：請選擇正確的圖片檔案（例如 JPG、PNG 格式的自拍照）！」
-    - 將 `FileReader` 的 `catch` 區塊中的英文出錯訊息，統一替換為貼心友善的中文防呆訊息。
+    - 上傳變更攔截：如 `file.type` 不符合 `image/*` 即時阻攔，並將所有錯誤彈出框更換為清晰貼心的中文防呆說明。
   - `src/components/AdminEditScreen.tsx`：
-    - 新增友善設備名稱解析函數 `getFriendlyDevice(ua)` 與 IP 描述格式化函數 `getIpDescription(ip)`。
-    - 在麗人管理 Tab 的頂部加入「搜尋與篩選列」：支援關鍵字搜尋（自動模糊比對 UUID、姓名、備註、IP、配對與已解鎖男生代碼），以及「會員等級方案篩選」和「驗資狀態篩選」兩大下拉式選單。
-    - 重構麗人管理列表格，增加「配對與解鎖」一列，可即時查看麗人的 AI 配對男生以及解鎖名單中的編號與名字（與 `profiles` 自助關聯）。
-    - 調整 IP 地址列為「IP 描述」列，直接將 IP 地址與解析後的描述結合為 `192.168.1.1 [本地開發]` 格式。
-    - 調整設備 ID 列為「設備型號 + ID」，在上方顯示經過 User-Agent 解析後的友好設備名稱（如 `iPhone (LINE)`、`Windows 電腦`），下方顯示 truncated 雜湊值，方便主控直接辨識麗人使用的硬體裝置。
-    - 將列表 `colSpan` 升級為 `11` 以相容全新的欄位。
+    - 狀態新增：增加 `ladySortField`, `ladySortDirection`（排序欄位與方向狀態），以及各列同步篩選狀態：`colFilterUuid`, `colFilterName`, `colFilterMatch`, `colFilterIp`, `colFilterDevice`, `colFilterNotes`。
+    - 排序實現：表頭改為可點擊，點擊即可對資料庫結果進行動態 `[...filtered].sort` 排序，並帶有箭頭指示器（▲ / ▼）。
+    - 列並列篩選實現：在表頭下新增一列過濾輸入行（Spreadsheet Filter Row）。各個輸入行（如 UUID、名稱、配對、IP、型號、備註、會員方案等）完全獨立且同步作用，支援「配對與已解鎖」列按輸入關聯男賓，即時篩選出有哪些 UUID 匹配到特定男士。同時附帶「重置」按鈕一鍵清除所有並列條件。
+    - 設備名稱渲染優化：當有精確型號時，優先以高亮 Badge 📱 展示（例如 `📱 iPhone 11 / XR` 或 `📱 Android (Oppo Find X5)`），無精確型號時回退至 User-Agent 精簡裝置類別。
 - **驗證命令 and 結果**：`npm run build` 編譯通過；`pm2 restart yuanyu` 重啟成功，功能完美運作。
-- **提交哈希**：90a6556e85f6823155d6bfb1d1c294c381cfa24a
+- **提交哈希**：1417ee08dff01e18507e9f2681e1186ebb84a8a1
 - **是否已經收斂**：是。

@@ -53,6 +53,7 @@ export interface LadyProfile {
   deviceId?: string;
   ipAddress?: string;
   userAgent?: string;
+  deviceModel?: string;
   createdAt?: string;
   updatedAt?: string;
 }

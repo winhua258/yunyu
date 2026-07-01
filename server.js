@@ -66,6 +66,7 @@ const LadyProfileSchema = new mongoose.Schema({
   deviceId: { type: String, default: "" },
   ipAddress: { type: String, default: "" },
   userAgent: { type: String, default: "" }, // 裝置 User-Agent
+  deviceModel: { type: String, default: "" }, // 裝置精確型號名稱 (如 iPhone 11)
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -280,7 +281,7 @@ function getClientIp(req) {
 // POST /api/lady/register: 模擬女性用戶註冊
 app.post("/api/lady/register", async (req, res) => {
   try {
-    const { name, photoUrl, deviceId } = req.body;
+    const { name, photoUrl, deviceId, deviceModel } = req.body;
     const clientIp = getClientIp(req);
 
     // 設備指紋 + IP 掃描攔截機制：防止重複註冊多個帳號來重複答題與解鎖
@@ -297,6 +298,26 @@ app.post("/api/lady/register", async (req, res) => {
     }
 
     if (existingLady) {
+      // 順便同步設備型號與 UA
+      let changed = false;
+      if (deviceModel && existingLady.deviceModel !== deviceModel) {
+        existingLady.deviceModel = deviceModel;
+        changed = true;
+      }
+      const userAgent = req.headers["user-agent"] || "";
+      if (userAgent && existingLady.userAgent !== userAgent) {
+        existingLady.userAgent = userAgent;
+        changed = true;
+      }
+      if (clientIp && existingLady.ipAddress !== clientIp) {
+        existingLady.ipAddress = clientIp;
+        changed = true;
+      }
+      if (changed) {
+        existingLady.updatedAt = new Date();
+        await existingLady.save();
+      }
+
       console.log(`[Scan Match] Auto-login for duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}) to code: ${existingLady.code}`);
       return res.status(200).json({ 
         message: "偵測到您的設備或 IP 已有註冊記錄，已自動為您載入原有帳戶。", 
@@ -312,7 +333,8 @@ app.post("/api/lady/register", async (req, res) => {
       photoUrl: photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800",
       deviceId: deviceId || "",
       ipAddress: clientIp || "",
-      userAgent: req.headers["user-agent"] || ""
+      userAgent: req.headers["user-agent"] || "",
+      deviceModel: deviceModel || ""
     });
     await newLady.save();
     res.status(201).json({ message: "女性用戶註冊成功！", lady: newLady });
@@ -325,7 +347,8 @@ app.post("/api/lady/register", async (req, res) => {
 // POST /api/lady/login: 模擬女性用戶登入
 app.post("/api/lady/login", async (req, res) => {
   try {
-    const { code } = req.body;
+    const { code, deviceModel } = req.body;
+    const clientIp = getClientIp(req);
     const lady = await LadyProfile.findOne({ code });
     if (!lady) {
       return res.status(404).json({ message: "查無此女性用戶編號。" });
@@ -333,6 +356,27 @@ app.post("/api/lady/login", async (req, res) => {
     if (!lady.isVerified) {
       return res.status(403).json({ message: "此女性用戶尚未通過驗證。" });
     }
+
+    // 更新最新連線資訊與精確設備型號
+    let changed = false;
+    if (deviceModel && lady.deviceModel !== deviceModel) {
+      lady.deviceModel = deviceModel;
+      changed = true;
+    }
+    const userAgent = req.headers["user-agent"] || "";
+    if (userAgent && lady.userAgent !== userAgent) {
+      lady.userAgent = userAgent;
+      changed = true;
+    }
+    if (clientIp && lady.ipAddress !== clientIp) {
+      lady.ipAddress = clientIp;
+      changed = true;
+    }
+    if (changed) {
+      lady.updatedAt = new Date();
+      await lady.save();
+    }
+
     res.json({ message: "女性用戶登入成功！", lady });
   } catch (error) {
     console.error("Error logging in lady:", error);

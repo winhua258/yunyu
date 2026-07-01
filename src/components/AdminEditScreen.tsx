@@ -154,6 +154,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [ladySearchQuery, setLadySearchQuery] = useState("");
   const [ladyFilterMembership, setLadyFilterMembership] = useState("all");
   const [ladyFilterAsset, setLadyFilterAsset] = useState("all");
+  const [ladySortField, setLadySortField] = useState<string>("createdAt");
+  const [ladySortDirection, setLadySortDirection] = useState<"asc" | "desc">("desc");
+  const [colFilterUuid, setColFilterUuid] = useState("");
+  const [colFilterName, setColFilterName] = useState("");
+  const [colFilterMatch, setColFilterMatch] = useState("");
+  const [colFilterIp, setColFilterIp] = useState("");
+  const [colFilterDevice, setColFilterDevice] = useState("");
+  const [colFilterNotes, setColFilterNotes] = useState("");
 
   const loadLadies = React.useCallback(async () => {
     if (!adminCodes[0]) return;
@@ -168,6 +176,15 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
       setLadiesLoading(false);
     }
   }, [adminCodes]);
+
+  const handleSort = (field: string) => {
+    if (ladySortField === field) {
+      setLadySortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setLadySortField(field);
+      setLadySortDirection("asc");
+    }
+  };
 
   React.useEffect(() => {
     if (activeTab === "ladies" || activeTab === "analytics") {
@@ -1472,31 +1489,221 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-brand-beige/60 border-b border-brand-border/40">
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">UUID</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">名稱</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">配對與解鎖</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">IP 描述</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden lg:table-cell">設備 ID</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">會員</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">答題</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">驗資</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">備注</th>
-                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden lg:table-cell">註冊時間</th>
+                      {/* UUID Header */}
+                      <th 
+                        onClick={() => handleSort("code")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>UUID</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "code" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Name Header */}
+                      <th 
+                        onClick={() => handleSort("name")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>名稱</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "name" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Match Header */}
+                      <th 
+                        onClick={() => handleSort("match")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>配對與解鎖</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "match" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* IP Header */}
+                      <th 
+                        onClick={() => handleSort("ip")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>IP 描述</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "ip" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Device Header */}
+                      <th 
+                        onClick={() => handleSort("device")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>設備 ID</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "device" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Membership Header */}
+                      <th 
+                        onClick={() => handleSort("membership")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>會員</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "membership" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Quiz Header */}
+                      <th 
+                        onClick={() => handleSort("quiz")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>答題</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "quiz" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Asset Header */}
+                      <th 
+                        onClick={() => handleSort("asset")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>驗資</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "asset" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Notes Header */}
+                      <th 
+                        onClick={() => handleSort("notes")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>備注</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "notes" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Registered Time Header */}
+                      <th 
+                        onClick={() => handleSort("createdAt")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>註冊時間</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "createdAt" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
                       <th className="text-right px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">操作</th>
+                    </tr>
+                    {/* Parallel Filters Row */}
+                    <tr className="bg-brand-beige/30 border-b border-brand-border/20">
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="text"
+                          value={colFilterUuid}
+                          onChange={e => setColFilterUuid(e.target.value)}
+                          placeholder="篩選 UUID"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="text"
+                          value={colFilterName}
+                          onChange={e => setColFilterName(e.target.value)}
+                          placeholder="篩選姓名"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 hidden md:table-cell">
+                        <input
+                          type="text"
+                          value={colFilterMatch}
+                          onChange={e => setColFilterMatch(e.target.value)}
+                          placeholder="男賓代碼/姓名"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 hidden md:table-cell">
+                        <input
+                          type="text"
+                          value={colFilterIp}
+                          onChange={e => setColFilterIp(e.target.value)}
+                          placeholder="篩選 IP/地區"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 hidden lg:table-cell">
+                        <input
+                          type="text"
+                          value={colFilterDevice}
+                          onChange={e => setColFilterDevice(e.target.value)}
+                          placeholder="篩選型號/ID"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <select
+                          value={ladyFilterMembership}
+                          onChange={e => setLadyFilterMembership(e.target.value)}
+                          className="w-full bg-white border border-brand-border/60 rounded px-1 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive font-semibold cursor-pointer"
+                        >
+                          <option value="all">全部</option>
+                          <option value="free">free</option>
+                          <option value="experience">experience</option>
+                          <option value="vip">vip</option>
+                        </select>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <div className="text-[10px] text-brand-muted text-center font-bold">—</div>
+                      </td>
+                      <td className="px-2 py-1.5 hidden md:table-cell">
+                        <select
+                          value={ladyFilterAsset}
+                          onChange={e => setLadyFilterAsset(e.target.value)}
+                          className="w-full bg-white border border-brand-border/60 rounded px-1 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive font-semibold cursor-pointer"
+                        >
+                          <option value="all">全部</option>
+                          <option value="none">未驗資</option>
+                          <option value="pending">審核中</option>
+                          <option value="approved">已驗資</option>
+                        </select>
+                      </td>
+                      <td className="px-2 py-1.5 hidden md:table-cell">
+                        <input
+                          type="text"
+                          value={colFilterNotes}
+                          onChange={e => setColFilterNotes(e.target.value)}
+                          placeholder="篩選備註"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 hidden lg:table-cell">
+                        <div className="text-[10px] text-brand-muted text-center font-bold">—</div>
+                      </td>
+                      <td className="px-2 py-1.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setColFilterUuid("");
+                            setColFilterName("");
+                            setColFilterMatch("");
+                            setColFilterIp("");
+                            setColFilterDevice("");
+                            setColFilterNotes("");
+                            setLadyFilterMembership("all");
+                            setLadyFilterAsset("all");
+                            setLadySearchQuery("");
+                          }}
+                          className="text-[10px] text-brand-olive hover:underline font-bold animate-pulse"
+                          title="重置所有篩選條件"
+                        >
+                          重置
+                        </button>
+                      </td>
                     </tr>
                   </thead>
                   <tbody>
                     {(() => {
+                      // 1. 同步篩選邏輯
                       const filteredLadies = ladies.filter(lady => {
-                        // Filter by membership
-                        if (ladyFilterMembership !== "all" && lady.membershipLevel !== ladyFilterMembership) {
-                          return false;
-                        }
-                        // Filter by asset verification
-                        if (ladyFilterAsset !== "all" && lady.assetVerified !== ladyFilterAsset) {
-                          return false;
-                        }
-                        // Search keyword
+                        // 1.1 全域關鍵字搜尋
                         if (ladySearchQuery.trim()) {
                           const query = ladySearchQuery.toLowerCase();
                           const uuidMatch = lady.code.toLowerCase().includes(query);
@@ -1510,17 +1717,129 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                             return false;
                           }
                         }
+
+                        // 1.2 會員等級列篩選
+                        if (ladyFilterMembership !== "all" && lady.membershipLevel !== ladyFilterMembership) {
+                          return false;
+                        }
+                        // 1.3 驗資狀態列篩選
+                        if (ladyFilterAsset !== "all" && lady.assetVerified !== ladyFilterAsset) {
+                          return false;
+                        }
+                        // 1.4 UUID 列篩選
+                        if (colFilterUuid.trim() && !lady.code.toLowerCase().includes(colFilterUuid.toLowerCase())) {
+                          return false;
+                        }
+                        // 1.5 姓名列篩選
+                        if (colFilterName.trim() && !(lady.name || "").toLowerCase().includes(colFilterName.toLowerCase())) {
+                          return false;
+                        }
+                        // 1.6 配對與解鎖列篩選
+                        if (colFilterMatch.trim()) {
+                          const val = colFilterMatch.toLowerCase();
+                          const matchCode = (lady.matchedGentlemanCode || "").toLowerCase();
+                          const matchName = (profiles[lady.matchedGentlemanCode || ""]?.name || "").toLowerCase();
+                          const matchMatch = matchCode.includes(val) || matchName.includes(val);
+                          
+                          const unlockMatch = (lady.unlockedGentlemanCodes || []).some(code => {
+                            const cCode = code.toLowerCase();
+                            const cName = (profiles[code]?.name || "").toLowerCase();
+                            return cCode.includes(val) || cName.includes(val);
+                          });
+
+                          if (!matchMatch && !unlockMatch) {
+                            return false;
+                          }
+                        }
+                        // 1.7 IP 與地區描述列篩選
+                        if (colFilterIp.trim()) {
+                          const val = colFilterIp.toLowerCase();
+                          const ip = (lady.ipAddress || "").toLowerCase();
+                          const desc = getIpDescription(lady.ipAddress).toLowerCase();
+                          if (!ip.includes(val) && !desc.includes(val)) {
+                            return false;
+                          }
+                        }
+                        // 1.8 設備型號與設備 ID 列篩選
+                        if (colFilterDevice.trim()) {
+                          const val = colFilterDevice.toLowerCase();
+                          const model = (lady.deviceModel || "").toLowerCase();
+                          const ua = getFriendlyDevice(lady.userAgent).toLowerCase();
+                          const id = (lady.deviceId || "").toLowerCase();
+                          if (!model.includes(val) && !ua.includes(val) && !id.includes(val)) {
+                            return false;
+                          }
+                        }
+                        // 1.9 備註列篩選
+                        if (colFilterNotes.trim() && !(lady.notes || "").toLowerCase().includes(colFilterNotes.toLowerCase())) {
+                          return false;
+                        }
+
                         return true;
+                      });
+
+                      // 2. 排序邏輯
+                      const sortedLadies = [...filteredLadies].sort((a, b) => {
+                        let fieldA: any = "";
+                        let fieldB: any = "";
+
+                        switch (ladySortField) {
+                          case "code":
+                            fieldA = a.code;
+                            fieldB = b.code;
+                            break;
+                          case "name":
+                            fieldA = a.name || "";
+                            fieldB = b.name || "";
+                            break;
+                          case "match":
+                            fieldA = a.matchedGentlemanCode || "";
+                            fieldB = b.matchedGentlemanCode || "";
+                            break;
+                          case "ip":
+                            fieldA = a.ipAddress || "";
+                            fieldB = b.ipAddress || "";
+                            break;
+                          case "device":
+                            fieldA = a.deviceModel || a.deviceId || "";
+                            fieldB = b.deviceModel || b.deviceId || "";
+                            break;
+                          case "membership":
+                            fieldA = a.membershipLevel || "";
+                            fieldB = b.membershipLevel || "";
+                            break;
+                          case "quiz":
+                            fieldA = a.quizTaken ? 1 : 0;
+                            fieldB = b.quizTaken ? 1 : 0;
+                            break;
+                          case "asset":
+                            fieldA = a.assetVerified || "";
+                            fieldB = b.assetVerified || "";
+                            break;
+                          case "notes":
+                            fieldA = a.notes || "";
+                            fieldB = b.notes || "";
+                            break;
+                          case "createdAt":
+                          default:
+                            fieldA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                            fieldB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                            break;
+                        }
+
+                        if (fieldA < fieldB) return ladySortDirection === "asc" ? -1 : 1;
+                        if (fieldA > fieldB) return ladySortDirection === "asc" ? 1 : -1;
+                        return 0;
                       });
 
                       if (ladiesLoading) {
                         return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">載入中...</td></tr>;
                       }
-                      if (filteredLadies.length === 0) {
-                        return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">無符合篩選條件的麗人帳號</td></tr>;
+                      if (sortedLadies.length === 0) {
+                        return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">無符合篩選與搜尋條件的麗人帳號</td></tr>;
                       }
 
-                      return filteredLadies.map((lady, idx) => (
+                      return sortedLadies.map((lady, idx) => (
                         <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
                           <td className="px-4 py-3 font-mono text-brand-dark">{lady.code.slice(0, 8)}…</td>
                           <td className="px-4 py-3 font-semibold text-brand-dark">
@@ -1564,7 +1883,15 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           </td>
                           {/* Device Friendly Description + Fingerprint */}
                           <td className="px-4 py-3 hidden lg:table-cell">
-                            <div className="font-semibold text-brand-dark text-[11px]">{getFriendlyDevice(lady.userAgent)}</div>
+                            <div className="font-semibold text-brand-dark text-[11px]">
+                              {lady.deviceModel ? (
+                                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-bold border border-emerald-200/50">
+                                  📱 {lady.deviceModel}
+                                </span>
+                              ) : (
+                                <span>{getFriendlyDevice(lady.userAgent)}</span>
+                              )}
+                            </div>
                             <div className="font-mono text-[9px] text-brand-light truncate max-w-[120px]" title={lady.deviceId}>
                               {lady.deviceId || "—"}
                             </div>

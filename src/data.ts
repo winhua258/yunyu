@@ -247,6 +247,65 @@ export async function syncSharedConfig(config: {
 
 // --- Lady Profile API Interactions ---
 
+// 偵測並判定精確的裝置型號與作業系統名稱
+async function detectPreciseDeviceModel(): Promise<string> {
+  // 1. 優先嘗試現代瀏覽器的高熵特徵 API
+  if ((navigator as any).userAgentData) {
+    try {
+      const info = await (navigator as any).userAgentData.getHighEntropyValues(["model", "platform", "platformVersion"]);
+      if (info.model) {
+        return `${info.platform || "Android"} (${info.model})`;
+      }
+    } catch (e) {
+      // 忽略錯誤，繼續使用常規檢測
+    }
+  }
+  
+  const ua = navigator.userAgent;
+  const uaLower = ua.toLowerCase();
+  
+  // 2. 針對 iOS 設備，通過螢幕解析度與倍率映射估計精確的 iPhone 型號
+  if (/iphone|ipad|ipod/i.test(ua)) {
+    const w = window.screen.width;
+    const h = window.screen.height;
+    const pr = window.devicePixelRatio;
+    
+    // 主流 iPhone 螢幕與像素比率數據映射
+    if (w === 414 && h === 896 && pr === 2) return "iPhone 11 / XR";
+    if (w === 414 && h === 896 && pr === 3) return "iPhone 11 Pro Max / XS Max";
+    if (w === 375 && h === 812 && pr === 3) return "iPhone 11 Pro / X / XS";
+    if (w === 390 && h === 844 && pr === 3) return "iPhone 12 / 13 / 14";
+    if (w === 428 && h === 926 && pr === 3) return "iPhone 12 Pro Max / 13 Pro Max / 14 Plus";
+    if (w === 393 && h === 852 && pr === 3) return "iPhone 14 Pro / 15";
+    if (w === 430 && h === 932 && pr === 3) return "iPhone 14 Pro Max / 15 Pro Max";
+    if (w === 375 && h === 667 && pr === 2) return "iPhone 6/7/8 / SE (2nd/3rd Gen)";
+    if (w === 414 && h === 736 && pr === 3) return "iPhone 6+/7+/8+";
+    return "iPhone / iPad (Apple)";
+  }
+
+  // 3. 常規 Android 裝置 UA 標識解析 (常含有 SM-G998B, CPH2307 等精確型號)
+  const androidMatch = ua.match(/Android\s+([^;]+);\s+([^;)]+)/);
+  if (androidMatch) {
+    const model = androidMatch[2].trim();
+    if (model.includes("Build/")) {
+      return `Android (${model.split("Build/")[0].trim()})`;
+    }
+    return `Android (${model})`;
+  }
+  
+  if (uaLower.includes("oppo") || uaLower.includes("cph") || uaLower.includes("pgj")) return "OPPO 手機";
+  if (uaLower.includes("vivo") || uaLower.includes("v2")) return "vivo 手機";
+  if (uaLower.includes("xiaomi") || uaLower.includes("mi ") || uaLower.includes("redmi")) return "小米手機";
+  if (uaLower.includes("samsung") || uaLower.includes("sm-")) return "三星手機";
+  if (uaLower.includes("huawei")) return "華為手機";
+
+  if (uaLower.includes("macintosh")) return "Mac 電腦";
+  if (uaLower.includes("windows")) return "Windows 電腦";
+  if (uaLower.includes("linux")) return "Linux 電腦";
+
+  return "未知行動裝置";
+}
+
 // 獲取或建立設備唯一識別碼以實施防刷機制
 function getOrCreateDeviceId(): string {
   let devId = localStorage.getItem("yuanyu_device_id");
@@ -266,10 +325,11 @@ function getOrCreateDeviceId(): string {
 export async function registerLady(name?: string, photoUrl?: string): Promise<LadyProfile> {
   try {
     const deviceId = getOrCreateDeviceId();
+    const deviceModel = await detectPreciseDeviceModel();
     const response = await fetch("/api/lady/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, photoUrl, deviceId }),
+      body: JSON.stringify({ name, photoUrl, deviceId, deviceModel }),
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -315,10 +375,11 @@ export async function resetDatabaseToDefaults(adminCode: string, currentAdminCod
 愛是 */
 export async function loginLady(code: string): Promise<LadyProfile> {
   try {
+    const deviceModel = await detectPreciseDeviceModel();
     const response = await fetch("/api/lady/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, deviceModel }),
     });
     if (!response.ok) {
       const errorData = await response.json();
