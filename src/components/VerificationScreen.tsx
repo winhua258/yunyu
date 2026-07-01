@@ -1036,7 +1036,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     <div>
                       <p className="text-[10px] text-brand-light font-bold">申請解鎖對象：</p>
                       <h4 className="font-serif text-sm font-bold text-brand-dark">
-                        {upgradeTargetProfile.code} · {upgradeTargetProfile.age} 歲 · {upgradeTargetProfile.location}
+                        **** · {upgradeTargetProfile.age} 歲 · {upgradeTargetProfile.location}
                       </h4>
                     </div>
                   </div>
