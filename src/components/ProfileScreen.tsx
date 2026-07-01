@@ -31,9 +31,10 @@ interface ProfileScreenProps {
   onBack: () => void;
 }
 
+const loadedImagesCache = new Set<string>();
+
 export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
   const [showRedirectModal, setShowRedirectModal] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const imgRef = React.useRef<HTMLImageElement>(null);
@@ -43,17 +44,26 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
     : [profile.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800"]
   ).map(url => encodeURI(url));
 
+  const currentImageUrl = images[currentImageIndex];
+  const [prevImageUrl, setPrevImageUrl] = useState(currentImageUrl);
+  const [imageLoaded, setImageLoaded] = useState(() => loadedImagesCache.has(currentImageUrl));
+
+  if (currentImageUrl !== prevImageUrl) {
+    setPrevImageUrl(currentImageUrl);
+    setImageLoaded(loadedImagesCache.has(currentImageUrl));
+  }
+
   React.useEffect(() => {
     setCurrentImageIndex(0);
-    setImageLoaded(false);
     setIsDetailsExpanded(false); // Reset to collapsed when switching profiles
   }, [profile]);
 
   React.useEffect(() => {
-    if (imgRef.current && imgRef.current.complete) {
+    if (imgRef.current && imgRef.current.complete && !imageLoaded) {
+      loadedImagesCache.add(currentImageUrl);
       setImageLoaded(true);
     }
-  }, [currentImageIndex, images]);
+  }, [currentImageUrl, imageLoaded]);
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -254,10 +264,13 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
 
             <img
               ref={imgRef}
-              key={currentImageIndex}
-              src={images[currentImageIndex]}
+              key={currentImageUrl}
+              src={currentImageUrl}
               alt={profile.name}
-              onLoad={() => setImageLoaded(true)}
+              onLoad={() => {
+                loadedImagesCache.add(currentImageUrl);
+                setImageLoaded(true);
+              }}
               onError={() => setImageLoaded(true)}
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out transform group-hover:scale-105 ${
                 imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"

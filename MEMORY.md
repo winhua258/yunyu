@@ -260,8 +260,26 @@
     - 確認 `isDetailsExpanded` 的初始值為 `false`，並在 `profile` 切換時自動重設為 `false`，確保每次進入都是預設收合狀態。
 - **驗證命令和結果**：
   - 執行 `npm run build` 並透過 `pm2 restart yuanyu` 重啟：順利編譯部署，實測資料卡剛進入時完美呈現小巧、精緻且絕不擋圖的極簡 collapsed 氣泡。
-- **提交哈希**：ce6155c2426de8da24e220eb93a1c9283f41887b
+- **提交哈希**：c66b614e6533000d095d298092fd41308418cd1e
 - **是否已經收斂**：是。
+
+## 2026-07-01 第十三輪剛進入卡片照片不正常顯示徹底修復
+
+- **本輪目標**：徹底修復部分設備/瀏覽器剛進入資料卡或切換角色時照片不正常顯示、需要切換或按一下才顯示的 Bug。
+- **發現的問題**：
+  - 由於 React 在切換 `profile` 但保持 `currentImageIndex` 為 `0` 時，`key` 值（原本使用 `currentImageIndex`）未發生改變，導致 React 重用了原本的 `<img>` DOM 元素。
+  - 對於已快取的圖片，將 reused 元素的 `src` 更新為新網址時，某些瀏覽器（如 iOS/Safari）不會再次觸發該 DOM 元素的 `onLoad` 事件。因此 `imageLoaded` 狀態停留在 `false`，使圖片因 `opacity-0` 樣式而隱形，直到用戶點選上一張/下一張切換（重新生成 `key`）才顯示。
+- **修改內容**：
+  - `ProfileScreen.tsx`：
+    - 將 `key` 由 `currentImageIndex` 調整為 `currentImageUrl`，強迫 React 在切換圖片網址或切換 Profile 時，銷毀舊有 `<img>` 並掛載全新節點，保證事件處理器正常綁定並由瀏覽器觸發。
+    - 引入模組級的 `loadedImagesCache`（`Set`），用於快取在當前 session 中已載入成功的圖片網址。
+    - 在 React 渲染路徑上，實施狀態同步機制：若當前 URL 已存在於 cache 中，則 `imageLoaded` 初始/即時為 `true`，杜絕任何 Skeleton 閃爍。
+    - 補齊副效應中對 `complete` 的 double-guard 同步檢測，確保快取圖片立即可見。
+- **驗證命令和結果**：
+  - 執行 `npm run build` 編譯成功，無 TypeScript 錯誤。透過 `pm2 restart yuanyu` 重啟：順利編譯部署，快取圖片加載行為達到極致流暢與穩定。
+- **提交哈希**：30903d8860d0c411afd3f7ee4f5176b30350c11d
+- **是否已經收斂**：是。
+
 
 
 
