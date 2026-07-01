@@ -373,3 +373,30 @@
 - **驗證命令和結果**：`npm run build` 編譯成功，`pm2 restart yuanyu` 部署重啟完成。
 - **提交哈希**：425dcc3f901ae86210e146f0889901d522cf369e
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第十八輪：主控列表備註展示 + 自拍相機頭像上傳與麗人名稱修改功能 + 已解鎖卡片清除邏輯 Bug 修復
+
+- **本輪目標**：在主控麗人列表增加「備註」展示列，支援麗人自主修改名稱以及使用自拍相機上傳新頭像，並修復清除已有解鎖資料卡但仍舊顯示解鎖的 Bug。
+- **發現的問題**：
+  - 主控無法直接在列表頁面看備註，不方便快速檢視；
+  - 麗人端之前動態生成 file input 並調用 `.click()` 在部分流覽器或 LINE 內置瀏覽器中會被限制，且沒有設置 `capture="user"` 無法引導強制自拍；麗人端沒有修改自己名字的入口；
+  - 降級清除邏輯 `isDowngradingAsset` 要求舊狀態為 `approved`，這導致本就因漏洞而在 `none/pending` 狀態卻持有已解鎖名單的麗人帳號，即使主控打勾「清除已有解鎖名單」仍無法被清除，且麗人客戶端存在 React state 緩存，管理員更新後麗人端不會即時同步。
+- **修改內容**：
+  - `server.js`：
+    - 新增 `POST /api/lady/:code/update-name` 介面，供麗人端更改其名稱。
+    - 修改 `POST /api/admin/lady/:code/update` 介面，使主控端更新也能修改麗人姓名。
+  - `src/data.ts`：
+    - 新增 `updateLadyName(code, name)` 前端 API 介面函數，且 `updateLadyByAdmin` 的資料傳輸型別增加 `name?: string`。
+  - `src/components/AdminEditScreen.tsx`：
+    - 主控「麗人管理」列表格中新增「備註」行（支援 tooltip 懸浮完整備註，超長文字截斷，並更新 colSpan 為 10）。
+    - 修正清除卡片判定邏輯：將 `isDowngradingAsset` 替換為 `shouldClearUnlocked`。只要當前新選擇狀態為 `none` 或 `pending` 且勾選了清空框，則必定清空已解鎖紀錄（不限於原狀態為 `approved` ），徹底解決先前被漏洞影響的測試帳號仍可看已解鎖卡片的問題。
+    - 在麗人編輯 Modal 頂部新增「麗人姓名」文字輸入欄位，支援主控在此為麗人改名。
+  - `src/components/VerificationScreen.tsx`：
+    - 導入 `updateLadyName`，並在麗人名旁加一個 Edit2 (鉛筆) 按鈕。點擊後跳出 `window.prompt` 輸入框以安全可靠地更新麗人姓名。
+    - 自拍引導：在頭像點擊生成的 file input 中顯式追加 `input.setAttribute("capture", "user")`，強制移動端打開前置自相機自拍。
+    - 同步與重整優化：在主面板頂部右方新增「重新整理」按鈕；並新增 `React.useEffect` 當進入 Dashboard 時自動重新請求並同步伺服器上最新的 `lady` 帳號狀態，保證主控端變更後麗人端能第一時間同步（收回卡片等）。
+- **驗證命令和結果**：`npm run build` 編譯成功，`pm2 restart yuanyu` 部署重啟完成。
+- **提交哈希**：369de4f6eb2a597fd2c989a1cb3dd4951937795c
+- **是否已經收斂**：是。

@@ -17,11 +17,12 @@ import {
   Gem, 
   UploadCloud, 
   Search, 
-  RefreshCw 
+  RefreshCw,
+  Edit2
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useData } from "./DataContext";
-import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES, requestPhotoChange } from "../data";
+import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES, requestPhotoChange, updateLadyName } from "../data";
 import { Profile } from "../types";
 
 
@@ -130,11 +131,20 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
   const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
+  // 自動同步最新的麗人資料
+  React.useEffect(() => {
+    if (loggedInLadyCode) {
+      login(loggedInLadyCode).catch((e) => console.error("Sync lady error:", e));
+    }
+  }, [loggedInLadyCode]);
+
   const handleAvatarClick = () => {
     if (!lady) return;
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
+    // 限制自拍 (開通前置攝像頭)
+    input.setAttribute("capture", "user");
     input.onchange = async (e: any) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -150,7 +160,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         try {
           const updatedLady = await requestPhotoChange(lady.code, reader.result as string);
           updateLadyProfile(updatedLady);
-          alert("🎉 頭像變更申請已提交！待主控核驗通過後即會更換。");
+          alert("🎉 自拍頭像變更申請已提交！待主控核驗通過後即會更換。");
         } catch (err: any) {
           alert(err.message || "上傳頭像申請失敗，請重試。");
         } finally {
@@ -160,6 +170,24 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       reader.readAsDataURL(file);
     };
     input.click();
+  };
+
+  const handleEditName = async () => {
+    if (!lady) return;
+    const newName = window.prompt("請編輯您的麗人名稱：", lady.name);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      alert("名稱不可為空！");
+      return;
+    }
+    try {
+      const updatedLady = await updateLadyName(lady.code, trimmed);
+      updateLadyProfile(updatedLady);
+      alert("名稱已成功修改！");
+    } catch (err: any) {
+      alert(err.message || "修改名稱失敗，請重試。");
+    }
   };
 
   // 統一驗證接口
@@ -404,7 +432,16 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-serif text-lg font-bold text-brand-dark">{lady.name}</h3>
+                      <div className="flex items-center gap-1">
+                        <h3 className="font-serif text-lg font-bold text-brand-dark">{lady.name}</h3>
+                        <button
+                          onClick={handleEditName}
+                          className="p-1 text-brand-light hover:text-brand-olive hover:bg-brand-border/20 rounded transition-all cursor-pointer"
+                          title="修改名稱"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       <span className="text-[10px] text-brand-light font-mono font-bold bg-white px-2 py-0.5 rounded">
                         編號: {lady.code.slice(0, 8)}...
                       </span>
@@ -449,13 +486,31 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   </div>
                 </div>
 
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-1.5 py-1.5 px-3 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl text-xs font-bold transition-all"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>登出麗人</span>
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!lady) return;
+                      try {
+                        await login(lady.code);
+                        alert("🔄 帳號狀態已更新！");
+                      } catch (e) {
+                        alert("重新整理失敗，請重試。");
+                      }
+                    }}
+                    className="flex items-center gap-1.5 py-1.5 px-3 border border-brand-border hover:bg-brand-border/20 text-brand-olive rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>重新整理</span>
+                  </button>
+
+                  <button
+                    onClick={logout}
+                    className="flex items-center gap-1.5 py-1.5 px-3 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>登出麗人</span>
+                  </button>
+                </div>
               </div>
 
               {/* Upper Section: Match and Lookup grid */}

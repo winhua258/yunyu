@@ -112,6 +112,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [ladyEditMembership, setLadyEditMembership] = useState("");
   const [ladyEditAsset, setLadyEditAsset] = useState("");
   const [ladyEditNotes, setLadyEditNotes] = useState("");
+  const [ladyEditName, setLadyEditName] = useState("");
   const [clearUnlockedOnDowngrade, setClearUnlockedOnDowngrade] = useState(true);
   const [ladyEditSaving, setLadyEditSaving] = useState(false);
   const [ladyEditMsg, setLadyEditMsg] = useState("");
@@ -141,6 +142,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     setLadyEditMembership(lady.membershipLevel || "free");
     setLadyEditAsset(lady.assetVerified || "none");
     setLadyEditNotes(lady.notes || "");
+    setLadyEditName(lady.name || "");
     setClearUnlockedOnDowngrade(true);
     setLadyEditMsg("");
   };
@@ -150,8 +152,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     setLadyEditSaving(true);
     try {
       let unlockedGentlemanCodes = editLady.unlockedGentlemanCodes || [];
-      const isDowngradingAsset = (ladyEditAsset === "none" || ladyEditAsset === "pending") && (editLady.assetVerified === "approved");
-      if (isDowngradingAsset && clearUnlockedOnDowngrade) {
+      const shouldClearUnlocked = clearUnlockedOnDowngrade && (ladyEditAsset === "none" || ladyEditAsset === "pending");
+      if (shouldClearUnlocked) {
         unlockedGentlemanCodes = [];
       }
 
@@ -161,6 +163,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           membershipLevel: ladyEditMembership, 
           assetVerified: ladyEditAsset, 
           notes: ladyEditNotes,
+          name: ladyEditName,
           unlockedGentlemanCodes
         },
         adminCodes[0]
@@ -1438,16 +1441,17 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">會員</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">答題</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">驗資</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">備注</th>
                       <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden lg:table-cell">註冊時間</th>
                       <th className="text-right px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">操作</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ladiesLoading && (
-                      <tr><td colSpan={9} className="text-center py-10 text-brand-muted">載入中...</td></tr>
+                      <tr><td colSpan={10} className="text-center py-10 text-brand-muted">載入中...</td></tr>
                     )}
                     {!ladiesLoading && ladies.length === 0 && (
-                      <tr><td colSpan={9} className="text-center py-10 text-brand-muted">尚無已註冊的麗人</td></tr>
+                      <tr><td colSpan={10} className="text-center py-10 text-brand-muted">尚無已註冊的麗人</td></tr>
                     )}
                     {ladies.map((lady, idx) => (
                       <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
@@ -1488,6 +1492,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           }`}>
                             {lady.assetVerified === "approved" ? "✓已驗資" : lady.assetVerified === "pending" ? "審核中" : "未驗資"}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 text-brand-light truncate max-w-[150px] hidden md:table-cell" title={lady.notes}>
+                          {lady.notes || "—"}
                         </td>
                         <td className="px-4 py-3 text-brand-muted hidden lg:table-cell">
                           {lady.createdAt ? new Date(lady.createdAt as string).toLocaleDateString("zh-TW") : "—"}
@@ -1754,6 +1761,16 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               </div>
 
               <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">麗人姓名</label>
+                  <input
+                    type="text"
+                    value={ladyEditName}
+                    onChange={e => setLadyEditName(e.target.value)}
+                    className="w-full bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive"
+                    placeholder="請輸入麗人實名..."
+                  />
+                </div>
                 <div>
                   <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">會員等級</label>
                   <select

@@ -364,6 +364,33 @@ app.post("/api/lady/:code/photo-request", async (req, res) => {
   }
 });
 
+// POST /api/lady/:code/update-name: 修改麗人名稱
+app.post("/api/lady/:code/update-name", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { name } = req.body;
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "名字不可為空。" });
+    }
+
+    const lady = await LadyProfile.findOne({ code });
+    if (!lady) {
+      return res.status(404).json({ message: "查無此麗人帳號。" });
+    }
+
+    lady.name = name.trim();
+    lady.updatedAt = new Date();
+    await lady.save();
+
+    res.json({ message: "名稱修改成功。", lady });
+  } catch (error) {
+    console.error("Error updating lady name:", error);
+    res.status(500).json({ message: "名稱修改失敗。" });
+  }
+});
+
+
 // POST /api/lady/:code/quiz-result: 儲存女性用戶測驗結果
 app.post("/api/lady/:code/quiz-result", async (req, res) => {
   try {
@@ -448,7 +475,7 @@ app.get("/api/admin/ladies", adminAuth, async (req, res) => {
 app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
   try {
     const { code } = req.params;
-    const { membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode, notes, photoUrl, pendingPhotoUrl } = req.body;
+    const { membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode, notes, photoUrl, pendingPhotoUrl, name } = req.body;
 
     const lady = await LadyProfile.findOne({ code });
     if (!lady) {
@@ -461,6 +488,7 @@ app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
     if (quizTaken !== undefined) lady.quizTaken = quizTaken;
     if (matchedGentlemanCode !== undefined) lady.matchedGentlemanCode = matchedGentlemanCode;
     if (notes !== undefined) lady.notes = notes;
+    if (name !== undefined) lady.name = name;
     // 管理員批准頭像：直接更新 photoUrl 並清空 pendingPhotoUrl
     if (photoUrl !== undefined) { lady.photoUrl = photoUrl; lady.pendingPhotoUrl = ""; }
     // 管理員拒絕頭像或手動清空 pending

@@ -431,6 +431,7 @@ export async function updateLadyByAdmin(
     notes?: string;
     photoUrl?: string;
     pendingPhotoUrl?: string;
+    name?: string;
   },
   adminCode: string
 ): Promise<LadyProfile> {
@@ -473,6 +474,23 @@ export async function requestPhotoChange(code: string, base64Photo: string): Pro
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || "提交頭像變更申請失敗。");
+  }
+  const { lady } = await response.json();
+  return lady;
+}
+
+/**
+ * Lady: Update name directly.
+ */
+export async function updateLadyName(code: string, name: string): Promise<LadyProfile> {
+  const response = await fetch(`/api/lady/${code}/update-name`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "更新名字失敗。");
   }
   const { lady } = await response.json();
   return lady;
