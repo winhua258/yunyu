@@ -133,12 +133,21 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
   const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
-  // 自動同步最新的麗人資料
+  // 自動同步最新的麗人資料，並持久化備份 UUID 至 history 緩存中（登出時不清除）
   React.useEffect(() => {
     if (loggedInLadyCode) {
       login(loggedInLadyCode).catch((e) => console.error("Sync lady error:", e));
+      localStorage.setItem("yuanyu_lady_code_history", loggedInLadyCode);
     }
   }, [loggedInLadyCode]);
+
+  // 初始化時，如果登入輸入框為空，自動讀取 history 緩存預填入輸入框中
+  React.useEffect(() => {
+    const historyCode = localStorage.getItem("yuanyu_lady_code_history");
+    if (historyCode && !ladyCodeInput) {
+      setLadyCodeInput(historyCode);
+    }
+  }, []);
 
   const handleAvatarClick = () => {
     if (!lady) return;
