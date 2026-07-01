@@ -14,6 +14,7 @@ import {
   LogOut, 
   CheckCircle2, 
   ChevronRight, 
+  ChevronDown,
   Gem, 
   UploadCloud, 
   Search, 
@@ -119,6 +120,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [showContactModal, setShowContactModal] = useState(false);
   const [ladyCodeInput, setLadyCodeInput] = useState("");
   const [ladyError, setLadyError] = useState("");
+  const [showLadyLoginInput, setShowLadyLoginInput] = useState(false);
   
   // Dashboard & Unlock states
   const [gentlemanCodeInput, setGentlemanCodeInput] = useState("");
@@ -936,67 +938,89 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
               {/* Login/Registration logic */}
               <div className="space-y-4 pt-2">
-                <h4 className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-brand-olive flex items-center gap-1.5">
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>麗人登入與建號</span>
-                </h4>
-                
-                {ladyError && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="flex items-center gap-1.5 text-xs text-red-650 font-bold"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{ladyError}</span>
-                  </motion.p>
-                )}
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={ladyCodeInput}
-                    onChange={(e) => {
-                      setLadyCodeInput(e.target.value);
-                      setLadyError("");
-                    }}
-                    placeholder="請輸入麗人編號"
-                    className="flex-1 min-w-0 bg-brand-beige/40 border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleLadyLogin}
-                    className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
-                  >
-                    登入
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleLadyRegister}
-                  className="w-full py-2.5 px-6 bg-brand-accent/20 hover:bg-brand-accent/40 text-brand-dark border border-brand-accent text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-102 active:scale-98 flex items-center justify-center gap-2"
-                >
-                  <UserPlus className="w-4 h-4 text-brand-olive fill-current" />
-                  <span>註冊新麗人編號</span>
-                </button>
-
-                {/* Direct Soul Match CTA for guests — most prominent action */}
-                <div className="pt-2 border-t border-brand-border/40">
-                  <p className="text-[9px] text-center text-brand-light uppercase tracking-widest font-bold mb-2">— 或者直接開始 —</p>
+                {/* 1. Primary Action: AI test (Highest Weight) */}
+                <div className="space-y-2">
                   <button
                     id="btn-guest-soul-match-direct"
                     type="button"
                     onClick={onSoulMatchClick}
-                    className="w-full py-3 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
+                    className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
                   >
-                    <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse" />
+                    <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
                     <span>免費開始 AI 靈魂配對測試</span>
                   </button>
-                  <p className="text-[9px] text-center text-brand-light mt-1.5 leading-relaxed">
-                    推廣期間免費解鎖首位契合紳士完整資料
+                  <p className="text-[9.5px] text-center text-brand-muted font-medium leading-relaxed">
+                    🎯 首次訪問推薦：直接開始測驗，免除資產審核並在配對成功後自動建檔
                   </p>
+                </div>
+
+                {/* 2. Secondary Action: Create Code */}
+                <button
+                  type="button"
+                  onClick={handleLadyRegister}
+                  className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>註冊新麗人帳戶編號</span>
+                </button>
+
+                {/* 3. Folded Lower Weight Action: Transfer/Login (Toggled) */}
+                <div className="pt-3 border-t border-brand-border/30">
+                  <button
+                    type="button"
+                    onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
+                    className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors"
+                  >
+                    <span>已有麗人帳號？點此進行「設備轉移與登入」</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showLadyLoginInput && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden space-y-3 pt-3"
+                      >
+                        <p className="text-[9px] text-brand-light leading-relaxed bg-brand-border/5 p-2.5 rounded-xl border border-brand-border/20">
+                          ℹ️ <strong>帳號轉移提示：</strong> 當您在不同手機/電腦，或清除快取後需要恢復資料時，請輸入原有的麗人編號進行載入。
+                        </p>
+                        
+                        {ladyError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-1 text-[10px] text-red-650 font-bold"
+                          >
+                            <AlertCircle className="w-3 h-3 shrink-0" />
+                            <span>{ladyError}</span>
+                          </motion.p>
+                        )}
+
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={ladyCodeInput}
+                            onChange={(e) => {
+                              setLadyCodeInput(e.target.value);
+                              setLadyError("");
+                            }}
+                            placeholder="請輸入麗人編號 (UUID)"
+                            className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleLadyLogin}
+                            className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
+                          >
+                            確認登入
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
