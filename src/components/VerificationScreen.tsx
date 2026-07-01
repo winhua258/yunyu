@@ -1050,24 +1050,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   
                   {/* Option 1: Mock upload asset validation */}
                   <button
-                    onClick={async () => {
-                      setShowUpgradeModal(false);
-                      try {
-                        const level = lady.membershipLevel || "free";
-                        const updatedUnlocked = [...(lady.unlockedGentlemanCodes || [])];
-                        if (upgradeTargetProfile && !updatedUnlocked.includes(upgradeTargetProfile.code)) {
-                          updatedUnlocked.push(upgradeTargetProfile.code);
-                        }
-                        await simulateAssets(level, "approved", updatedUnlocked);
-                        alert("🎉 資料已上報！資產驗證成功模組已啟用！\n您已正式開通全站無限制自由預覽解鎖名額。");
-                        if (upgradeTargetProfile) {
-                          onVerifySuccess(upgradeTargetProfile.code);
-                        }
-                      } catch (e) {
-                        alert("模擬上傳失敗，請重試");
-                      }
+                    onClick={() => {
+                      alert("⏳ 此功能暫不開放，敬請期待。");
                     }}
-                    className="w-full flex items-center justify-between p-3 border border-[#06C755]/30 bg-[#06C755]/5 hover:bg-[#06C755]/10 rounded-2xl transition-all text-left"
+                    className="w-full flex items-center justify-between p-3 border border-[#06C755]/30 bg-[#06C755]/5 hover:bg-[#06C755]/10 rounded-2xl transition-all text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-[#06C755]">
@@ -1083,25 +1069,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
                   {/* Option 2: Upgrade to Experience Package */}
                   <button
-                    onClick={async () => {
-                      setShowUpgradeModal(false);
-                      try {
-                        const verified = lady.assetVerified || "none";
-                        // 前往體驗方案並解鎖此绅士
-                        const updatedUnlocked = [...(lady.unlockedGentlemanCodes || [])];
-                        if (upgradeTargetProfile && !updatedUnlocked.includes(upgradeTargetProfile.code)) {
-                          updatedUnlocked.push(upgradeTargetProfile.code);
-                        }
-                        await simulateAssets("experience", verified, updatedUnlocked);
-                        alert("🎉 付費體驗方案升級成功！\n解鎖上限提升至 2 位！已為您自動扣除 1 個名額解鎖。");
-                        if (upgradeTargetProfile) {
-                          onVerifySuccess(upgradeTargetProfile.code);
-                        }
-                      } catch (e) {
-                        alert("模擬升級失敗，請重試");
-                      }
+                    onClick={() => {
+                      alert("⏳ 此功能暫不開放，敬請期待。");
                     }}
-                    className="w-full flex items-center justify-between p-3 border border-brand-olive/30 bg-brand-olive/5 hover:bg-brand-olive/10 rounded-2xl transition-all text-left"
+                    className="w-full flex items-center justify-between p-3 border border-brand-olive/30 bg-brand-olive/5 hover:bg-brand-olive/10 rounded-2xl transition-all text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-brand-olive/10 flex items-center justify-center text-brand-olive">
@@ -1117,24 +1088,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
                   {/* Option 3: Upgrade to Full VIP */}
                   <button
-                    onClick={async () => {
-                      setShowUpgradeModal(false);
-                      try {
-                        const verified = lady.assetVerified || "none";
-                        const updatedUnlocked = [...(lady.unlockedGentlemanCodes || [])];
-                        if (upgradeTargetProfile && !updatedUnlocked.includes(upgradeTargetProfile.code)) {
-                          updatedUnlocked.push(upgradeTargetProfile.code);
-                        }
-                        await simulateAssets("vip", verified, updatedUnlocked);
-                        alert("🥇 尊榮 VIP 套餐開通成功！\n您已自動配享全能解鎖預覽權限。");
-                        if (upgradeTargetProfile) {
-                          onVerifySuccess(upgradeTargetProfile.code);
-                        }
-                      } catch (e) {
-                        alert("模擬升級失敗，請重試");
-                      }
+                    onClick={() => {
+                      alert("⏳ 此功能暫不開放，敬請期待。");
                     }}
-                    className="w-full flex items-center justify-between p-3 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 rounded-2xl transition-all text-left"
+                    className="w-full flex items-center justify-between p-3 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 rounded-2xl transition-all text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
