@@ -68,6 +68,7 @@ const LadyProfileSchema = new mongoose.Schema({
   ipAddress: { type: String, default: "" },
   userAgent: { type: String, default: "" }, // 裝置 User-Agent
   deviceModel: { type: String, default: "" }, // 裝置精確型號名稱 (如 iPhone 11)
+  canvasFingerprint: { type: String, default: "" }, // 帆布硬體指紋
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -279,16 +280,52 @@ function getClientIp(req) {
   return req.ip;
 }
 
+// 記憶體中的 IP 註冊追蹤 (IP -> timestamps array)
+const ipRegistrationLimits = new Map();
+const LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 分鐘
+const MAX_REGISTRATIONS_PER_WINDOW = 3; // 最多 3 次註冊
+
+// 定期自動清理 Map 釋放記憶體，避免 Memory Leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, timestamps] of ipRegistrationLimits.entries()) {
+    const active = timestamps.filter(t => now - t < LIMIT_WINDOW_MS);
+    if (active.length === 0) {
+      ipRegistrationLimits.delete(ip);
+    } else {
+      ipRegistrationLimits.set(ip, active);
+    }
+  }
+}, 15 * 60 * 1000).unref();
+
 // POST /api/lady/register: 模擬女性用戶註冊
 app.post("/api/lady/register", async (req, res) => {
   try {
-    const { name, photoUrl, deviceId, deviceModel } = req.body;
+    const { name, photoUrl, deviceId, deviceModel, canvasFingerprint } = req.body;
     const clientIp = getClientIp(req);
 
-    // 設備指紋攔截機制：防止重複註冊多個帳號
+    // 1. IP 註冊頻率限制 (Rate Limiting)
+    if (clientIp) {
+      const now = Date.now();
+      let timestamps = ipRegistrationLimits.get(clientIp) || [];
+      timestamps = timestamps.filter(t => now - t < LIMIT_WINDOW_MS);
+      if (timestamps.length >= MAX_REGISTRATIONS_PER_WINDOW) {
+        return res.status(429).json({ 
+          message: "偵測到您的網路連線近期已註冊多個帳號，為防範異常洗版，請稍後（10分鐘）再試。或聯繫客服人員人工排程。" 
+        });
+      }
+      timestamps.push(now);
+      ipRegistrationLimits.set(clientIp, timestamps);
+    }
+
+    // 2. 設備指紋與帆布硬體指紋雙重攔截機制：防止重複註冊多個帳號
     let existingLady = null;
     if (deviceId) {
       existingLady = await LadyProfile.findOne({ deviceId });
+    }
+    if (!existingLady && canvasFingerprint) {
+      // 就算用戶清空了 localStorage (deviceId 變新)，只要硬體帆布指紋相同，依然能進行加載/攔截！
+      existingLady = await LadyProfile.findOne({ canvasFingerprint });
     }
 
     if (existingLady) {
@@ -296,6 +333,10 @@ app.post("/api/lady/register", async (req, res) => {
       let changed = false;
       if (deviceModel && existingLady.deviceModel !== deviceModel) {
         existingLady.deviceModel = deviceModel;
+        changed = true;
+      }
+      if (canvasFingerprint && existingLady.canvasFingerprint !== canvasFingerprint) {
+        existingLady.canvasFingerprint = canvasFingerprint;
         changed = true;
       }
       const userAgent = req.headers["user-agent"] || "";
@@ -312,9 +353,9 @@ app.post("/api/lady/register", async (req, res) => {
         await existingLady.save();
       }
 
-      console.log(`[Scan Match] Auto-login for duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}) to code: ${existingLady.code}`);
+      console.log(`[Scan Match] Auto-login for duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}, Canvas: ${canvasFingerprint}) to code: ${existingLady.code}`);
       return res.status(200).json({ 
-        message: "偵測到您的設備或 IP 已有註冊記錄，已自動為您載入原有帳戶。", 
+        message: "偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。", 
         lady: existingLady 
       });
     }
@@ -326,6 +367,7 @@ app.post("/api/lady/register", async (req, res) => {
       isVerified: true, // 模擬已驗證
       photoUrl: photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800",
       deviceId: deviceId || "",
+      canvasFingerprint: canvasFingerprint || "",
       ipAddress: clientIp || "",
       userAgent: req.headers["user-agent"] || "",
       deviceModel: deviceModel || ""

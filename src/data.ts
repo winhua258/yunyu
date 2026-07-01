@@ -316,6 +316,45 @@ function getOrCreateDeviceId(): string {
   return devId;
 }
 
+// 獲取 Canvas 硬體帆布指紋 + 高熵特徵組合成設備指紋
+function getCanvasFingerprint(): string {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    canvas.width = 200;
+    canvas.height = 50;
+    ctx.textBaseline = "top";
+    ctx.font = "14px 'Arial'";
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle = "#069";
+    ctx.fillText("yuanyu_soulmatch_fingerprint_😊", 2, 15);
+    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+    ctx.fillText("yuanyu_soulmatch_fingerprint_😊", 4, 17);
+    
+    const canvasData = canvas.toDataURL();
+    // 結合螢幕解析度、時區差與 User-Agent 提高熵值，防止不同設備碰撞
+    const extraInfo = [
+      navigator.userAgent,
+      screen.width,
+      screen.height,
+      screen.colorDepth,
+      new Date().getTimezoneOffset()
+    ].join('||');
+    
+    const combined = canvasData + "||" + extraInfo;
+    let hash = 0;
+    for (let i = 0; i < combined.length; i++) {
+      hash = (hash << 5) - hash + combined.charCodeAt(i);
+      hash |= 0;
+    }
+    return 'fp_' + Math.abs(hash).toString(36);
+  } catch (e) {
+    return '';
+  }
+}
+
 /**
  * Registers a new lady profile.
  * @param name - Optional name for the lady.
@@ -325,11 +364,12 @@ function getOrCreateDeviceId(): string {
 export async function registerLady(name?: string, photoUrl?: string): Promise<LadyProfile> {
   try {
     const deviceId = getOrCreateDeviceId();
+    const canvasFingerprint = getCanvasFingerprint();
     const deviceModel = await detectPreciseDeviceModel();
     const response = await fetch("/api/lady/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, photoUrl, deviceId, deviceModel }),
+      body: JSON.stringify({ name, photoUrl, deviceId, deviceModel, canvasFingerprint }),
     });
     if (!response.ok) {
       const errorData = await response.json();

@@ -52,6 +52,7 @@ export interface LadyProfile {
   unlockedGentlemanCodes?: string[];
   quizAnswers?: number[];
   deviceId?: string;
+  canvasFingerprint?: string;
   ipAddress?: string;
   userAgent?: string;
   deviceModel?: string;

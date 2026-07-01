@@ -508,3 +508,25 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，問候語隨機化順暢完美。
 - **提交哈希**：ac259c26e3f3a4ac600ffa650a017f665309a028
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第二十四輪：實作 IP 註冊頻率限制與 Canvas 帆布硬體指紋防刷機制
+
+- **本輪目標**：針對免費卡片與 AI 測驗防刷，執行兩大安全升級策略：1. 在後端實作 IP 註冊頻率限制；2. 在前台實作 HTML5 Canvas 帆布硬體特徵指紋比對去重攔截。
+- **發現的問題**：
+  - 移除了 IP 匹配自動載入的降級邏輯（以防止 NAT 串號）後，惡意訪客可以輕易透過開啟「無痕/隱私模式」或手動「清除瀏覽器 LocalStorage 快取」來重複註冊全新的麗人帳戶，藉此繞過答題次數限制並洗刷免費卡片額度。
+- **修改內容**：
+  - `server.js`：
+    - 在內存中新增一個具備定時主動清理機制的 IP 註冊頻率追蹤 Map：`ipRegistrationLimits`。
+    - 在註冊端點 `POST /api/lady/register` 中加入第一重防護：同一個 IP 地址，在 10 分鐘內最多僅允許註冊 3 個麗人帳戶。超出即回傳 HTTP 429 錯誤與中文警告提示。
+    - 在 LadyProfileSchema 中新增 `canvasFingerprint: { type: String, default: "" }` 欄位。
+    - 註冊端點支持提取 `canvasFingerprint` 請求參數。若在 `deviceId` 查無舊用戶時，降級使用 `canvasFingerprint` 進行去重比對。若完全相同，則自動攔截並載入其舊帳戶，實施閉環阻斷。
+  - `src/types.ts`：
+    - `LadyProfile` 補齊 `canvasFingerprint` 屬性。
+  - `src/data.ts`：
+    - 實作前台高熵 Canvas 指紋運算函式 `getCanvasFingerprint()`：利用 HTML5 Canvas 繪製隱藏的彩色混合漸層與 Emoji 特徵，並融合 User-Agent、螢幕解析度（寬、高、顏色深度）以及時區偏移值，產生具備高度唯一且極難篡改的硬體帆布特徵雜湊碼（例如 `fp_xxxx`）。
+    - 修改 `registerLady`，使其在向後端註冊新帳號時，同步遞交此硬體 Canvas 指紋。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，兩大防刷限制運作完美。
+- **提交哈希**：3d06e858ef15d2a4d909709f5c6045666bada84f
+- **是否已經收斂**：是。
