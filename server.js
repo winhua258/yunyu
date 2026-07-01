@@ -403,6 +403,60 @@ app.post("/api/lady/:code/simulate-assets", async (req, res) => {
     res.status(500).json({ message: "模擬變更失敗。" });
   }
 });
+// --- Admin Lady Management API ---
+
+// GET /api/admin/ladies: 獲取所有已註冊麗人列表（管理員專用）
+app.get("/api/admin/ladies", adminAuth, async (req, res) => {
+  try {
+    const ladies = await LadyProfile.find({}).sort({ createdAt: -1 }).lean();
+    res.json({ ladies });
+  } catch (error) {
+    console.error("Error fetching ladies:", error);
+    res.status(500).json({ message: "獲取麗人列表失敗。" });
+  }
+});
+
+// POST /api/admin/lady/:code/update: 管理員直接修改麗人帳號資料
+app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode } = req.body;
+
+    const lady = await LadyProfile.findOne({ code });
+    if (!lady) {
+      return res.status(404).json({ message: "查無此女性用戶編號。" });
+    }
+
+    if (membershipLevel !== undefined) lady.membershipLevel = membershipLevel;
+    if (assetVerified !== undefined) lady.assetVerified = assetVerified;
+    if (unlockedGentlemanCodes !== undefined) lady.unlockedGentlemanCodes = unlockedGentlemanCodes;
+    if (quizTaken !== undefined) lady.quizTaken = quizTaken;
+    if (matchedGentlemanCode !== undefined) lady.matchedGentlemanCode = matchedGentlemanCode;
+
+    lady.updatedAt = new Date();
+    await lady.save();
+    res.json({ message: "麗人帳號已由管理員更新。", lady });
+  } catch (error) {
+    console.error("Error updating lady by admin:", error);
+    res.status(500).json({ message: "更新失敗。" });
+  }
+});
+
+// DELETE /api/admin/lady/:code: 管理員永久刪除麗人帳號
+app.delete("/api/admin/lady/:code", adminAuth, async (req, res) => {
+  try {
+    const { code } = req.params;
+    const result = await LadyProfile.deleteOne({ code });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "查無此女性用戶編號。" });
+    }
+    res.json({ message: "麗人帳號已永久刪除。" });
+  } catch (error) {
+    console.error("Error deleting lady by admin:", error);
+    res.status(500).json({ message: "刪除失敗。" });
+  }
+});
+
 // POST /api/generate: Google GenAI API (暫時停用，待適配新版SDK)
 app.post("/api/generate", async (req, res) => {
   return res.status(503).json({ message: "AI 生成功能暫時維護中。" });

@@ -21,14 +21,24 @@ import {
   ChevronRight,
   X,
   Lock,
-  RefreshCw
+  RefreshCw,
+  Users,
+  BarChart2,
+  Crown,
+  ShieldCheck,
+  Smartphone,
+  Globe,
+  Edit2
 } from "lucide-react";
-import { Profile, PersonalityMetrics } from "../types";
+import { Profile, PersonalityMetrics, LadyProfile } from "../types";
 import { 
   DEFAULT_PROFILES, 
   DEFAULT_METRICS,
   syncSharedConfig,
   resetDatabaseToDefaults,
+  fetchAllLadies,
+  updateLadyByAdmin,
+  deleteLadyByAdmin,
 } from "../data";
 import { useData } from "./DataContext";
 
@@ -85,10 +95,83 @@ const METRIC_CATEGORIES = [
   }
 ];
 
+type AdminTab = "gentlemen" | "ladies" | "analytics";
+
 export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   // Load global data from context
   const { profiles, metrics: allMetrics, adminCodes, refreshData, isDataLoading, setOptimisticData } = useData();
-  
+
+  // Main tab state
+  const [activeTab, setActiveTab] = useState<AdminTab>("gentlemen");
+
+  // --- Ladies Panel State ---
+  const [ladies, setLadies] = useState<LadyProfile[]>([]);
+  const [ladiesLoading, setLadiesLoading] = useState(false);
+  const [ladiesError, setLadiesError] = useState("");
+  const [editLady, setEditLady] = useState<LadyProfile | null>(null);
+  const [ladyEditMembership, setLadyEditMembership] = useState("");
+  const [ladyEditAsset, setLadyEditAsset] = useState("");
+  const [ladyEditSaving, setLadyEditSaving] = useState(false);
+  const [ladyEditMsg, setLadyEditMsg] = useState("");
+
+  const loadLadies = React.useCallback(async () => {
+    if (!adminCodes[0]) return;
+    setLadiesLoading(true);
+    setLadiesError("");
+    try {
+      const data = await fetchAllLadies(adminCodes[0]);
+      setLadies(data);
+    } catch (e: unknown) {
+      setLadiesError(e instanceof Error ? e.message : "獲取失敗");
+    } finally {
+      setLadiesLoading(false);
+    }
+  }, [adminCodes]);
+
+  React.useEffect(() => {
+    if (activeTab === "ladies" || activeTab === "analytics") {
+      void loadLadies();
+    }
+  }, [activeTab, loadLadies]);
+
+  const handleOpenEditLady = (lady: LadyProfile) => {
+    setEditLady(lady);
+    setLadyEditMembership(lady.membershipLevel || "free");
+    setLadyEditAsset(lady.assetVerified || "none");
+    setLadyEditMsg("");
+  };
+
+  const handleSaveLady = async () => {
+    if (!editLady || !adminCodes[0]) return;
+    setLadyEditSaving(true);
+    try {
+      const updated = await updateLadyByAdmin(
+        editLady.code,
+        { membershipLevel: ladyEditMembership, assetVerified: ladyEditAsset },
+        adminCodes[0]
+      );
+      setLadies(prev => prev.map(l => l.code === updated.code ? updated : l));
+      setLadyEditMsg("已儲存！");
+      setTimeout(() => { setEditLady(null); setLadyEditMsg(""); }, 1200);
+    } catch (e: unknown) {
+      setLadyEditMsg(e instanceof Error ? e.message : "儲存失敗");
+    } finally {
+      setLadyEditSaving(false);
+    }
+  };
+
+  const handleDeleteLady = async (code: string, name: string) => {
+    if (!adminCodes[0]) return;
+    if (!window.confirm(`確定要永久刪除麗人「${name}」的帳號嗎？此動作無法復原。`)) return;
+    try {
+      await deleteLadyByAdmin(code, adminCodes[0]);
+      setLadies(prev => prev.filter(l => l.code !== code));
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "刪除失敗");
+    }
+  };
+
+  // --- Gentlemen Panel State ---
   // Currently selected profile to edit
   const [selectedCode, setSelectedCode] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -509,13 +592,13 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               Yuan-Yu Administration // 緣友運營主控台
             </span>
             <h1 className="text-2xl md:text-3xl font-serif font-bold tracking-wider text-white">
-              紳士會員檔案管理系統
+              緣友全域運營主控台
             </h1>
             <p className="text-xs text-brand-light/90 max-w-xl leading-relaxed">
-              在此可自由更改 4 位尊榮紳士的個人檔案及 20 維性格特質。儲存後，麗人答題「AI 靈魂共鳴測驗」的配對對象以及紳士「專屬驗資登入」皆會自動讀取最新變更，實現即時更換與營運。
+              管理紳士檔案、麗人帳號，並可視化查看平台訪問量、地區分佈與答題人數。
             </p>
           </div>
-          
+
           <div className="flex flex-col gap-3 self-start md:self-center shrink-0">
             <button
               id="btn-admin-force-refresh"
@@ -538,6 +621,34 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
             </button>
           </div>
         </div>
+
+        {/* ===== MAIN TAB SWITCHER ===== */}
+        <div className="bg-white p-2 rounded-2xl shadow-md border border-brand-border/60 flex gap-2">
+          {([
+            { id: "gentlemen" as AdminTab, icon: <User className="w-4 h-4" />, label: "紳士檔案管理" },
+            { id: "ladies" as AdminTab, icon: <Users className="w-4 h-4" />, label: "麗人帳號管理" },
+            { id: "analytics" as AdminTab, icon: <BarChart2 className="w-4 h-4" />, label: "可視化儀表板" },
+          ] as { id: AdminTab; icon: React.ReactNode; label: string }[]).map(tab => (
+            <button
+              key={tab.id}
+              id={`btn-admin-main-tab-${tab.id}`}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer flex-1 justify-center ${
+                activeTab === tab.id
+                  ? "bg-brand-dark text-white shadow-md"
+                  : "text-brand-olive hover:bg-brand-beige/60"
+              }`}
+            >
+              {tab.icon}
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ===== GENTLEMEN TAB ===== */}
+        {activeTab === "gentlemen" && (
+        <div className="flex flex-col gap-8">
 
         {/* Profile Tabs Selector */}
         <div className="bg-white p-3 rounded-2xl md:rounded-full shadow-md border border-brand-border/60 flex flex-col md:flex-row gap-2">
@@ -1222,9 +1333,369 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
             </div>
           </div>
 
+        </div>{/* end gentlemen inner wrapper */}
         </div>
+        )}{/* end gentlemen tab */}
 
-      </div>
+        {/* ===== LADIES MANAGEMENT TAB ===== */}
+        {activeTab === "ladies" && (
+          <div className="flex flex-col gap-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "總麗人數", value: ladies.length, icon: <Users className="w-5 h-5" />, color: "bg-brand-olive" },
+                { label: "已答題", value: ladies.filter(l => l.quizTaken).length, icon: <Check className="w-5 h-5" />, color: "bg-emerald-600" },
+                { label: "VIP 會員", value: ladies.filter(l => l.membershipLevel === "vip").length, icon: <Crown className="w-5 h-5" />, color: "bg-amber-600" },
+                { label: "已驗資", value: ladies.filter(l => l.assetVerified === "approved").length, icon: <ShieldCheck className="w-5 h-5" />, color: "bg-blue-600" },
+              ].map((card, i) => (
+                <div key={i} className="bg-white rounded-2xl p-5 shadow border border-brand-border/60 flex flex-col gap-2">
+                  <div className={`${card.color} text-white rounded-xl w-9 h-9 flex items-center justify-center`}>{card.icon}</div>
+                  <div className="text-2xl font-bold font-serif text-brand-dark">{card.value}</div>
+                  <div className="text-[11px] text-brand-muted uppercase tracking-wider">{card.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Refresh button */}
+            <div className="flex items-center gap-3">
+              <button
+                id="btn-ladies-refresh"
+                type="button"
+                onClick={() => void loadLadies()}
+                disabled={ladiesLoading}
+                className="flex items-center gap-2 px-4 py-2 border border-brand-olive/50 rounded-full text-xs font-bold text-brand-olive hover:bg-brand-olive/10 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${ladiesLoading ? "animate-spin" : ""}`} />
+                <span>{ladiesLoading ? "載入中..." : "重新整理"}</span>
+              </button>
+              {ladiesError && <span className="text-xs text-red-500">{ladiesError}</span>}
+              <span className="text-xs text-brand-muted ml-auto">共 {ladies.length} 位麗人，按最新註冊排序</span>
+            </div>
+
+            {/* Ladies Table */}
+            <div className="bg-white rounded-2xl shadow border border-brand-border/60 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-brand-beige/60 border-b border-brand-border/40">
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">UUID</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">名稱</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">IP</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden lg:table-cell">設備 ID</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">會員</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">答題</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden md:table-cell">驗資</th>
+                      <th className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider hidden lg:table-cell">註冊時間</th>
+                      <th className="text-right px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ladiesLoading && (
+                      <tr><td colSpan={9} className="text-center py-10 text-brand-muted">載入中...</td></tr>
+                    )}
+                    {!ladiesLoading && ladies.length === 0 && (
+                      <tr><td colSpan={9} className="text-center py-10 text-brand-muted">尚無已註冊的麗人</td></tr>
+                    )}
+                    {ladies.map((lady, idx) => (
+                      <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
+                        <td className="px-4 py-3 font-mono text-brand-dark">{lady.code.slice(0, 8)}…</td>
+                        <td className="px-4 py-3 font-semibold text-brand-dark">{lady.name || "未命名"}</td>
+                        <td className="px-4 py-3 text-brand-muted hidden md:table-cell">{lady.ipAddress || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-brand-muted hidden lg:table-cell">{lady.deviceId ? lady.deviceId.slice(0, 14) + "…" : "—"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                            lady.membershipLevel === "vip" ? "bg-amber-100 text-amber-700" :
+                            lady.membershipLevel === "experience" ? "bg-blue-100 text-blue-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>
+                            {lady.membershipLevel === "vip" ? <Crown className="w-3 h-3" /> : null}
+                            {lady.membershipLevel || "free"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {lady.quizTaken
+                            ? <span className="text-emerald-600 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5" />是</span>
+                            : <span className="text-brand-muted">否</span>
+                          }
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <span className={`font-semibold ${
+                            lady.assetVerified === "approved" ? "text-emerald-600" :
+                            lady.assetVerified === "pending" ? "text-amber-600" :
+                            "text-brand-muted"
+                          }`}>
+                            {lady.assetVerified === "approved" ? "✓已驗資" : lady.assetVerified === "pending" ? "審核中" : "未驗資"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-brand-muted hidden lg:table-cell">
+                          {lady.createdAt ? new Date(lady.createdAt as string).toLocaleDateString("zh-TW") : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <button
+                              id={`btn-lady-edit-${idx}`}
+                              type="button"
+                              onClick={() => handleOpenEditLady(lady)}
+                              className="p-1.5 rounded-lg text-brand-olive hover:bg-brand-olive/10 transition-colors cursor-pointer"
+                              title="編輯會員資格"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              id={`btn-lady-delete-${idx}`}
+                              type="button"
+                              onClick={() => void handleDeleteLady(lady.code, lady.name || "未命名")}
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                              title="刪除帳號"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}{/* end ladies tab */}
+
+        {/* ===== ANALYTICS DASHBOARD TAB ===== */}
+        {activeTab === "analytics" && (() => {
+          const total = ladies.length;
+          const quizDone = ladies.filter(l => l.quizTaken).length;
+          const quizRate = total > 0 ? Math.round((quizDone / total) * 100) : 0;
+          const vipCount = ladies.filter(l => l.membershipLevel === "vip").length;
+          const expCount = ladies.filter(l => l.membershipLevel === "experience").length;
+          const freeCount = total - vipCount - expCount;
+          const approvedCount = ladies.filter(l => l.assetVerified === "approved").length;
+          const pendingCount = ladies.filter(l => l.assetVerified === "pending").length;
+
+          // IP region grouping (static prefix mapping)
+          const regionMap: Record<string, string> = {
+            "202.160": "台灣（中華電信）", "61.": "台灣（台灣大哥大）", "114.": "台灣（遠傳）",
+            "218.": "台灣（亞太）", "223.": "台灣（台灣之星）", "1.": "台灣（台灣固網）",
+            "211.": "香港", "210.": "香港", "103.": "香港/東南亞",
+            "65.181": "美國/VPN", "192.168": "本地（開發）", "127.": "本地（開發）",
+          };
+          const regionCounts: Record<string, number> = {};
+          ladies.forEach(l => {
+            if (!l.ipAddress) return;
+            const region = Object.entries(regionMap).find(([prefix]) => (l.ipAddress as string).startsWith(prefix))?.[1] ?? "其他/未知";
+            regionCounts[region] = (regionCounts[region] || 0) + 1;
+          });
+          const regionEntries = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]);
+          const maxRegion = regionEntries[0]?.[1] || 1;
+
+          // Circle SVG for quiz completion rate
+          const circumference = 2 * Math.PI * 52;
+          const dashOffset = circumference * (1 - quizRate / 100);
+
+          const today = new Date().toDateString();
+          const todayNew = ladies.filter(l => l.createdAt && new Date(l.createdAt as string).toDateString() === today).length;
+          const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          const week7 = ladies.filter(l => l.createdAt && new Date(l.createdAt as string).getTime() >= sevenDaysAgo).length;
+
+          return (
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void loadLadies()}
+                  disabled={ladiesLoading}
+                  className="flex items-center gap-2 px-4 py-2 border border-brand-olive/50 rounded-full text-xs font-bold text-brand-olive hover:bg-brand-olive/10 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${ladiesLoading ? "animate-spin" : ""}`} />
+                  <span>{ladiesLoading ? "載入中..." : "重新整理"}</span>
+                </button>
+                {ladiesError && <span className="text-xs text-red-500">{ladiesError}</span>}
+              </div>
+
+              {/* KPI Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "總訪客（已註冊）", value: total, sub: "全時段", icon: <Globe className="w-5 h-5" />, color: "bg-brand-olive" },
+                  { label: "今日新增", value: todayNew, sub: "今天", icon: <Users className="w-5 h-5" />, color: "bg-emerald-600" },
+                  { label: "近 7 日新增", value: week7, sub: "過去一週", icon: <Calendar className="w-5 h-5" />, color: "bg-blue-600" },
+                  { label: "已完成答題", value: quizDone, sub: `共 ${total} 位`, icon: <Check className="w-5 h-5" />, color: "bg-amber-600" },
+                ].map((card, i) => (
+                  <div key={i} className="bg-white rounded-2xl p-5 shadow border border-brand-border/60 flex flex-col gap-2">
+                    <div className={`${card.color} text-white rounded-xl w-9 h-9 flex items-center justify-center`}>{card.icon}</div>
+                    <div className="text-3xl font-bold font-serif text-brand-dark">{card.value}</div>
+                    <div className="text-[11px] text-brand-muted uppercase tracking-wider">{card.label}</div>
+                    <div className="text-[10px] text-brand-light">{card.sub}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {/* Answer Completion Ring */}
+                <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col items-center gap-4">
+                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase">答題完成率</h3>
+                  <div className="relative w-32 h-32">
+                    <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                      <circle cx="60" cy="60" r="52" fill="none" stroke="#f0ede5" strokeWidth="12" />
+                      <circle
+                        cx="60" cy="60" r="52" fill="none"
+                        stroke="#6b6b47"
+                        strokeWidth="12"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={dashOffset}
+                        className="transition-all duration-700"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold font-serif text-brand-dark">{quizRate}%</span>
+                      <span className="text-[10px] text-brand-muted">完成率</span>
+                    </div>
+                  </div>
+                  <div className="text-center text-xs text-brand-muted">
+                    {quizDone} 位已答題 / {total - quizDone} 位未答題
+                  </div>
+                </div>
+
+                {/* Membership Distribution */}
+                <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col gap-4">
+                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase">會員等級分佈</h3>
+                  <div className="flex flex-col gap-3 flex-1 justify-center">
+                    {[
+                      { label: "VIP 尊榮", count: vipCount, color: "bg-amber-400", textColor: "text-amber-700" },
+                      { label: "體驗方案", count: expCount, color: "bg-blue-400", textColor: "text-blue-700" },
+                      { label: "免費用戶", count: freeCount, color: "bg-gray-300", textColor: "text-gray-600" },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center gap-3">
+                        <div className="text-xs font-semibold w-20 text-right text-brand-dark shrink-0">{item.label}</div>
+                        <div className="flex-1 bg-brand-beige/60 rounded-full h-4 overflow-hidden">
+                          <div
+                            className={`${item.color} h-4 rounded-full transition-all duration-700`}
+                            style={{ width: total > 0 ? `${(item.count / total) * 100}%` : "0%" }}
+                          />
+                        </div>
+                        <div className={`text-xs font-bold w-8 ${item.textColor}`}>{item.count}</div>
+                      </div>
+                    ))}
+                    <div className="mt-3 pt-3 border-t border-brand-border/30 flex flex-col gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="text-xs font-semibold w-20 text-right text-brand-dark shrink-0">已驗資</div>
+                        <div className="flex-1 bg-brand-beige/60 rounded-full h-4 overflow-hidden">
+                          <div className="bg-emerald-400 h-4 rounded-full transition-all duration-700" style={{ width: total > 0 ? `${(approvedCount / total) * 100}%` : "0%" }} />
+                        </div>
+                        <div className="text-xs font-bold w-8 text-emerald-700">{approvedCount}</div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-xs font-semibold w-20 text-right text-brand-dark shrink-0">審核中</div>
+                        <div className="flex-1 bg-brand-beige/60 rounded-full h-4 overflow-hidden">
+                          <div className="bg-amber-300 h-4 rounded-full transition-all duration-700" style={{ width: total > 0 ? `${(pendingCount / total) * 100}%` : "0%" }} />
+                        </div>
+                        <div className="text-xs font-bold w-8 text-amber-700">{pendingCount}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Region Bar Chart */}
+                <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col gap-4">
+                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-brand-olive" />
+                    訪問地區分佈
+                  </h3>
+                  {regionEntries.length === 0 ? (
+                    <div className="text-xs text-brand-muted text-center py-8">暫無訪問地區資料</div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 flex-1 justify-center">
+                      {regionEntries.slice(0, 6).map(([region, count]) => (
+                        <div key={region} className="flex items-center gap-2">
+                          <div className="text-[10px] font-semibold text-brand-dark w-28 shrink-0 truncate text-right">{region}</div>
+                          <div className="flex-1 bg-brand-beige/60 rounded-full h-3.5 overflow-hidden">
+                            <div
+                              className="bg-brand-olive h-3.5 rounded-full transition-all duration-700"
+                              style={{ width: `${(count / maxRegion) * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-xs font-bold text-brand-olive w-5 text-right">{count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="text-[10px] text-brand-light text-center mt-1">* 基於 IP 前綴靜態映射</div>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}{/* end analytics tab */}
+
+      </div>{/* end main content wrapper */}
+
+      {/* ===== LADY EDIT MODAL ===== */}
+      <AnimatePresence>
+        {editLady && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-brand-dark/50 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-brand-beige w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-brand-border/80 space-y-5"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-base font-bold text-brand-dark">編輯麗人會員資格</h3>
+                <button type="button" onClick={() => setEditLady(null)} className="p-1.5 rounded-full hover:bg-brand-border/40 transition-colors cursor-pointer"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="text-xs text-brand-muted font-mono bg-white px-3 py-2 rounded-xl border border-brand-border/50">
+                UUID: {editLady.code}
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">會員等級</label>
+                  <select
+                    value={ladyEditMembership}
+                    onChange={e => setLadyEditMembership(e.target.value)}
+                    className="w-full bg-white border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive cursor-pointer"
+                  >
+                    <option value="free">免費用戶 (free)</option>
+                    <option value="experience">體驗方案 (experience)</option>
+                    <option value="vip">VIP 尊榮 (vip)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-brand-muted uppercase tracking-wider mb-1.5">驗資狀態</label>
+                  <select
+                    value={ladyEditAsset}
+                    onChange={e => setLadyEditAsset(e.target.value)}
+                    className="w-full bg-white border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive cursor-pointer"
+                  >
+                    <option value="none">未驗資 (none)</option>
+                    <option value="pending">審核中 (pending)</option>
+                    <option value="approved">已驗資 (approved)</option>
+                  </select>
+                </div>
+              </div>
+              {ladyEditMsg && (
+                <div className={`text-xs px-3 py-2 rounded-xl font-semibold ${ladyEditMsg === "已儲存！" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+                  {ladyEditMsg}
+                </div>
+              )}
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setEditLady(null)}
+                  className="flex-1 py-2.5 border border-brand-border text-brand-olive hover:bg-brand-border/20 text-xs font-bold tracking-widest uppercase rounded-xl transition-all cursor-pointer"
+                >取消</button>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveLady()}
+                  disabled={ladyEditSaving}
+                  className="flex-1 py-2.5 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all shadow cursor-pointer disabled:opacity-50"
+                >{ladyEditSaving ? "儲存中..." : "確認儲存"}</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Add Member Modal Overlay */}
       <AnimatePresence>

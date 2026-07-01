@@ -48,6 +48,8 @@ export interface LadyProfile {
   membershipLevel?: string;
   assetVerified?: string;
   unlockedGentlemanCodes?: string[];
+  deviceId?: string;
+  ipAddress?: string;
   createdAt?: string;
   updatedAt?: string;
 }

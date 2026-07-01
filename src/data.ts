@@ -401,3 +401,59 @@ export async function simulateLadyAssets(
   const { lady } = await response.json();
   return lady;
 }
+
+/**
+ * Admin: Fetch all registered ladies.
+ */
+export async function fetchAllLadies(adminCode: string): Promise<LadyProfile[]> {
+  const response = await fetch("/api/admin/ladies", {
+    headers: { "x-admin-code": adminCode },
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "獲取麗人列表失敗。");
+  }
+  const { ladies } = await response.json();
+  return ladies;
+}
+
+/**
+ * Admin: Update a lady's membership/quiz status directly.
+ */
+export async function updateLadyByAdmin(
+  code: string,
+  data: {
+    membershipLevel?: string;
+    assetVerified?: string;
+    unlockedGentlemanCodes?: string[];
+    quizTaken?: boolean;
+    matchedGentlemanCode?: string | null;
+  },
+  adminCode: string
+): Promise<LadyProfile> {
+  const response = await fetch(`/api/admin/lady/${code}/update`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "更新失敗。");
+  }
+  const { lady } = await response.json();
+  return lady;
+}
+
+/**
+ * Admin: Permanently delete a lady account.
+ */
+export async function deleteLadyByAdmin(code: string, adminCode: string): Promise<void> {
+  const response = await fetch(`/api/admin/lady/${code}`, {
+    method: "DELETE",
+    headers: { "x-admin-code": adminCode },
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "刪除失敗。");
+  }
+}
