@@ -36,6 +36,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
 
   const images = (profile.imageUrls && profile.imageUrls.length > 0
     ? profile.imageUrls
@@ -47,6 +48,12 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
     setImageLoaded(false);
     setIsDetailsExpanded(false); // Reset to collapsed when switching profiles
   }, [profile]);
+
+  React.useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      setImageLoaded(true);
+    }
+  }, [currentImageIndex, images]);
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -246,6 +253,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/40 via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-500 z-10" />
 
             <img
+              ref={imgRef}
               key={currentImageIndex}
               src={images[currentImageIndex]}
               alt={profile.name}
@@ -328,7 +336,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className={`absolute bottom-[-10px] left-[-10px] sm:left-[-30px] bg-white rounded-3xl shadow-xl border border-brand-border/60 backdrop-blur-sm z-20 cursor-pointer transition-all duration-300 select-none ${
-              isDetailsExpanded ? "p-6 w-64 animate-none" : "p-4 w-56 sm:w-60 flex items-start hover:scale-105"
+              isDetailsExpanded ? "p-6 w-64 animate-none" : "p-2.5 w-44 sm:w-48 flex items-center hover:scale-105"
             }`}
           >
             {isDetailsExpanded ? (
@@ -347,12 +355,12 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 </p>
               </div>
             ) : (
-              <div className="flex items-start gap-2 w-full text-left overflow-hidden min-w-0">
-                <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse shrink-0 mt-1.5" />
-                <div className="text-xs leading-relaxed text-brand-olive font-serif min-w-0 select-none">
+              <div className="flex items-center gap-1.5 w-full text-left overflow-hidden min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse shrink-0" />
+                <div className="text-[10px] leading-none text-brand-olive font-serif min-w-0 truncate select-none">
                   <span className="font-bold">理想生活細節：</span>
-                  <span className="text-brand-muted line-clamp-2">
-                    {profile.cardDetail || "暫無細節說明..."}
+                  <span className="text-brand-muted">
+                    {profile.cardDetail ? profile.cardDetail.slice(0, 4) + "..." : "無..."}
                   </span>
                 </div>
               </div>
