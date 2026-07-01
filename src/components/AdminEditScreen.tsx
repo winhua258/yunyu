@@ -273,13 +273,22 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
   const handleDeleteLady = async (code: string, name: string) => {
     if (!adminCodes[0]) return;
-    if (!window.confirm(`確定要永久刪除麗人「${name}」的帳號嗎？此動作無法復原。`)) return;
-    try {
-      await deleteLadyByAdmin(code, adminCodes[0]);
-      setLadies(prev => prev.filter(l => l.code !== code));
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "刪除失敗");
-    }
+    setConfirmModal({
+      show: true,
+      title: "永久刪除麗人帳號",
+      message: `確定要永久刪除麗人「${name}」的帳號嗎？此動作無法復原。`,
+      onConfirm: async () => {
+        try {
+          await deleteLadyByAdmin(code, adminCodes[0]);
+          setLadies(prev => prev.filter(l => l.code !== code));
+          setSuccessMessage(`麗人「${name}」的帳號已永久刪除。`);
+          setTimeout(() => setSuccessMessage(""), 3000);
+        } catch (e: unknown) {
+          setErrorMessage(e instanceof Error ? e.message : "刪除失敗");
+          setTimeout(() => setErrorMessage(""), 4000);
+        }
+      }
+    });
   };
 
   // --- Gentlemen Panel State ---
@@ -308,6 +317,20 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   // Add Member Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCode, setNewCode] = useState("");
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    needsInput?: boolean;
+    inputPlaceholder?: string;
+    onConfirm: (inputText?: string) => void;
+  }>({
+    show: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+  const [confirmInputText, setConfirmInputText] = useState("");
   const [newName, setNewName] = useState("");
   const [addError, setAddError] = useState("");
 
@@ -473,81 +496,78 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
   // Reset current profile to default values
   const handleResetToDefault = async () => {
-    // Find the original code key based on index/name or select the best default match
     const currentProfile = profiles[selectedCode];
     const originalDefaultCode = Object.keys(DEFAULT_PROFILES).find(
       key => DEFAULT_PROFILES[key].name === currentProfile.name
     ) || selectedCode;
 
-    if (window.confirm(`確定要將「${currentProfile?.name}」恢復為系統預設值與預設編號 (${originalDefaultCode}) 嗎？`)) {
-      const defaultProf = DEFAULT_PROFILES[originalDefaultCode] || Object.values(DEFAULT_PROFILES)[0];
-      const defaultMetr = DEFAULT_METRICS[originalDefaultCode] || Object.values(DEFAULT_METRICS)[0];
-      
-      const newProfiles = { ...profiles };
-      const newMetrics = { ...allMetrics };
+    setConfirmModal({
+      show: true,
+      title: "重設紳士角色為預設值",
+      message: `確定要將「${currentProfile?.name}」恢復為系統預設值與預設編號 (${originalDefaultCode}) 嗎？此動作將會替換您當前對該角色的修改。`,
+      onConfirm: async () => {
+        const defaultProf = DEFAULT_PROFILES[originalDefaultCode] || Object.values(DEFAULT_PROFILES)[0];
+        const defaultMetr = DEFAULT_METRICS[originalDefaultCode] || Object.values(DEFAULT_METRICS)[0];
+        
+        const newProfiles = { ...profiles };
+        const newMetrics = { ...allMetrics };
 
-      // Delete active key
-      delete newProfiles[selectedCode];
-      delete newMetrics[selectedCode];
+        // Delete active key
+        delete newProfiles[selectedCode];
+        delete newMetrics[selectedCode];
 
-      // Restore default key
-      newProfiles[originalDefaultCode] = defaultProf;
-      newMetrics[originalDefaultCode] = defaultMetr;
+        // Restore default key
+        newProfiles[originalDefaultCode] = defaultProf;
+        newMetrics[originalDefaultCode] = defaultMetr;
 
-      const result = await handleSync(newProfiles, newMetrics, adminCodes);
-      if (!result || !result.success) {
-        setErrorMessage(result?.message || "重設失敗！");
-        setSuccessMessage("");
-        return;
+        const result = await handleSync(newProfiles, newMetrics, adminCodes);
+        if (!result || !result.success) {
+          setErrorMessage(result?.message || "重設失敗！");
+          setSuccessMessage("");
+          return;
+        }
+
+        await refreshData();
+        setSelectedCode(originalDefaultCode);
+        setErrorMessage("");
+        setSuccessMessage("已成功恢復該角色的預設檔案與特質設定。");
+        setTimeout(() => setSuccessMessage(""), 3000);
       }
-
-      // Re-fetch the canonical data from the server
-      await refreshData();
-
-      // Select restored profile
-      setSelectedCode(originalDefaultCode);
-
-      setErrorMessage("");
-      setSuccessMessage("已成功恢復該角色的預設檔案與特質設定。");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    }
+    });
   };
 
   // Reset ALL profiles to system defaults
   const handleResetAllToDefault = async () => {
-    const confirmationMessage = `
-確定要將【所有紳士成員】的資料庫恢復為系統內建的預設值嗎？
+    const confirmationMessage = "確定要將【所有紳士成員】的資料庫恢復為系統內建的預設值嗎？此動作將會清除所有您手動新增或修改的紳士資料，並將資料庫重設回 4 位內建角色，您設定的管理密碼將保留。此操作無法復原！";
+    
+    setConfirmModal({
+      show: true,
+      title: "系統重置與救援",
+      message: confirmationMessage,
+      needsInput: true,
+      inputPlaceholder: "請輸入您的管理員密碼進行授權",
+      onConfirm: async (adminCode) => {
+        if (!adminCode || !adminCode.trim()) {
+          setErrorMessage("未提供管理員密碼，操作已取消。");
+          return;
+        }
 
-此動作將會：
-1. 清除所有您手動新增或修改的紳士資料。
-2. 將紳士資料庫重置為程式碼中的 4 位預設角色。
-3. 您目前設定的管理員登入編號將會被保留。
+        const result = await resetDatabaseToDefaults(adminCode.trim(), adminCodes);
+        if (!result || !result.success) {
+          setErrorMessage(result?.message || "全部重設失敗！");
+          setSuccessMessage("");
+          return;
+        }
 
-此操作無法復原，請謹慎操作！`;
-    if (window.confirm(confirmationMessage)) {
-      const adminCode = prompt("為了安全，請輸入您的管理員編號以授權本次重置：");
-      if (!adminCode) {
-        setErrorMessage("未提供管理員編號，操作已取消。");
-        return;
+        await refreshData();
+        const defaultCode = Object.keys(DEFAULT_PROFILES)[0];
+        setSelectedCode(defaultCode);
+
+        setErrorMessage("");
+        setSuccessMessage("所有角色檔案與特質指標皆已成功重置為系統初始預設值！");
+        setTimeout(() => setSuccessMessage(""), 3000);
       }
-
-      const result = await resetDatabaseToDefaults(adminCode, adminCodes);
-      if (!result || !result.success) {
-        setErrorMessage(result?.message || "全部重設失敗！");
-        setSuccessMessage("");
-        return;
-      }
-
-      // Re-fetch the canonical data from the server after reset
-      await refreshData();
-
-      const defaultCode = Object.keys(DEFAULT_PROFILES)[0];
-      setSelectedCode(defaultCode);
-
-      setErrorMessage("");
-      setSuccessMessage("所有角色檔案與特質指標皆已成功重置為系統初始預設值！");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    }
+    });
   };
 
   const handleUpdateAdminCode = async () => {
@@ -655,33 +675,39 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
   const handleDeleteProfile = async (codeToDelete: string) => {
     if (Object.keys(DEFAULT_PROFILES).includes(codeToDelete)) {
-      alert("此為系統內建的預設紳士，不允許刪除。");
+      setErrorMessage("此為系統內建的預設紳士，不允許刪除。");
+      setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
-    if (window.confirm(`確定要永久刪除紳士成員 「${profiles[codeToDelete]?.name || codeToDelete}」 嗎？此動作無法復原。`)) {
-      const updatedProfiles = { ...profiles };
-      const updatedMetrics = { ...allMetrics };
 
-      delete updatedProfiles[codeToDelete];
-      delete updatedMetrics[codeToDelete];
+    setConfirmModal({
+      show: true,
+      title: "永久刪除紳士檔案",
+      message: `確定要永久刪除紳士成員 「${profiles[codeToDelete]?.name || codeToDelete}」 嗎？此動作無法復原。`,
+      onConfirm: async () => {
+        const updatedProfiles = { ...profiles };
+        const updatedMetrics = { ...allMetrics };
 
-      const result = await handleSync(updatedProfiles, updatedMetrics, adminCodes);
-      if (!result || !result.success) {
-        setErrorMessage(result?.message || "刪除失敗！");
-        setSuccessMessage("");
-        return;
+        delete updatedProfiles[codeToDelete];
+        delete updatedMetrics[codeToDelete];
+
+        const result = await handleSync(updatedProfiles, updatedMetrics, adminCodes);
+        if (!result || !result.success) {
+          setErrorMessage(result?.message || "刪除失敗！");
+          setSuccessMessage("");
+          return;
+        }
+
+        await refreshData();
+
+        // Select first remaining profile
+        const fallbackCode = Object.keys(updatedProfiles)[0] || Object.keys(DEFAULT_PROFILES)[0] || "monkeyB";
+        handleSelectProfile(fallbackCode);
+
+        setSuccessMessage("該紳士成員已成功移除。");
+        setTimeout(() => setSuccessMessage(""), 3000);
       }
-
-      // Re-fetch to get the latest state after deletion
-      await refreshData();
-
-      // Select first remaining profile
-      const fallbackCode = Object.keys(updatedProfiles)[0] || Object.keys(DEFAULT_PROFILES)[0] || "monkeyB";
-      handleSelectProfile(fallbackCode);
-
-      setSuccessMessage("該紳士成員已成功移除。");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    }
+    });
   };
 
   if (isDataLoading) {
@@ -2552,6 +2578,72 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
         )}
       </AnimatePresence>
 
+      {/* ========================================================================= */}
+      {/* GENERIC CONFIRMATION & AUTHENTICATION MODAL */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {confirmModal.show && (
+          <div className="fixed inset-0 flex items-center justify-center z-[100] p-4 bg-brand-dark/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-brand-beige w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-brand-border/60 space-y-4 text-left"
+            >
+              <div className="flex items-center gap-2.5 pb-1 border-b border-brand-border/20">
+                <span className="font-serif text-sm font-bold text-brand-dark tracking-wide">
+                  {confirmModal.title}
+                </span>
+              </div>
+
+              <p className="text-xs text-brand-muted leading-relaxed whitespace-pre-line">
+                {confirmModal.message}
+              </p>
+
+              {confirmModal.needsInput && (
+                <div className="space-y-1.5 pt-1">
+                  <label htmlFor="confirm-modal-input" className="block text-[10px] font-bold text-brand-muted uppercase tracking-wider">
+                    安全密碼認證
+                  </label>
+                  <input
+                    id="confirm-modal-input"
+                    type="password"
+                    autoFocus
+                    placeholder={confirmModal.inputPlaceholder || "請輸入管理密碼..."}
+                    value={confirmInputText}
+                    onChange={(e) => setConfirmInputText(e.target.value)}
+                    className="w-full bg-white border border-brand-border rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmModal(prev => ({ ...prev, show: false }));
+                    setConfirmInputText("");
+                  }}
+                  className="px-4 py-2 border border-brand-border text-brand-muted hover:bg-brand-border/10 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    confirmModal.onConfirm(confirmInputText);
+                    setConfirmModal(prev => ({ ...prev, show: false }));
+                    setConfirmInputText("");
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-750 text-white text-xs font-bold rounded-xl transition-all shadow cursor-pointer"
+                >
+                  確定執行
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

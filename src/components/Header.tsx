@@ -67,11 +67,7 @@ export default function Header({ onBackToVerify, showBack = false, onSoulMatchCl
                 <span>麗人 {loggedInLadyCode}</span>
               </div>
               <button
-                onClick={() => {
-                  if (window.confirm("您確定要登出嗎？")) {
-                    logout();
-                  }
-                }}
+                onClick={logout}
                 className="p-1.5 rounded-full text-brand-light hover:bg-brand-border/40 hover:text-brand-dark transition-colors"
                 title="登出"
               >

@@ -651,3 +651,25 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機上所有動作反饋皆能正常彈出精美 Toast 提示。
 - **提交哈希**：f15ef267e72b16b4d27d3aca0bc7fd36388cf31b
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第三十二輪：以自訂 React Modal 取代全部 window.confirm 和 window.prompt 解決行動端 WebView 封鎖問題
+
+- **本輪目標**：修復「行動端主控台點擊刪除資料/重置系統無反應」的 Bug，全面以自訂 React 確認與授權彈窗取代原生的 `window.confirm` 和 `window.prompt`。
+- **發現的問題**：
+  - 行動端 WebView（如 LINE 瀏覽器）為避免惡意指令阻斷，預設會禁用 `window.confirm()` 和 `window.prompt()`。這導致主控台刪除麗人、刪除紳士、重置單一角色、重置整個資料庫等操作在手機端點擊後直接回傳 `false` (取消) 退出，毫無任何反應。
+  - 同時，麗人登出按鈕和靈魂測驗的「重新開始(重來)」按鈕也因使用原生 `window.confirm()` 而在手機端受限。
+- **修改內容**：
+  - `src/components/AdminEditScreen.tsx`：
+    - 新增通用 `confirmModal` 狀態，支援標題、訊息、以及可選的「密碼輸入框（代入原 `prompt` 功能）」和確定回呼函數。
+    - 將刪除麗人、刪除紳士、單個重設為預設、以及全體重置等 4 處 `window.confirm/prompt` 完全替換為自訂彈窗。
+    - 在頁面底部渲染具有 YUAN-YU 風格的磨砂毛玻璃自訂確認彈窗，並對危險操作（如刪除）搭配顯眼的紅色確定按鈕。
+  - `src/components/SoulMatchQuiz.tsx`：
+    - 新增 `showResetConfirm` 狀態與 `executeResetQuiz` 輔助函數。
+    - 將測驗右上角「重來」按鈕所呼叫的 `window.confirm()` 改為自訂 React 確認小卡，具備精緻的 AlertCircle 圖標與動態效果。
+  - `src/components/Header.tsx`：
+    - 移除了低風險操作「登出」的原生確認對話框，使其能直接、流暢地一鍵執行登出。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機主控台所有刪除、重置按鈕皆能正常呼叫高質感確認對話框，輸入授權並流暢執行！
+- **提交哈希**：10de0d07e50291f6dde821278892b2edd0dc1dbc
+- **是否已經收斂**：是。

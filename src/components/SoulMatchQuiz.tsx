@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { HelpCircle, ArrowRight, ArrowLeft, RefreshCw, X, ShieldCheck, Heart, User } from "lucide-react";
+import { HelpCircle, ArrowRight, ArrowLeft, RefreshCw, X, ShieldCheck, Heart, User, AlertCircle } from "lucide-react";
 import { Profile, PersonalityMetrics } from "../types";
 import { TEMPLATE_EXCLUDED_CODES, saveLadyQuizResult } from "../data";
 import { useAuth } from "./AuthContext";
@@ -92,6 +92,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
 
   // Top 3 personality tags highlighted for the user
   const [topTags, setTopTags] = useState<{ label: string; val: number }[]>([]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // 檢查女性用戶是否已完成測驗
   useEffect(() => {
@@ -320,14 +321,15 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
   };
 
   const handleRestartQuiz = () => {
-    if (window.confirm("您確定要放棄目前進度，重新開始測驗嗎？")) {
-      localStorage.removeItem(QUIZ_PROGRESS_KEY);
-      setUserMetrics({ ...defaultUserMetrics });
-      setMetricHistory([]);
-      setCurrentQuestionIndex(0);
-      // We stay on the 'quiz' step, just resetting the content.
-      // If called from another step, we might want to setCurrentStep('quiz')
-    }
+    setShowResetConfirm(true);
+  };
+
+  const executeResetQuiz = () => {
+    localStorage.removeItem(QUIZ_PROGRESS_KEY);
+    setUserMetrics({ ...defaultUserMetrics });
+    setMetricHistory([]);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswers([]);
   };
 
   const handleSelectOption = async (modifiers: Partial<PersonalityMetrics>, optionIdx: number) => {
@@ -811,6 +813,42 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
           </AnimatePresence>
         </div>
       </motion.div>
+    {/* Quiz Reset Confirmation Dialog */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-brand-beige w-full max-w-xs rounded-3xl p-6 shadow-2xl border border-brand-border/60 text-center space-y-4"
+            >
+              <div className="w-10 h-10 rounded-full bg-red-100 text-red-650 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="font-serif text-sm font-bold text-brand-dark">確定要重新開始測驗嗎？</h3>
+              <p className="text-[10px] text-brand-muted leading-relaxed">這將會清除您目前已回答的所有進度，並重新回到第一題。</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 py-2 border border-brand-border hover:bg-brand-border/10 text-brand-muted text-[10px] font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  繼續答題
+                </button>
+                <button
+                  onClick={() => {
+                    setShowResetConfirm(false);
+                    executeResetQuiz();
+                  }}
+                  className="flex-1 py-2 bg-red-600 hover:bg-red-750 text-white text-[10px] font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  確認重來
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
