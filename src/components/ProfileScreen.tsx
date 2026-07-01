@@ -33,8 +33,16 @@ interface ProfileScreenProps {
 
 const loadedImagesCache = new Set<string>();
 
+const GREETING_OPTIONS = [
+  "Hello，在緣友的靈魂配對中發現了你。聽說最契合的靈魂總會相遇，看來系統沒有騙我 😊",
+  "你好，我來自緣友。透過 20 維度算法配對，你是系統為我推薦最契合的對象，很高興認識你。",
+  "Hi！我是從緣友過來的。系統說我們的契合度非常高，希望能從一杯咖啡的時間開始認識你 ☕️",
+  "你好，我在緣友遇見了你的靈魂名片。很高興系統將我們牽引在一起，期待與你開啟對話 ✨"
+];
+
 export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
   const [showRedirectModal, setShowRedirectModal] = useState(false);
+  const [selectedGreeting, setSelectedGreeting] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const imgRef = React.useRef<HTMLImageElement>(null);
@@ -99,12 +107,14 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
   };
 
   const handleLineClick = () => {
+    const randomIdx = Math.floor(Math.random() * GREETING_OPTIONS.length);
+    setSelectedGreeting(GREETING_OPTIONS[randomIdx]);
     setShowRedirectModal(true);
   };
 
   const confirmRedirect = () => {
     setShowRedirectModal(false);
-    const greetingMsg = "Hello 我來自緣友通過靈魂配對，你是最契合我的異性";
+    const greetingMsg = selectedGreeting || GREETING_OPTIONS[0];
 
     // 嘗試從 contactLineUrl 中提取 LINE ID，構建帶入問候語的 URL
     // LINE URL Scheme: https://line.me/R/oaMessage/{LINE_ID}/?{encodedMessage}
@@ -447,7 +457,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
 
                 <p className="text-[11px] text-brand-light leading-relaxed bg-brand-beige/50 p-3 rounded-xl border border-brand-border/40">
                   🎁 <strong>專屬提示：</strong> 點擊跳轉後，系統將自動開啟與對方的 LINE 對話，並<strong>預填入專屬問候語</strong>（個人帳號將自動複製至剪貼簿）：<br/>
-                  <strong className="text-brand-dark italic block mt-1 text-center font-serif">「Hello 我來自緣友通過靈魂配對，你是最契合我的異性」</strong>
+                  <strong className="text-brand-dark italic block mt-1 text-center font-serif">「{selectedGreeting}」</strong>
                 </p>
               </div>
 
