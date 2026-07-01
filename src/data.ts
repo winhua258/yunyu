@@ -359,9 +359,9 @@ function getCanvasFingerprint(): string {
  * Registers a new lady profile.
  * @param name - Optional name for the lady.
  * @param photoUrl - Optional photo URL for the lady.
- * @returns The newly created LadyProfile.
+ * @returns { lady, isNew } — isNew=true 表示全新建號，isNew=false 表示偵測到已有帳號並自動載入。
  */
-export async function registerLady(name?: string, photoUrl?: string): Promise<LadyProfile> {
+export async function registerLady(name?: string, photoUrl?: string): Promise<{ lady: LadyProfile; isNew: boolean }> {
   try {
     const deviceId = getOrCreateDeviceId();
     const canvasFingerprint = getCanvasFingerprint();
@@ -375,8 +375,9 @@ export async function registerLady(name?: string, photoUrl?: string): Promise<La
       const errorData = await response.json();
       throw new Error(errorData.message || "女性用戶註冊失敗。");
     }
+    const isNew = response.status === 201;
     const { lady } = await response.json();
-    return lady;
+    return { lady, isNew };
   } catch (error) {
     console.error("Error registering lady:", error);
     throw error;

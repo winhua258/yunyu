@@ -6,7 +6,7 @@ interface AuthContextType {
   loggedInLadyCode: string | null;
   ladyProfiles: Record<string, LadyProfile>;
   login: (code: string) => Promise<LadyProfile>;
-  register: () => Promise<LadyProfile>;
+  register: () => Promise<{ lady: LadyProfile; isNew: boolean }>;
   logout: () => void;
   updateLadyProfile: (profile: LadyProfile) => void;
   simulateAssets: (level: string, verified: string, unlocked?: string[], quizTaken?: boolean, matchedGentlemanCode?: string | null) => Promise<LadyProfile>;
@@ -34,11 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async () => {
-    const lady = await apiRegisterLady();
+    const { lady, isNew } = await apiRegisterLady();
     localStorage.setItem("yuanyu_lady_code", lady.code);
     setLoggedInLadyCode(lady.code);
     updateLadyProfile(lady);
-    return lady;
+    return { lady, isNew };
   }, []);
 
   const logout = useCallback(() => {

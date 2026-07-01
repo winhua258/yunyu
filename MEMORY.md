@@ -563,3 +563,20 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，預填狀態無縫運作。
 - **提交哈希**：f4a50beeab86d8b325cd8d78eb0295fb984b3891
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第二十七輪：區分全新建號與老用戶重複注冊的提示語
+
+- **本輪目標**：修復「已有帳號的用戶重複點擊『註冊新麗人帳戶』時，仍顯示『恭喜您註冊成功』的誤導提示」問題，改為根據是否為全新帳號顯示不同的精準文案。
+- **發現的問題**：
+  - Server 端在偵測到同設備/同 Canvas 指紋已有帳號時，會回傳 HTTP `200` + 自動載入舊帳戶；首次建號回傳 HTTP `201`。但前端 `data.ts` 的 `registerLady` 僅返回 `lady`，未傳遞建立狀態，導致 `VerificationScreen.tsx` 一律彈出「恭喜您註冊成功」誤導老用戶。
+- **修改內容**：
+  - `src/data.ts`：`registerLady` 回傳型別改為 `{ lady: LadyProfile; isNew: boolean }`，利用 HTTP 狀態碼 `201`（全新建號）vs `200`（已有帳號自動載入）作為判斷依據。
+  - `src/components/AuthContext.tsx`：`register` 函式介面與實作更新，透傳 `{ lady, isNew }` 給上層調用方。
+  - `src/components/VerificationScreen.tsx`：`handleLadyRegister` 根據 `isNew` 顯示完全不同的提示語：
+    - 全新建號（`isNew=true`）：🌸 歡迎加入緣友！顯示新建 UUID 並提示截圖保存。
+    - 老用戶自動載入（`isNew=false`）：✅ 歡迎回來！告知偵測到既有帳戶並已自動恢復。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，兩種情境提示語清晰準確。
+- **提交哈希**：c24453ab9425f84556d91835378dba74e381c58e
+- **是否已經收斂**：是。

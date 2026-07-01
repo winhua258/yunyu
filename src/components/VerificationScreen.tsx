@@ -239,8 +239,12 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     if (e) e.preventDefault();
     setLadyError("");
     try {
-      const ladyProfile = await register();
-      alert(`🎉 恭喜您註冊成功！\n您的專屬麗人編號是：${ladyProfile.code}\n請妥善保管此編號，已為您自動登入。`);
+      const { lady, isNew } = await register();
+      if (isNew) {
+        alert(`🌸 歡迎加入緣友！\n您的專屬麗人編號已成功建立：\n\n${lady.code}\n\n請截圖保存此編號，以便日後換設備時恢復帳戶。已為您自動登入，祝您找到心儀的另一半 ✨`);
+      } else {
+        alert(`✅ 歡迎回來！\n我們偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。\n\n您的麗人編號：${lady.code}\n\n如需查看配對結果，請繼續完成靈魂測驗 💫`);
+      }
     } catch (err: any) {
       setLadyError(err.message || "註冊失敗，請稍後再試。");
     }
