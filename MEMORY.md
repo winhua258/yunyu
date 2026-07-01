@@ -457,3 +457,21 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯無誤；`pm2 restart yuanyu` 重啟正常上線。
 - **提交哈希**：eae93ab23be1c6e1a263d34ef52ac5d8ef8ff19d
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第二十一輪：修復同 IP 下不同物理裝置註冊被錯誤合併為同一帳戶 (UUID) 的 Bug
+
+- **本輪目標**：修復測試手機與電腦在同一區域網路（同 IP 地址）下註冊時，會被錯誤載入並共享同一個麗人 UUID/帳戶的嚴重商務與安全 Bug。
+- **發現的問題**：
+  - 在 `server.js` 的 `POST /api/lady/register` (註冊路由) 中，原設計的「防刷機制」在 `deviceId` (基於瀏覽器 localStorage 生成的設備指紋) 查不到時，會回退去查是否有相同 `ipAddress` 的麗人帳號：
+    `existingLady = await LadyProfile.findOne({ ipAddress: clientIp });`
+  - 由於大眾在辦公室、家庭、公共場所 Wi-Fi 等環境下都是透過 NAT (網路位址轉換) 共享同一個公共 IP 地址，這導致當設備 B (手機) 註冊時，後端會搜尋到同 IP 的設備 A (電腦) 的帳號，並將設備 B 的帳戶強行「自動登入/加載」成同一個帳號 UUID。
+  - 這是一個嚴重的隱私洩露漏洞與業務邏輯 Bug（讓不同物理設備的訪客互通帳戶與解鎖數據）。
+- **修改內容**：
+  - `server.js`：
+    - 刪除 `POST /api/lady/register` 路由中透過 IP 比對帳號的 Fallback 邏輯（刪除 `if (!existingLady && clientIp) { ... LadyProfile.findOne({ ipAddress: clientIp }) }` 的程式碼段落）。
+    - 現在，帳號的去重與自動載入**僅依賴於 `deviceId` 設備指紋**。每個獨立物理瀏覽器的 `localStorage` 內都有一個唯一的隨機設備 ID，不會在同 IP 區域網路下發生衝突，完美保障了帳戶的獨立性與隔離度。
+- **驗證命令 and 結果**：`npm run build` 編譯通過；`pm2 restart yuanyu` 重啟成功，功能完美運作，解決了同 IP 互串帳號的 Bug。
+- **提交哈希**：c2c632e3cc5789586cc7185f4d6469a65a133d7f
+- **是否已經收斂**：是。

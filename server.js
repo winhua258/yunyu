@@ -285,17 +285,10 @@ app.post("/api/lady/register", async (req, res) => {
     const { name, photoUrl, deviceId, deviceModel } = req.body;
     const clientIp = getClientIp(req);
 
-    // 設備指紋 + IP 掃描攔截機制：防止重複註冊多個帳號來重複答題與解鎖
+    // 設備指紋攔截機制：防止重複註冊多個帳號
     let existingLady = null;
     if (deviceId) {
       existingLady = await LadyProfile.findOne({ deviceId });
-    }
-    
-    // 如果設備 ID 查不到，且 clientIp 存在，且非本地開發環節，則檢查 IP
-    if (!existingLady && clientIp) {
-      if (clientIp !== "127.0.0.1" && clientIp !== "::1" && clientIp !== "::ffff:127.0.0.1") {
-        existingLady = await LadyProfile.findOne({ ipAddress: clientIp });
-      }
     }
 
     if (existingLady) {
