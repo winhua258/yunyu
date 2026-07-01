@@ -634,3 +634,20 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機與電腦端均能流暢彈出高質感對話框。
 - **提交哈希**：caba87f7a168fcf152d7d10f33239ce1b1862a8b
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第三十一輪：引入輕量級 React Toast 提示，全面替代普通用戶的原生 alert()
+
+- **本輪目標**：全面清理麗人/紳士等普通用戶端所有使用到原生 `alert()` 的提示點，改為自訂的 React Toast 組件，解決手機 WebView 禁用彈窗導致提示失效的潛在風險。
+- **發現的問題**：
+  - 行動端 WebView 會禁用原生 `alert()`。除註冊提示外，頭像上傳限制（大小超限、格式不對）、頭像上傳成功、姓名修改成功、帳號刷新成功、以及點選未開放功能等處仍散落著 9 處原生 `alert()`。
+- **修改內容**：
+  - `src/components/VerificationScreen.tsx`：
+    - 新增 `toast` 狀態，以及 `showToast(message, type)` 輔助函數（支援 `success`、`error`、`info` 三種樣式）。
+    - 設定 `useEffect` 在 2.5 秒後自動清空 `toast` 狀態完成淡出。
+    - 將頭像上傳、姓名修改、帳號狀態刷新、以及三個套餐升級按鈕內的原生 `alert(...)` 呼叫全面修改為 `showToast(...)`。
+    - 渲染自訂的 `Toast` 組件：使用浮動的磨砂毛玻璃底色、適配品牌色的字體和 icon，大大提升視覺一致性。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機上所有動作反饋皆能正常彈出精美 Toast 提示。
+- **提交哈希**：f15ef267e72b16b4d27d3aca0bc7fd36388cf31b
+- **是否已經收斂**：是。

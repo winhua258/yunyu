@@ -137,6 +137,18 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [ladyAlertMessage, setLadyAlertMessage] = useState("");
   const [ladyAlertCode, setLadyAlertCode] = useState("");
   const [ladyAlertCopied, setLadyAlertCopied] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showToast = React.useCallback((message: string, type: "success" | "error" | "info" = "info") => {
+    setToast({ message, type });
+  }, []);
+
+  React.useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
@@ -168,12 +180,12 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       if (!file) return;
 
       if (!file.type.startsWith("image/")) {
-        alert("⚠️ 上傳失敗：請選擇正確的圖片檔案（例如 JPG、PNG 格式的自拍照）！");
+        showToast("請選擇正確的圖片檔案（例如 JPG、PNG 格式的自拍照）！", "error");
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
-        alert("⚠️ 上傳失敗：自拍照檔案大小不能超過 2MB，請壓縮或更換小於 2MB 的圖片！");
+        showToast("自拍照檔案大小不能超過 2MB，請壓縮後重試！", "error");
         return;
       }
 
@@ -183,9 +195,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         try {
           const updatedLady = await requestPhotoChange(lady.code, reader.result as string);
           updateLadyProfile(updatedLady);
-          alert("🎉 自拍頭像已成功提交審核！請靜候主控核驗，核驗通過後您的頭像將會自動更換。");
+          showToast("自拍頭像已成功提交審核！請靜候主控核驗 ✨", "success");
         } catch (err: any) {
-          alert("⚠️ 頭像提交審核失敗！請確保圖片格式正確且網絡連線正常，或請稍後再試。");
+          showToast("頭像提交審核失敗，請確認圖片格式與網絡連線！", "error");
         } finally {
           setPhotoUploading(false);
         }
@@ -199,15 +211,16 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     if (!lady) return;
     const trimmed = editNameInput.trim();
     if (!trimmed) {
-      alert("名稱不可為空！");
+      showToast("名稱不可為空！", "error");
       return;
     }
     try {
       const updatedLady = await updateLadyName(lady.code, trimmed);
       updateLadyProfile(updatedLady);
       setIsEditingName(false);
+      showToast("名稱已成功修改！", "success");
     } catch (err: any) {
-      alert(err.message || "修改名稱失敗，請重試。");
+      showToast(err.message || "修改名稱失敗，請重試。", "error");
     }
   };
 
@@ -372,7 +385,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     setSimulating(true);
     try {
       await simulateAssets("experience", "none", [], false, null);
-      alert("已重置該麗人帳戶至初始狀態（免費、未測驗、零解鎖）！");
+      showToast("已重置該麗人帳戶至初始狀態！", "success");
     } catch (e) {
       console.error(e);
     } finally {
@@ -554,9 +567,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       if (!lady) return;
                       try {
                         await login(lady.code);
-                        alert("🔄 帳號狀態已更新！");
+                        showToast("帳號狀態已更新！", "success");
                       } catch (e) {
-                        alert("重新整理失敗，請重試。");
+                        showToast("重新整理失敗，請重試。", "error");
                       }
                     }}
                     className="flex items-center gap-1.5 py-1.5 px-3 border border-brand-border hover:bg-brand-border/20 text-brand-olive rounded-xl text-xs font-bold transition-all cursor-pointer"
@@ -1235,7 +1248,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   {/* Option 1: Mock upload asset validation */}
                   <button
                     onClick={() => {
-                      alert("⏳ 此功能暫不開放，敬請期待。");
+                      showToast("此功能暫不開放，敬請期待 ⏳", "info");
                     }}
                     className="w-full flex items-center justify-between p-3 border border-[#06C755]/30 bg-[#06C755]/5 hover:bg-[#06C755]/10 rounded-2xl transition-all text-left cursor-pointer"
                   >
@@ -1254,7 +1267,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   {/* Option 2: Upgrade to Experience Package */}
                   <button
                     onClick={() => {
-                      alert("⏳ 此功能暫不開放，敬請期待。");
+                      showToast("此功能暫不開放，敬請期待 ⏳", "info");
                     }}
                     className="w-full flex items-center justify-between p-3 border border-brand-olive/30 bg-brand-olive/5 hover:bg-brand-olive/10 rounded-2xl transition-all text-left cursor-pointer"
                   >
@@ -1273,7 +1286,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   {/* Option 3: Upgrade to Full VIP */}
                   <button
                     onClick={() => {
-                      alert("⏳ 此功能暫不開放，敬請期待。");
+                      showToast("此功能暫不開放，敬請期待 ⏳", "info");
                     }}
                     className="w-full flex items-center justify-between p-3 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 rounded-2xl transition-all text-left cursor-pointer"
                   >
@@ -1371,6 +1384,32 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               >
                 開始探索
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* GLOBAL FLOATING TOAST NOTIFICATION */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {toast && (
+          <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm px-4 flex justify-center pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={`px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold tracking-wide flex items-center justify-center gap-2 w-full text-center pointer-events-auto ${
+                toast.type === "success"
+                  ? "bg-[#4d4d36]/95 border-brand-accent/20 text-white"
+                  : toast.type === "error"
+                  ? "bg-red-950/95 border-red-500/20 text-white"
+                  : "bg-brand-dark/95 border-brand-border/20 text-white"
+              }`}
+            >
+              {toast.type === "success" && <Sparkles className="w-3.5 h-3.5 text-brand-accent fill-current shrink-0" />}
+              {toast.type === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+              <span>{toast.message}</span>
             </motion.div>
           </div>
         )}
