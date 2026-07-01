@@ -316,9 +316,33 @@
 - **提交哈希**：1c9a0d4ca2660c742482fe493b91616e7bea7a7f
 - **是否已經收斂**：是。
 
+---
 
+## 2026-07-01 第十六輪：新增管理後台麗人帳號面板與可視化儀表板
 
-
+- **本輪目標**：在管理後台（AdminEditScreen）新增「麗人帳號管理」與「可視化儀表板」兩個 Tab，讓管理員可查閱所有 UUID、設備 ID、IP，管理會員資格，並可視化訪問量、地區分佈、答題人數。
+- **發現的問題**：原有主控台只有紳士資料管理，無法查看麗人帳號、無法對帳號進行管理、無可視化數據監控。
+- **是否真實可複現**：是，管理員登入後主控台只有紳士編輯功能。
+- **修改內容**：
+  - `server.js`：新增三條管理員 API（均需 `x-admin-code` Header 鑑權）：
+    - `GET /api/admin/ladies` — 返回所有麗人列表（含完整欄位）
+    - `POST /api/admin/lady/:code/update` — 直接修改指定麗人的會員等級/驗資狀態等
+    - `DELETE /api/admin/lady/:code` — 永久刪除麗人帳號
+  - `src/data.ts`：新增 `fetchAllLadies`、`updateLadyByAdmin`、`deleteLadyByAdmin` 三個前端 API 函數。
+  - `src/types.ts`：`LadyProfile` 新增 `deviceId?` 和 `ipAddress?` 欄位。
+  - `src/components/AdminEditScreen.tsx`：
+    - 頂部新增主 Tab 切換列（紳士檔案管理 / 麗人帳號管理 / 可視化儀表板）
+    - 麗人帳號面板：總人數/已答題/VIP/已驗資 KPI 卡 + 完整資料表格（UUID/名稱/IP/設備ID/會員等級/答題/驗資/時間/操作），支持彈窗編輯會員資格、一鍵刪除帳號
+    - 可視化儀表板：訪問量 KPI 卡（總/今日/七日）+ 答題完成率環形圖（純 SVG）+ 會員等級橫向柱狀圖 + 地區分佈橫向柱狀圖（IP 前綴靜態映射，顯示最多 6 個地區）
+    - 麗人編輯 Modal（AnimatePresence 動畫）
+- **刪除或減少了什麼**：無代碼刪除；新增 590 行（4 文件），後端 +55 行、前端 +535 行。
+- **執行效率優化點**：麗人數據僅在切換至 ladies/analytics Tab 時才觸發一次 API 請求（`useEffect` 依賴 `activeTab`），避免無謂初始化請求。
+- **驗證命令和結果**：`npm run build` 成功（0 錯誤）、`pm2 restart yuanyu` 成功，服務 online。
+- **提交哈希**：47c4a90
+- **是否已經收斂**：是。
+- **剩餘風險及暫不處理原因**：
+  - IP 地區解析基於靜態前綴映射，精確度有限。若需精確到城市，需引入 `geoip-lite` 庫（後端服務）。
+  - 「今日訪客」口徑為「今日新增麗人數」，非真實訪問日誌。若需精確訪問日誌，需在 server.js 中加請求記錄表。
 
 
 
