@@ -148,15 +148,17 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [ladyEditAsset, setLadyEditAsset] = useState("");
   const [ladyEditNotes, setLadyEditNotes] = useState("");
   const [ladyEditName, setLadyEditName] = useState("");
+  const [ladyEditMatchedCode, setLadyEditMatchedCode] = useState("");
+  const [ladyEditUnlockedCodes, setLadyEditUnlockedCodes] = useState<string[]>([]);
   const [clearUnlockedOnDowngrade, setClearUnlockedOnDowngrade] = useState(true);
   const [ladyEditSaving, setLadyEditSaving] = useState(false);
   const [ladyEditMsg, setLadyEditMsg] = useState("");
   const [ladySearchQuery, setLadySearchQuery] = useState("");
   const [ladyFilterMembership, setLadyFilterMembership] = useState("all");
   const [ladyFilterAsset, setLadyFilterAsset] = useState("all");
+  const [ladyFilterQuiz, setLadyFilterQuiz] = useState("all");
   const [ladySortField, setLadySortField] = useState<string>("createdAt");
   const [ladySortDirection, setLadySortDirection] = useState<"asc" | "desc">("desc");
-  const [colFilterUuid, setColFilterUuid] = useState("");
   const [colFilterName, setColFilterName] = useState("");
   const [colFilterMatch, setColFilterMatch] = useState("");
   const [colFilterIp, setColFilterIp] = useState("");
@@ -198,6 +200,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     setLadyEditAsset(lady.assetVerified || "none");
     setLadyEditNotes(lady.notes || "");
     setLadyEditName(lady.name || "");
+    setLadyEditMatchedCode(lady.matchedGentlemanCode || "");
+    setLadyEditUnlockedCodes(lady.unlockedGentlemanCodes || []);
     setClearUnlockedOnDowngrade(true);
     setLadyEditMsg("");
   };
@@ -206,7 +210,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     if (!editLady || !adminCodes[0]) return;
     setLadyEditSaving(true);
     try {
-      let unlockedGentlemanCodes = editLady.unlockedGentlemanCodes || [];
+      let unlockedGentlemanCodes = ladyEditUnlockedCodes;
       const shouldClearUnlocked = clearUnlockedOnDowngrade && (ladyEditAsset === "none" || ladyEditAsset === "pending");
       if (shouldClearUnlocked) {
         unlockedGentlemanCodes = [];
@@ -219,6 +223,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           assetVerified: ladyEditAsset, 
           notes: ladyEditNotes,
           name: ladyEditName,
+          matchedGentlemanCode: ladyEditMatchedCode || null,
           unlockedGentlemanCodes
         },
         adminCodes[0]
@@ -1515,17 +1520,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-brand-beige/60 border-b border-brand-border/40">
-                      {/* UUID Header */}
-                      <th 
-                        onClick={() => handleSort("code")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
-                      >
-                        <div className="flex items-center gap-1">
-                          <span>UUID</span>
-                          <span className="text-[9px] text-brand-olive">{ladySortField === "code" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
-                        </div>
-                      </th>
-                      {/* Name Header */}
+                      {/* Name Header (Priority 1: Always) */}
                       <th 
                         onClick={() => handleSort("name")}
                         className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
@@ -1535,27 +1530,57 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           <span className="text-[9px] text-brand-olive">{ladySortField === "name" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
                         </div>
                       </th>
-                      {/* Match Header */}
+                      {/* Match Header (Priority 2: Always) */}
                       <th 
                         onClick={() => handleSort("match")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
                       >
                         <div className="flex items-center gap-1">
                           <span>配對與解鎖</span>
                           <span className="text-[9px] text-brand-olive">{ladySortField === "match" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
                         </div>
                       </th>
-                      {/* IP Header */}
+                      {/* Membership Header (Low Priority: Tablet+) */}
+                      <th 
+                        onClick={() => handleSort("membership")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>會員</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "membership" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Quiz Header (Low Priority: Tablet+) */}
+                      <th 
+                        onClick={() => handleSort("quiz")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>答題</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "quiz" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* Registered Time Header (Priority 3: Tablet+) */}
+                      <th 
+                        onClick={() => handleSort("createdAt")}
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>註冊時間</span>
+                          <span className="text-[9px] text-brand-olive">{ladySortField === "createdAt" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
+                        </div>
+                      </th>
+                      {/* IP Header (Priority 4: Desktop) */}
                       <th 
                         onClick={() => handleSort("ip")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
                       >
                         <div className="flex items-center gap-1">
                           <span>IP 描述</span>
                           <span className="text-[9px] text-brand-olive">{ladySortField === "ip" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
                         </div>
                       </th>
-                      {/* Device Header */}
+                      {/* Device Header (Priority 5: Desktop) */}
                       <th 
                         onClick={() => handleSort("device")}
                         className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
@@ -1565,69 +1590,31 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           <span className="text-[9px] text-brand-olive">{ladySortField === "device" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
                         </div>
                       </th>
-                      {/* Membership Header */}
-                      <th 
-                        onClick={() => handleSort("membership")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
-                      >
-                        <div className="flex items-center gap-1">
-                          <span>會員</span>
-                          <span className="text-[9px] text-brand-olive">{ladySortField === "membership" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
-                        </div>
-                      </th>
-                      {/* Quiz Header */}
-                      <th 
-                        onClick={() => handleSort("quiz")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none"
-                      >
-                        <div className="flex items-center gap-1">
-                          <span>答題</span>
-                          <span className="text-[9px] text-brand-olive">{ladySortField === "quiz" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
-                        </div>
-                      </th>
-                      {/* Asset Header */}
+                      {/* Asset Header (Low Priority: Desktop) */}
                       <th 
                         onClick={() => handleSort("asset")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
                       >
                         <div className="flex items-center gap-1">
                           <span>驗資</span>
                           <span className="text-[9px] text-brand-olive">{ladySortField === "asset" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
                         </div>
                       </th>
-                      {/* Notes Header */}
+                      {/* Notes Header (Low Priority: Desktop) */}
                       <th 
                         onClick={() => handleSort("notes")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden md:table-cell"
+                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
                       >
                         <div className="flex items-center gap-1">
                           <span>備注</span>
                           <span className="text-[9px] text-brand-olive">{ladySortField === "notes" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
                         </div>
                       </th>
-                      {/* Registered Time Header */}
-                      <th 
-                        onClick={() => handleSort("createdAt")}
-                        className="text-left px-4 py-3 text-brand-muted font-bold uppercase tracking-wider cursor-pointer hover:text-brand-dark transition-colors select-none hidden lg:table-cell"
-                      >
-                        <div className="flex items-center gap-1">
-                          <span>註冊時間</span>
-                          <span className="text-[9px] text-brand-olive">{ladySortField === "createdAt" ? (ladySortDirection === "asc" ? " ▲" : " ▼") : " ⇅"}</span>
-                        </div>
-                      </th>
                       <th className="text-right px-4 py-3 text-brand-muted font-bold uppercase tracking-wider">操作</th>
                     </tr>
                     {/* Parallel Filters Row */}
                     <tr className="bg-brand-beige/30 border-b border-brand-border/20">
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="text"
-                          value={colFilterUuid}
-                          onChange={e => setColFilterUuid(e.target.value)}
-                          placeholder="篩選 UUID"
-                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                        />
-                      </td>
+                      {/* 1. Name Filter */}
                       <td className="px-2 py-1.5">
                         <input
                           type="text"
@@ -1637,61 +1624,85 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
                         />
                       </td>
-                      <td className="px-2 py-1.5 hidden md:table-cell">
-                        <input
-                          type="text"
+                      {/* 2. Match Filter */}
+                      <td className="px-2 py-1.5">
+                        <select
                           value={colFilterMatch}
                           onChange={e => setColFilterMatch(e.target.value)}
-                          placeholder="男賓代碼/姓名"
-                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                        />
+                          className="w-full bg-white border border-brand-border/60 rounded px-1 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive font-semibold cursor-pointer text-brand-dark"
+                        >
+                          <option value="">全部男賓</option>
+                          {Object.keys(profiles).map(code => (
+                            <option key={code} value={code}>
+                              {profiles[code]?.name || code} ({code})
+                            </option>
+                          ))}
+                        </select>
                       </td>
+                      {/* 3. Membership Filter */}
                       <td className="px-2 py-1.5 hidden md:table-cell">
-                        <input
-                          type="text"
-                          value={colFilterIp}
-                          onChange={e => setColFilterIp(e.target.value)}
-                          placeholder="篩選 IP/地區"
-                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5 hidden lg:table-cell">
-                        <input
-                          type="text"
-                          value={colFilterDevice}
-                          onChange={e => setColFilterDevice(e.target.value)}
-                          placeholder="篩選型號/ID"
-                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5">
                         <select
                           value={ladyFilterMembership}
                           onChange={e => setLadyFilterMembership(e.target.value)}
                           className="w-full bg-white border border-brand-border/60 rounded px-1 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive font-semibold cursor-pointer"
                         >
-                          <option value="all">全部</option>
+                          <option value="all">全部會員</option>
                           <option value="free">free</option>
                           <option value="experience">experience</option>
                           <option value="vip">vip</option>
                         </select>
                       </td>
-                      <td className="px-2 py-1.5">
-                        <div className="text-[10px] text-brand-muted text-center font-bold">—</div>
-                      </td>
+                      {/* 4. Quiz Filter */}
                       <td className="px-2 py-1.5 hidden md:table-cell">
+                        <select
+                          value={ladyFilterQuiz}
+                          onChange={e => setLadyFilterQuiz(e.target.value)}
+                          className="w-full bg-white border border-brand-border/60 rounded px-1 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive font-semibold cursor-pointer"
+                        >
+                          <option value="all">全部答題</option>
+                          <option value="yes">已答題</option>
+                          <option value="no">未答題</option>
+                        </select>
+                      </td>
+                      {/* 5. Registered Time Filter Placeholder */}
+                      <td className="px-2 py-1.5 hidden md:table-cell text-center">
+                        <div className="text-[10px] text-brand-muted font-bold">—</div>
+                      </td>
+                      {/* 6. IP Filter */}
+                      <td className="px-2 py-1.5 hidden lg:table-cell">
+                        <input
+                          type="text"
+                          value={colFilterIp}
+                          onChange={e => setColFilterIp(e.target.value)}
+                          placeholder="篩選 IP"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      {/* 7. Device Filter */}
+                      <td className="px-2 py-1.5 hidden lg:table-cell">
+                        <input
+                          type="text"
+                          value={colFilterDevice}
+                          onChange={e => setColFilterDevice(e.target.value)}
+                          placeholder="篩選設備"
+                          className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                        />
+                      </td>
+                      {/* 8. Asset Filter */}
+                      <td className="px-2 py-1.5 hidden lg:table-cell">
                         <select
                           value={ladyFilterAsset}
                           onChange={e => setLadyFilterAsset(e.target.value)}
                           className="w-full bg-white border border-brand-border/60 rounded px-1 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive font-semibold cursor-pointer"
                         >
-                          <option value="all">全部</option>
+                          <option value="all">全部驗資</option>
                           <option value="none">未驗資</option>
                           <option value="pending">審核中</option>
                           <option value="approved">已驗資</option>
                         </select>
                       </td>
-                      <td className="px-2 py-1.5 hidden md:table-cell">
+                      {/* 9. Notes Filter */}
+                      <td className="px-2 py-1.5 hidden lg:table-cell">
                         <input
                           type="text"
                           value={colFilterNotes}
@@ -1700,14 +1711,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                           className="w-full bg-white border border-brand-border/60 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-olive"
                         />
                       </td>
-                      <td className="px-2 py-1.5 hidden lg:table-cell">
-                        <div className="text-[10px] text-brand-muted text-center font-bold">—</div>
-                      </td>
+                      {/* 10. Actions Filter (Reset button) */}
                       <td className="px-2 py-1.5 text-right">
                         <button
                           type="button"
                           onClick={() => {
-                            setColFilterUuid("");
                             setColFilterName("");
                             setColFilterMatch("");
                             setColFilterIp("");
@@ -1715,6 +1723,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                             setColFilterNotes("");
                             setLadyFilterMembership("all");
                             setLadyFilterAsset("all");
+                            setLadyFilterQuiz("all");
                             setLadySearchQuery("");
                           }}
                           className="text-[10px] text-brand-olive hover:underline font-bold animate-pulse"
@@ -1752,26 +1761,24 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         if (ladyFilterAsset !== "all" && lady.assetVerified !== ladyFilterAsset) {
                           return false;
                         }
-                        // 1.4 UUID 列篩選
-                        if (colFilterUuid.trim() && !lady.code.toLowerCase().includes(colFilterUuid.toLowerCase())) {
+                        // 1.3b 答題狀態列篩選
+                        if (ladyFilterQuiz === "yes" && !lady.quizTaken) {
+                          return false;
+                        }
+                        if (ladyFilterQuiz === "no" && lady.quizTaken) {
                           return false;
                         }
                         // 1.5 姓名列篩選
                         if (colFilterName.trim() && !(lady.name || "").toLowerCase().includes(colFilterName.toLowerCase())) {
                           return false;
                         }
-                        // 1.6 配對與解鎖列篩選
+                        // 1.6 配對與解鎖列篩選 (精確匹配選取的男賓)
                         if (colFilterMatch.trim()) {
                           const val = colFilterMatch.toLowerCase();
                           const matchCode = (lady.matchedGentlemanCode || "").toLowerCase();
-                          const matchName = (profiles[lady.matchedGentlemanCode || ""]?.name || "").toLowerCase();
-                          const matchMatch = matchCode.includes(val) || matchName.includes(val);
+                          const matchMatch = matchCode === val;
                           
-                          const unlockMatch = (lady.unlockedGentlemanCodes || []).some(code => {
-                            const cCode = code.toLowerCase();
-                            const cName = (profiles[code]?.name || "").toLowerCase();
-                            return cCode.includes(val) || cName.includes(val);
-                          });
+                          const unlockMatch = (lady.unlockedGentlemanCodes || []).some(code => code.toLowerCase() === val);
 
                           if (!matchMatch && !unlockMatch) {
                             return false;
@@ -1859,15 +1866,15 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       });
 
                       if (ladiesLoading) {
-                        return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">載入中...</td></tr>;
+                        return <tr><td colSpan={10} className="text-center py-10 text-brand-muted">載入中...</td></tr>;
                       }
                       if (sortedLadies.length === 0) {
-                        return <tr><td colSpan={11} className="text-center py-10 text-brand-muted">無符合篩選與搜尋條件的麗人帳號</td></tr>;
+                        return <tr><td colSpan={10} className="text-center py-10 text-brand-muted">無符合篩選與搜尋條件的麗人帳號</td></tr>;
                       }
 
                       return sortedLadies.map((lady, idx) => (
                         <tr key={lady.code} className={`border-b border-brand-border/20 hover:bg-brand-beige/30 transition-colors ${idx % 2 === 0 ? "" : "bg-brand-beige/10"}`}>
-                          <td className="px-4 py-3 font-mono text-brand-dark">{lady.code.slice(0, 8)}…</td>
+                          {/* 1. 名稱 (Always) */}
                           <td className="px-4 py-3 font-semibold text-brand-dark">
                             <div className="flex items-center gap-1.5">
                               <span>{lady.name || "未命名"}</span>
@@ -1878,8 +1885,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                               )}
                             </div>
                           </td>
-                          {/* Match & Unlocked Column */}
-                          <td className="px-4 py-3 hidden md:table-cell text-[10px]">
+                          {/* 2. 配對與解鎖 (Always) */}
+                          <td className="px-4 py-3 text-[10px]">
                             <div className="space-y-1">
                               <div>
                                 <span className="text-brand-light font-bold">配對：</span>
@@ -1903,11 +1910,33 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                               </div>
                             </div>
                           </td>
-                          {/* IP Description Column */}
-                          <td className="px-4 py-3 text-brand-muted hidden md:table-cell font-mono">
+                          {/* 3. 會員 (Tablet+) */}
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                              lady.membershipLevel === "vip" ? "bg-amber-100 text-amber-700" :
+                              lady.membershipLevel === "experience" ? "bg-blue-100 text-blue-700" :
+                              "bg-gray-100 text-gray-600"
+                            }`}>
+                              {lady.membershipLevel === "vip" ? <Crown className="w-3 h-3" /> : null}
+                              {lady.membershipLevel || "free"}
+                            </span>
+                          </td>
+                          {/* 4. 答題 (Tablet+) */}
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            {lady.quizTaken
+                              ? <span className="text-emerald-600 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5" />是</span>
+                              : <span className="text-brand-muted">否</span>
+                            }
+                          </td>
+                          {/* 5. 註冊時間 (Tablet+) */}
+                          <td className="px-4 py-3 text-brand-muted hidden md:table-cell">
+                            {lady.createdAt ? new Date(lady.createdAt as string).toLocaleDateString("zh-TW") : "—"}
+                          </td>
+                          {/* 6. IP 描述 (Desktop) */}
+                          <td className="px-4 py-3 text-brand-muted hidden lg:table-cell font-mono">
                             {getIpDescription(lady.ipAddress)}
                           </td>
-                          {/* Device Friendly Description + Fingerprint */}
+                          {/* 7. 設備 ID (Desktop) */}
                           <td className="px-4 py-3 hidden lg:table-cell">
                             <div className="font-semibold text-brand-dark text-[11px]">
                               {lady.deviceModel ? (
@@ -1922,23 +1951,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                               {lady.deviceId || "—"}
                             </div>
                           </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
-                              lady.membershipLevel === "vip" ? "bg-amber-100 text-amber-700" :
-                              lady.membershipLevel === "experience" ? "bg-blue-100 text-blue-700" :
-                              "bg-gray-100 text-gray-600"
-                            }`}>
-                              {lady.membershipLevel === "vip" ? <Crown className="w-3 h-3" /> : null}
-                              {lady.membershipLevel || "free"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            {lady.quizTaken
-                              ? <span className="text-emerald-600 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5" />是</span>
-                              : <span className="text-brand-muted">否</span>
-                            }
-                          </td>
-                          <td className="px-4 py-3 hidden md:table-cell font-semibold">
+                          {/* 8. 驗資 (Desktop) */}
+                          <td className="px-4 py-3 hidden lg:table-cell font-semibold">
                             <span className={
                               lady.assetVerified === "approved" ? "text-emerald-600" :
                               lady.assetVerified === "pending" ? "text-amber-600" :
@@ -1947,12 +1961,11 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                               {lady.assetVerified === "approved" ? "✓已驗資" : lady.assetVerified === "pending" ? "審核中" : "未驗資"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-brand-light truncate max-w-[150px] hidden md:table-cell" title={lady.notes}>
+                          {/* 9. 備註 (Desktop) */}
+                          <td className="px-4 py-3 text-brand-light truncate max-w-[150px] hidden lg:table-cell" title={lady.notes}>
                             {lady.notes || "—"}
                           </td>
-                          <td className="px-4 py-3 text-brand-muted hidden lg:table-cell">
-                            {lady.createdAt ? new Date(lady.createdAt as string).toLocaleDateString("zh-TW") : "—"}
-                          </td>
+                          {/* 10. 操作 (Always) */}
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1.5 justify-end">
                               <button
@@ -2285,29 +2298,52 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   配對與已解鎖資訊
                 </h4>
                 <div className="bg-white p-2.5 rounded-xl border border-brand-border/50 text-[10px] space-y-2">
-                  <div>
-                    <span className="font-semibold text-brand-light">AI 匹配對象：</span>
-                    {editLady.matchedGentlemanCode ? (
-                      <span className="font-bold text-brand-olive">
-                        {editLady.matchedGentlemanCode} ({profiles[editLady.matchedGentlemanCode]?.name || "未知"})
-                      </span>
-                    ) : (
-                      <span className="text-brand-muted">無匹配對象</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-brand-light block mb-1">已解鎖名單 ({editLady.unlockedGentlemanCodes?.length || 0})：</span>
-                    {editLady.unlockedGentlemanCodes && editLady.unlockedGentlemanCodes.length > 0 ? (
-                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 bg-brand-border/10 rounded-lg">
-                        {editLady.unlockedGentlemanCodes.map(code => (
-                          <span key={code} className="inline-flex items-center px-1.5 py-0.5 bg-brand-beige text-brand-dark rounded font-mono text-[10px]">
+                  <div className="space-y-2">
+                    <div>
+                      <label htmlFor="lady-edit-match-select" className="font-semibold text-brand-light block mb-1">AI 匹配對象：</label>
+                      <select
+                        id="lady-edit-match-select"
+                        value={ladyEditMatchedCode}
+                        onChange={e => setLadyEditMatchedCode(e.target.value)}
+                        className="w-full bg-white border border-brand-border rounded-xl px-2 py-1.5 text-[10px] font-semibold focus:outline-none focus:ring-1 focus:ring-brand-olive cursor-pointer"
+                      >
+                        <option value="">(無匹配對象)</option>
+                        {Object.keys(profiles).map(code => (
+                          <option key={code} value={code}>
                             {code} ({profiles[code]?.name || "未知"})
-                          </span>
+                          </option>
                         ))}
+                      </select>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-brand-light block mb-1">
+                        已解鎖名單 ({ladyEditUnlockedCodes.length})：
+                      </span>
+                      <div className="grid grid-cols-2 gap-1.5 p-2 bg-brand-border/10 rounded-xl max-h-32 overflow-y-auto border border-brand-border/30">
+                        {Object.keys(profiles).map(code => {
+                          const isChecked = ladyEditUnlockedCodes.includes(code);
+                          return (
+                            <label key={code} className="flex items-center gap-1.5 text-[9.5px] font-medium text-brand-dark cursor-pointer hover:text-brand-olive select-none">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={e => {
+                                  if (e.target.checked) {
+                                    setLadyEditUnlockedCodes(prev => [...prev, code]);
+                                  } else {
+                                    setLadyEditUnlockedCodes(prev => prev.filter(c => c !== code));
+                                  }
+                                }}
+                                className="rounded text-brand-olive focus:ring-brand-olive cursor-pointer w-3.5 h-3.5"
+                              />
+                              <span className="truncate">
+                                {profiles[code]?.name || code} ({code})
+                              </span>
+                            </label>
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <span className="text-brand-muted">尚未解鎖任何男生</span>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
