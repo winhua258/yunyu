@@ -286,6 +286,7 @@ function getClientIp(req) {
 const ipRegistrationLimits = new Map();
 const LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 分鐘
 const MAX_REGISTRATIONS_PER_WINDOW = 3; // 最多 3 次註冊
+const ongoingRegistrations = new Set();
 
 // 定期自動清理 Map 釋放記憶體，避免 Memory Leak
 setInterval(() => {
@@ -302,9 +303,33 @@ setInterval(() => {
 
 // POST /api/lady/register: 模擬女性用戶註冊
 app.post("/api/lady/register", async (req, res) => {
+  const { name, photoUrl, deviceId, deviceModel, canvasFingerprint } = req.body;
+  const clientIp = getClientIp(req);
+  const lockKey = deviceId || canvasFingerprint;
+
   try {
-    const { name, photoUrl, deviceId, deviceModel, canvasFingerprint } = req.body;
-    const clientIp = getClientIp(req);
+    // 併發防重入鎖定機制
+    if (lockKey) {
+      if (ongoingRegistrations.has(lockKey)) {
+        for (let i = 0; i < 20; i++) {
+          await new Promise(r => setTimeout(r, 100));
+          if (!ongoingRegistrations.has(lockKey)) {
+            let existingLady = null;
+            if (deviceId) existingLady = await LadyProfile.findOne({ deviceId });
+            if (!existingLady && canvasFingerprint) existingLady = await LadyProfile.findOne({ canvasFingerprint });
+            if (existingLady) {
+              console.log(`[Re-entry scan match] Auto-login for concurrent duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}, Canvas: ${canvasFingerprint}) to code: ${existingLady.code}`);
+              return res.status(200).json({ 
+                message: "偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。", 
+                lady: existingLady 
+              });
+            }
+            break;
+          }
+        }
+      }
+      ongoingRegistrations.add(lockKey);
+    }
 
     // 1. IP 註冊頻率限制 (Rate Limiting)
     if (clientIp) {
@@ -379,6 +404,10 @@ app.post("/api/lady/register", async (req, res) => {
   } catch (error) {
     console.error("Error registering lady:", error);
     res.status(500).json({ message: "女性用戶註冊失敗。" });
+  } finally {
+    if (lockKey) {
+      ongoingRegistrations.delete(lockKey);
+    }
   }
 });
 

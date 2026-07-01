@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { LadyProfile } from '../types';
 import { loginLady, registerLady as apiRegisterLady, simulateLadyAssets } from '../data';
 
@@ -33,12 +33,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return lady;
   }, []);
 
+  const ongoingRegisterPromiseRef = useRef<Promise<{ lady: LadyProfile; isNew: boolean }> | null>(null);
+
   const register = useCallback(async () => {
-    const { lady, isNew } = await apiRegisterLady();
-    localStorage.setItem("yuanyu_lady_code", lady.code);
-    setLoggedInLadyCode(lady.code);
-    updateLadyProfile(lady);
-    return { lady, isNew };
+    if (ongoingRegisterPromiseRef.current) {
+      return ongoingRegisterPromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const { lady, isNew } = await apiRegisterLady();
+        localStorage.setItem("yuanyu_lady_code", lady.code);
+        setLoggedInLadyCode(lady.code);
+        updateLadyProfile(lady);
+        return { lady, isNew };
+      } finally {
+        ongoingRegisterPromiseRef.current = null;
+      }
+    })();
+
+    ongoingRegisterPromiseRef.current = promise;
+    return promise;
   }, []);
 
   const logout = useCallback(() => {
