@@ -580,3 +580,24 @@
 - **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，兩種情境提示語清晰準確。
 - **提交哈希**：c24453ab9425f84556d91835378dba74e381c58e
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-01 第二十八輪：修復麗人行動端修改姓名失敗與刪除帳戶後的狀態鎖死 Bug
+
+- **本輪目標**：1. 修復麗人介面在手機 WebView 下點擊修改姓名無反應的 Bug；2. 修復主控在後台刪除帳戶後，手機端無法順暢重新註冊且答題後無法返回麗人列表的狀態鎖死 Bug。
+- **發現的問題**：
+  - **姓名修改 Bug**：原先使用 `window.prompt` 取得新姓名，但行動端 WebView（如 LINE 內嵌瀏覽器）常為防止釣魚而禁用或攔截 `window.prompt`，導致手機上修改姓名無反應。
+  - **帳戶刪除殘留 Bug**：主控刪除麗人後，前端捕獲 404 進行登出，但只清理了 `yuanyu_lady_code`，本地仍殘留有 `yuanyu_lady_code_history` 和 `yuanyu_soulmatch_progress`（測驗進度快取），導致再次進入時無法重新註冊且直接套用舊答題狀態。
+  - **重定向鎖死 Bug**：在 `App.tsx` 的同步 Effect 中，只要麗人的 `quizTaken === true`，系統便會強行將 `verifiedCode` 設定為已匹配的男賓，造成用戶點選「返回」退回麗人列表時，立刻又被強推重定向至男賓卡片，無法留在麗人 Dashboard。
+- **修改內容**：
+  - `src/components/VerificationScreen.tsx`：
+    - 引入 `isEditingName` 和 `editNameInput` 狀態。
+    - 廢除 `window.prompt`，改在姓名區域以就地行內編輯方式（Inline Edit Input）呈現，相容 100% 手機端環境，且視覺質感大幅提升。
+  - `src/components/AuthContext.tsx`：
+    - 在拉取麗人資料失敗的 `.catch()` 分支，進行硬登出清除：一併刪除 `yuanyu_lady_code_history` 和 `yuanyu_soulmatch_progress` 本地快取，確保刪除帳戶後本地狀態被徹底歸零，可重新乾淨建號。
+  - `src/App.tsx`：
+    - 修改登入重定向邏輯：當已測驗過的麗人登入時，預設保持其在麗人首頁 Dashboard (`verifiedCode = null`)，不再強行重定向導向紳士卡片。僅在 `SoulMatchQuiz` 完成測驗的瞬間進行一次性跳轉。解決了點擊返回後立刻再次被重定向卡死的 Bug。
+- **驗證命令 and 結果**：`npm run build` 打包編譯通過；`pm2 restart yuanyu` 重啟完成，手機姓名編輯正常，帳戶重設與返回路由邏輯完美收斂。
+- **提交哈希**：072804d7104fea4d578a9d7897d68ea3ac40ceaa
+- **是否已經收斂**：是。

@@ -130,6 +130,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [showSimulator, setShowSimulator] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameInput, setEditNameInput] = useState("");
 
   const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
@@ -188,11 +190,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     input.click();
   };
 
-  const handleEditName = async () => {
+  const handleSaveName = async () => {
     if (!lady) return;
-    const newName = window.prompt("請編輯您的麗人名稱：", lady.name);
-    if (newName === null) return;
-    const trimmed = newName.trim();
+    const trimmed = editNameInput.trim();
     if (!trimmed) {
       alert("名稱不可為空！");
       return;
@@ -200,7 +200,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     try {
       const updatedLady = await updateLadyName(lady.code, trimmed);
       updateLadyProfile(updatedLady);
-      alert("名稱已成功修改！");
+      setIsEditingName(false);
     } catch (err: any) {
       alert(err.message || "修改名稱失敗，請重試。");
     }
@@ -452,16 +452,48 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex items-center gap-1">
-                        <h3 className="font-serif text-lg font-bold text-brand-dark">{lady.name}</h3>
-                        <button
-                          onClick={handleEditName}
-                          className="p-1 text-brand-light hover:text-brand-olive hover:bg-brand-border/20 rounded transition-all cursor-pointer"
-                          title="修改名稱"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      {isEditingName ? (
+                        <div className="flex items-center gap-1.5 bg-white border border-brand-border rounded-xl px-2 py-1 shadow-inner">
+                          <input
+                            type="text"
+                            value={editNameInput}
+                            onChange={(e) => setEditNameInput(e.target.value)}
+                            className="bg-transparent text-xs font-bold text-brand-dark focus:outline-none w-28 md:w-36 font-sans"
+                            placeholder="輸入麗人名稱"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveName();
+                              if (e.key === "Escape") setIsEditingName(false);
+                            }}
+                          />
+                          <button
+                            onClick={handleSaveName}
+                            className="px-2 py-0.5 bg-brand-olive hover:bg-[#4d4d36] text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            儲存
+                          </button>
+                          <button
+                            onClick={() => setIsEditingName(false)}
+                            className="px-2 py-0.5 border border-brand-border hover:bg-brand-border/10 text-brand-muted text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <h3 className="font-serif text-lg font-bold text-brand-dark">{lady.name}</h3>
+                          <button
+                            onClick={() => {
+                              setEditNameInput(lady.name);
+                              setIsEditingName(true);
+                            }}
+                            className="p-1 text-brand-light hover:text-brand-olive hover:bg-brand-border/20 rounded transition-all cursor-pointer"
+                            title="修改名稱"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                       <span className="text-[10px] text-brand-light font-mono font-bold bg-white px-2 py-0.5 rounded">
                         編號: {lady.code.slice(0, 8)}...
                       </span>

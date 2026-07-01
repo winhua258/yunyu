@@ -52,11 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginLady(loggedInLadyCode)
         .then(lady => updateLadyProfile(lady))
         .catch(() => {
-          // code is invalid, log out
-          logout();
+          // 帳號已被主控刪除或無效，執行徹底硬登出，清理所有本地歷史快取與測驗進度快取
+          localStorage.removeItem("yuanyu_lady_code");
+          localStorage.removeItem("yuanyu_lady_code_history");
+          localStorage.removeItem("yuanyu_soulmatch_progress");
+          setLoggedInLadyCode(null);
+          setLadyProfiles({});
         });
     }
-  }, [loggedInLadyCode, ladyProfiles, updateLadyProfile, logout]);
+  }, [loggedInLadyCode, ladyProfiles, updateLadyProfile]);
 
   const simulateAssets = useCallback(async (level: string, verified: string, unlocked?: string[], quizTaken?: boolean, matched?: string | null) => {
     if (!loggedInLadyCode) throw new Error("尚未登入麗人角色");

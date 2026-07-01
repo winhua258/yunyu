@@ -25,13 +25,13 @@ export default function App() {
         setHasInitializedLady(true);
         setVerifiedCode(null); // 確保沒有紳士檔案被顯示
         setShowAdmin(false); // 確保後台是關閉的
-        if (lady.quizTaken && lady.matchedGentlemanCode) {
-          // 如果已完成測驗，顯示配對的紳士
-          setVerifiedCode(lady.matchedGentlemanCode);
-          setShowQuiz(false);
-        } else {
-          // 如果未完成測驗，顯示測驗畫面
+        if (!lady.quizTaken) {
+          // 如果未完成測驗，自動彈出測驗畫面
           setShowQuiz(true);
+        } else {
+          // 已完成測驗的麗人登入，預設留在麗人首頁 Dashboard (不強行導向紳士卡片)
+          setVerifiedCode(null);
+          setShowQuiz(false);
         }
       }
     } else {
