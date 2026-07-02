@@ -122,6 +122,25 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [isSuccess, setIsSuccess] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showGentlemenNormsModal, setShowGentlemenNormsModal] = useState(false);
+  
+  // Real-time ticking online/matched statistics
+  const [onlineCount, setOnlineCount] = useState(324);
+  const [matchedCount, setMatchedCount] = useState(1248);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setOnlineCount(prev => {
+        const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
+        const next = prev + delta;
+        return Math.max(310, Math.min(345, next));
+      });
+      if (Math.random() > 0.6) {
+        setMatchedCount(prev => prev + 1);
+      }
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
   const [ladyCodeInput, setLadyCodeInput] = useState("");
   const [ladyError, setLadyError] = useState("");
   const [showLadyLoginInput, setShowLadyLoginInput] = useState(false);
@@ -266,7 +285,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       setLadyAlertCopied(false);
       if (isNew) {
         setLadyAlertTitle("🌸 歡迎加入緣友！");
-        setLadyAlertMessage("您的專屬麗人編號已成功建立。請截圖或複製保存此編號，以便日後換手機或瀏覽器登入時使用。系統已為您自動登入，祝您順利找到對的人 ✨");
+        setLadyAlertMessage("您的專屬名媛編號已成功建立。請截圖或複製保存此編號，以便日後換手機或瀏覽器登入時使用。系統已為您自動登入，祝您順利找到對的人 ✨");
       } else {
         setLadyAlertTitle("✅ 歡迎回來！");
         setLadyAlertMessage("我們偵測到您先前已在此手機登入過，已自動為您找回帳號。請繼續進行靈魂測驗，查看與您契合的優質紳士 💫");
@@ -282,7 +301,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     setLadyError("");
     const sanitizedCode = ladyCodeInput.trim();
     if (!sanitizedCode) {
-      setLadyError("請輸入您的麗人編號。");
+      setLadyError("請輸入您的名媛編號。");
       return;
     }
     try {
@@ -389,7 +408,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     setSimulating(true);
     try {
       await simulateAssets("experience", "none", [], false, null);
-      showToast("已重置該麗人帳戶至初始狀態！", "success");
+      showToast("已重置該名媛帳戶至初始狀態！", "success");
     } catch (e) {
       console.error(e);
     } finally {
@@ -457,12 +476,12 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <span className="text-[10.5px] text-brand-olive font-bold">
-                目前有 324 位用戶正在進行靈魂媒合測驗...
+                目前有 {onlineCount} 位用戶正在進行靈魂媒合測驗...
               </span>
             </div>
             <span className="hidden sm:inline text-brand-border/80">|</span>
             <p className="text-[10px] text-brand-muted font-bold tracking-wide">
-              今日已有 1,248 位台北/台中菁英完成媒合
+              今日已有 {matchedCount.toLocaleString("zh-TW")} 位台北/台中菁英完成媒合
             </p>
           </div>
         </div>
@@ -514,7 +533,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                             value={editNameInput}
                             onChange={(e) => setEditNameInput(e.target.value)}
                             className="bg-transparent text-xs font-bold text-brand-dark focus:outline-none w-28 md:w-36 font-sans"
-                            placeholder="輸入麗人名稱"
+                            placeholder="輸入名媛名稱"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleSaveName();
@@ -552,7 +571,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <span 
                         onClick={() => {
                           void copyToClipboard(lady.code).then(() => {
-                            showToast("已複製麗人編號 🌸", "success");
+                            showToast("已複製名媛編號 🌸", "success");
                           });
                         }}
                         className="text-[10px] text-brand-light font-mono font-bold bg-white hover:bg-brand-border/20 px-2 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 active:scale-95 select-none"
@@ -623,7 +642,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     className="flex items-center gap-1.5 py-1.5 px-3 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl text-xs font-bold transition-all cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>登出麗人</span>
+                    <span>登出名媛</span>
                   </button>
                 </div>
               </div>
@@ -919,7 +938,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           disabled={simulating}
                           className="py-1 px-3 bg-red-600 hover:bg-red-750 text-white rounded text-[10px] font-bold transition-all"
                         >
-                          重置該麗人 AI 測驗與解鎖 (重頭測試)
+                          重置該名媛 AI 測驗與解鎖 (重頭測試)
                         </button>
                       </div>
                     </motion.div>
@@ -936,7 +955,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
 
             {/* LEFT COLUMN: LADIES (名媛限時免財力認證通道) */}
-            <div className="flex flex-col justify-between p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden min-h-[460px] md:min-h-[500px]">
+            <div className="flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden space-y-6 h-full">
               <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
                 PROMO 限時特許
               </div>
@@ -1052,7 +1071,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             </div>
 
             {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
-            <div className="flex flex-col justify-between p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden min-h-[460px] md:min-h-[500px]">
+            <div className="flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden space-y-6 h-full">
               <div className="absolute top-3 right-3 bg-brand-olive/10 text-brand-olive text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-brand-olive/20 select-none">
                 GENTLEMEN 通道
               </div>
@@ -1537,7 +1556,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 {lady?.photoUrl ? (
                   <img
                     src={lady.photoUrl}
-                    alt={lady.name || "麗人"}
+                    alt={lady.name || "名媛"}
                     className="w-16 h-16 rounded-full object-cover border-2 border-brand-accent/50 shadow-md"
                   />
                 ) : (
@@ -1557,7 +1576,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
               {ladyAlertCode && (
                 <div className="space-y-1.5 text-left">
-                  <span className="text-[10px] font-bold text-brand-light uppercase tracking-wider block">您的專屬麗人編號</span>
+                  <span className="text-[10px] font-bold text-brand-light uppercase tracking-wider block">您的專屬名媛編號</span>
                   <div className="bg-white p-3 rounded-2xl border border-brand-border/60 flex items-center justify-between gap-2 shadow-inner">
                     <span className="text-xs text-brand-dark font-mono font-bold break-all select-all">{ladyAlertCode}</span>
                     <button

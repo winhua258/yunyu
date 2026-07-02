@@ -583,7 +583,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
                     「想更了解妳一點，這樣才能推薦真正適合的人。」
                   </p>
                   <p className="text-[11px] md:text-xs font-normal text-brand-light leading-relaxed">
-                    這是一套為麗人會員設計的對話式特質探索，而非枯燥的心理測驗。
+                    這是一套為名媛會員設計的對話式特質探索，而非枯燥的心理測驗。
                     我們將透過 7 道生活情境互動，默默分析您的<b>金錢觀、戀愛觀、財務成熟度與情緒需求</b>等指標，並精準媒合最契合的對象。
                   </p>
                 </div>

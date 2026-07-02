@@ -799,7 +799,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
         <div className="bg-white p-2 rounded-2xl shadow-md border border-brand-border/60 flex gap-2">
           {([
             { id: "analytics" as AdminTab, icon: <BarChart2 className="w-4 h-4" />, label: "可視化儀表板" },
-            { id: "ladies" as AdminTab, icon: <Users className="w-4 h-4" />, label: "麗人帳號管理" },
+            { id: "ladies" as AdminTab, icon: <Users className="w-4 h-4" />, label: "名媛帳號管理" },
             { id: "gentlemen" as AdminTab, icon: <User className="w-4 h-4" />, label: "紳士檔案管理" },
           ] as { id: AdminTab; icon: React.ReactNode; label: string }[]).map(tab => (
             <button
@@ -1516,10 +1516,10 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "總麗人數", value: ladies.length, icon: <Users className="w-5 h-5" />, color: "bg-brand-olive" },
+                { label: "總名媛數", value: ladies.length, icon: <Users className="w-5 h-5" />, color: "bg-brand-olive" },
                 { label: "已答題", value: ladies.filter(l => l.quizTaken).length, icon: <Check className="w-5 h-5" />, color: "bg-emerald-600" },
                 { label: "VIP 會員", value: ladies.filter(l => l.membershipLevel === "vip").length, icon: <Crown className="w-5 h-5" />, color: "bg-amber-600" },
-                { label: "已驗資", value: ladies.filter(l => l.assetVerified === "approved").length, icon: <ShieldCheck className="w-5 h-5" />, color: "bg-blue-600" },
+                { label: "已審核財力", value: ladies.filter(l => l.assetVerified === "approved").length, icon: <ShieldCheck className="w-5 h-5" />, color: "bg-blue-600" },
               ].map((card, i) => (
                 <div key={i} className="bg-white rounded-2xl p-5 shadow border border-brand-border/60 flex flex-col gap-2">
                   <div className={`${card.color} text-white rounded-xl w-9 h-9 flex items-center justify-center`}>{card.icon}</div>
@@ -1542,7 +1542,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 <span>{ladiesLoading ? "載入中..." : "重新整理"}</span>
               </button>
               {ladiesError && <span className="text-xs text-red-500">{ladiesError}</span>}
-              <span className="text-xs text-brand-muted ml-auto">共 {ladies.length} 位麗人，按最新註冊排序</span>
+              <span className="text-xs text-brand-muted ml-auto">共 {ladies.length} 位名媛，按最新註冊排序</span>
             </div>
 
             {/* Ladies Table */}
@@ -2200,9 +2200,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "總註冊麗人", value: total, sub: "全時段", icon: <Globe className="w-5 h-5" />, color: "bg-brand-olive" },
-                  { label: "今日新增麗人", value: todayNew, sub: "今天", icon: <Users className="w-5 h-5" />, color: "bg-emerald-600" },
-                  { label: "近 7 日新增麗人", value: week7, sub: "過去一週", icon: <Calendar className="w-5 h-5" />, color: "bg-blue-600" },
+                  { label: "總註冊名媛", value: total, sub: "全時段", icon: <Globe className="w-5 h-5" />, color: "bg-brand-olive" },
+                  { label: "今日新增名媛", value: todayNew, sub: "今天", icon: <Users className="w-5 h-5" />, color: "bg-emerald-600" },
+                  { label: "近 7 日新增名媛", value: week7, sub: "過去一週", icon: <Calendar className="w-5 h-5" />, color: "bg-blue-600" },
                   { label: "已完成答題", value: quizDone, sub: `共 ${total} 位`, icon: <Check className="w-5 h-5" />, color: "bg-amber-600" },
                 ].map((card, i) => (
                   <div key={i} className="bg-white rounded-2xl p-5 shadow border border-brand-border/60 flex flex-col gap-2">
