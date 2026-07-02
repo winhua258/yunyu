@@ -685,6 +685,7 @@ app.get("/api/admin/visits", adminAuth, async (req, res) => {
         ipAddress: item._id || "unknown",
         totalVisits: item.totalVisits || 0,
         uniqueDevicesCount: (item.uniqueDevices || []).filter(d => d).length,
+        deviceIds: (item.uniqueDevices || []).filter(d => d),
         lastVisit: item.lastVisit,
         userAgent: item.userAgent || ""
       })),

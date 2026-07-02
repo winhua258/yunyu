@@ -19,7 +19,9 @@ import {
   UploadCloud, 
   Search, 
   RefreshCw,
-  Edit2
+  Edit2,
+  Camera,
+  User
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useData } from "./DataContext";
@@ -466,7 +468,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       className="w-14 h-14 rounded-full object-cover border-2 border-brand-olive/40 group-hover:opacity-85 transition-all"
                     />
                     <div className="absolute -bottom-1 -right-1 bg-brand-accent text-brand-olive p-0.5 rounded-full border border-white">
-                      <Sparkles className="w-3.5 h-3.5 fill-current" />
+                      <Camera className="w-3.5 h-3.5" />
                     </div>
                     {photoUploading && (
                       <div className="absolute inset-0 bg-brand-dark/50 rounded-full flex items-center justify-center">
@@ -932,13 +934,32 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
               {/* Login/Registration logic */}
               <div className="space-y-4 pt-2">
+                {/* Simulated dynamic online counts */}
+                <div className="flex flex-col items-center justify-center space-y-0.5 text-center bg-brand-border/10 p-2.5 rounded-2xl border border-brand-border/30">
+                  <div className="flex items-center gap-1.5 justify-center">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[10px] text-brand-olive font-semibold">
+                      目前有 324 位用戶正在進行靈魂媒合測驗...
+                    </span>
+                  </div>
+                  <p className="text-[9.5px] text-brand-muted font-medium tracking-wide">
+                    今日已有 1,248 位台北/台中菁英完成媒合
+                  </p>
+                </div>
+
                 {/* 1. Primary Action: AI test (Highest Weight) */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
+                  <div className="text-center text-[10.5px] text-brand-light font-bold">
+                    💡 僅需 30 秒，透過 7 題核心特質，為您速配今日契合靈魂（免註冊即可體驗）
+                  </div>
                   <button
                     id="btn-guest-soul-match-direct"
                     type="button"
                     onClick={onSoulMatchClick}
-                    className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
+                    className="w-full py-4 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale"
                   >
                     <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
                     <span>免費開始 AI 靈魂媒合測試</span>
@@ -946,6 +967,22 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   <p className="text-[9.5px] text-center text-brand-muted font-medium leading-relaxed">
                     🎯 首次訪問推薦：直接開始測驗，免除年收認證並在媒合成功後自動為您建立專屬編號
                   </p>
+                </div>
+
+                {/* Trust Badges */}
+                <div className="grid grid-cols-1 gap-2 pt-2 border-t border-brand-border/40 text-[10px] leading-normal text-brand-light">
+                  <div className="flex items-start gap-2 bg-white/40 p-2 rounded-xl border border-brand-border/20">
+                    <span className="shrink-0 text-brand-olive font-bold">🔒 絕對隱私：</span>
+                    <span>所有數據皆通過 AWS 銀行級加密，嚴禁外洩。</span>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/40 p-2 rounded-xl border border-brand-border/20">
+                    <span className="shrink-0 text-brand-olive font-bold">👤 實名審核：</span>
+                    <span>拒絕機器人與詐騙，打造純淨菁英圈層。</span>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/40 p-2 rounded-xl border border-brand-border/20">
+                    <span className="shrink-0 text-brand-olive font-bold">❌ 無廣告騷擾：</span>
+                    <span>純淨會員制體驗，絕不主動發送垃圾訊息。</span>
+                  </div>
                 </div>
 
                 {/* 2. Secondary Action: Create Code */}
@@ -1379,9 +1416,17 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               className="bg-brand-beige rounded-3xl shadow-2xl border border-brand-border w-full max-w-sm overflow-hidden z-10 flex flex-col p-6 text-center space-y-4"
             >
               <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner">
-                  <Sparkles className="w-6 h-6 text-brand-olive fill-current" />
-                </div>
+                {lady?.photoUrl ? (
+                  <img
+                    src={lady.photoUrl}
+                    alt={lady.name || "麗人"}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-brand-accent/50 shadow-md"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner">
+                    <User className="w-6 h-6 text-brand-olive" />
+                  </div>
+                )}
               </div>
 
               <h3 className="font-serif text-lg text-brand-dark font-bold tracking-wide">

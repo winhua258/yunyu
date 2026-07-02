@@ -171,12 +171,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     ipAddress: string;
     totalVisits: number;
     uniqueDevicesCount: number;
+    deviceIds?: string[];
     lastVisit: string;
     userAgent: string;
   }
   const [visitsData, setVisitsData] = useState<{ summary: VisitSummaryItem[]; totalLogs: number } | null>(null);
   const [visitsLoading, setVisitsLoading] = useState(false);
   const [excludedIp, setExcludedIp] = useState<string>(() => localStorage.getItem("yuanyu_excluded_ip") || "");
+  const [visitFilter, setVisitFilter] = useState<"all" | "quiz_completed" | "quiz_not_completed">("all");
 
   const loadLadies = React.useCallback(async () => {
     if (!adminCodes[0]) return;
@@ -2046,21 +2048,41 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
             "65.181": "美國/VPN", "192.168": "本地（開發）", "127.": "本地（開發）",
           };
 
-          // Filter visits summary by excludedIp
+          // Parse excluded IPs list (supporting multiple IPs separated by comma, spaces)
+          const excludedIpList = excludedIp 
+            ? excludedIp.split(/[\s,，]+/).map(ip => ip.trim()).filter(Boolean)
+            : [];
+
+          // Filter visits summary by excludedIp list
           const rawVisits = visitsData?.summary || [];
-          const filteredVisits = excludedIp 
-            ? rawVisits.filter(v => v.ipAddress !== excludedIp)
+          const visitsForStats = excludedIpList.length > 0 
+            ? rawVisits.filter(v => !excludedIpList.includes(v.ipAddress))
             : rawVisits;
 
-          const totalVisitsCount = filteredVisits.reduce((acc, curr) => acc + curr.totalVisits, 0);
-          const uniqueIpsCount = filteredVisits.length;
-          const uniqueDevicesCount = filteredVisits.reduce((acc, curr) => acc + curr.uniqueDevicesCount, 0);
+          const totalVisitsCount = visitsForStats.reduce((acc, curr) => acc + curr.totalVisits, 0);
+          const uniqueIpsCount = visitsForStats.length;
+          const uniqueDevicesCount = visitsForStats.reduce((acc, curr) => acc + curr.uniqueDevicesCount, 0);
 
-          // Region counts (also exclude excludedIp if configured)
+          // Detailed visits list after applying status filter
+          const filteredVisits = visitsForStats.filter(v => {
+            const matchingLadiesForIp = ladies.filter(l => l.ipAddress === v.ipAddress);
+            const isRegistered = matchingLadiesForIp.length > 0;
+            const hasTakenQuiz = matchingLadiesForIp.some(l => l.quizTaken);
+
+            if (visitFilter === "quiz_completed") {
+              return isRegistered && hasTakenQuiz;
+            }
+            if (visitFilter === "quiz_not_completed") {
+              return !(isRegistered && hasTakenQuiz);
+            }
+            return true;
+          });
+
+          // Region counts (also exclude excludedIp list if configured)
           const regionCounts: Record<string, number> = {};
           ladies.forEach(l => {
             if (!l.ipAddress) return;
-            if (excludedIp && l.ipAddress === excludedIp) return; // Exclude matching IP
+            if (excludedIpList.length > 0 && excludedIpList.includes(l.ipAddress)) return; // Exclude matching IP
             const region = Object.entries(regionMap).find(([prefix]) => (l.ipAddress as string).startsWith(prefix))?.[1] ?? "其他/未知";
             regionCounts[region] = (regionCounts[region] || 0) + 1;
           });
@@ -2072,17 +2094,17 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           const dashOffset = circumference * (1 - quizRate / 100);
 
           const today = new Date().toDateString();
-          // Filter ladies registered today, excluding excludedIp if needed
+          // Filter ladies registered today, excluding excludedIp list if needed
           const todayNew = ladies.filter(l => {
             if (!l.createdAt) return false;
-            if (excludedIp && l.ipAddress === excludedIp) return false;
+            if (excludedIpList.length > 0 && l.ipAddress && excludedIpList.includes(l.ipAddress)) return false;
             return new Date(l.createdAt as string).toDateString() === today;
           }).length;
 
           const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
           const week7 = ladies.filter(l => {
             if (!l.createdAt) return false;
-            if (excludedIp && l.ipAddress === excludedIp) return false;
+            if (excludedIpList.length > 0 && l.ipAddress && excludedIpList.includes(l.ipAddress)) return false;
             return new Date(l.createdAt as string).getTime() >= sevenDaysAgo;
           }).length;
 
@@ -2291,22 +2313,37 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               {/* Visited IPs Details List */}
               <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-brand-border/40 pb-3">
                   <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
                     <Globe className="w-4 h-4 text-brand-olive" />
                     詳細訪問 IP 清單 (最新連線排序)
                   </h3>
-                  <span className="text-[10px] text-brand-light">
-                    共 {filteredVisits.length} 個 IP，已過濾 {excludedIp ? 1 : 0} 個
-                  </span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-brand-light">狀態篩選：</span>
+                      <select
+                        value={visitFilter}
+                        onChange={e => setVisitFilter(e.target.value as any)}
+                        className="bg-brand-beige/50 border border-brand-border rounded-lg px-2.5 py-1 text-[11px] font-semibold text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-olive cursor-pointer"
+                      >
+                        <option value="all">全部訪問</option>
+                        <option value="quiz_completed">✅ 已註冊並完成答題</option>
+                        <option value="quiz_not_completed">❌ 未答題 / 流失訪客</option>
+                      </select>
+                    </div>
+                    <span className="text-[10px] text-brand-light font-bold">
+                      共 {filteredVisits.length} 個 IP，已過濾 {excludedIpList.length} 個
+                    </span>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto border border-brand-border/40 rounded-xl">
-                  <div className="max-h-60 overflow-y-auto">
+                  <div className="max-h-80 overflow-y-auto">
                     <table className="w-full text-[11px] text-left">
                       <thead className="bg-brand-beige/55 sticky top-0 border-b border-brand-border/30">
                         <tr>
                           <th className="px-4 py-2 text-brand-muted font-bold">IP 位址</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">業務狀態</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">點擊訪問次數</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">包含設備數</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">最近進入時間</th>
@@ -2317,38 +2354,84 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       <tbody>
                         {visitsLoading ? (
                           <tr>
-                            <td colSpan={6} className="text-center py-8 text-brand-muted">載入中...</td>
+                            <td colSpan={7} className="text-center py-8 text-brand-muted">載入中...</td>
                           </tr>
                         ) : filteredVisits.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="text-center py-8 text-brand-muted">目前尚無訪問記錄</td>
+                            <td colSpan={7} className="text-center py-8 text-brand-muted">沒有符合篩選條件的記錄</td>
                           </tr>
                         ) : (
-                          filteredVisits.map(item => (
-                            <tr key={item.ipAddress} className="border-b border-brand-border/10 hover:bg-brand-beige/10">
-                              <td className="px-4 py-2 font-mono font-semibold text-brand-dark">{item.ipAddress}</td>
-                              <td className="px-4 py-2 font-bold text-brand-olive">{item.totalVisits} 次</td>
-                              <td className="px-4 py-2 text-brand-dark">{item.uniqueDevicesCount} 台</td>
-                              <td className="px-4 py-2 text-brand-light">
-                                {item.lastVisit ? new Date(item.lastVisit).toLocaleString("zh-TW") : "—"}
-                              </td>
-                              <td className="px-4 py-2 text-brand-muted truncate max-w-[200px]" title={item.userAgent}>
-                                {getFriendlyDevice(item.userAgent)}
-                              </td>
-                              <td className="px-4 py-2 text-right">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setExcludedIp(item.ipAddress);
-                                    localStorage.setItem("yuanyu_excluded_ip", item.ipAddress);
-                                  }}
-                                  className="text-[9px] text-brand-olive hover:underline font-bold"
-                                >
-                                  排除此 IP
-                                </button>
-                              </td>
-                            </tr>
-                          ))
+                          filteredVisits.map(item => {
+                            const matchingLadiesForIp = ladies.filter(l => l.ipAddress === item.ipAddress);
+                            const isRegistered = matchingLadiesForIp.length > 0;
+                            const hasTakenQuiz = matchingLadiesForIp.some(l => l.quizTaken);
+
+                            // Detect if this device has connected with other IPs
+                            const isSameDeviceShared = (item.deviceIds || []).some(devId => {
+                              return rawVisits.some(v => v.ipAddress !== item.ipAddress && (v.deviceIds || []).includes(devId));
+                            });
+
+                            return (
+                              <tr key={item.ipAddress} className="border-b border-brand-border/10 hover:bg-brand-beige/10">
+                                <td className="px-4 py-2 font-mono font-semibold text-brand-dark">
+                                  <span>{item.ipAddress}</span>
+                                  {isSameDeviceShared && (
+                                    <span 
+                                      className="inline-block text-[8px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 font-sans font-bold ml-1.5"
+                                      title="系統偵測到此設備使用過多個不同 IP 連線本網站"
+                                    >
+                                      同設備跨 IP
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2">
+                                  {isRegistered && hasTakenQuiz ? (
+                                    <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                                      已註冊答題 ({matchingLadiesForIp.map(l => l.name).join(", ")})
+                                    </span>
+                                  ) : isRegistered ? (
+                                    <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                                      已註冊未答題 ({matchingLadiesForIp.map(l => l.name).join(", ")})
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] bg-brand-light/10 text-brand-light border border-brand-border/40 px-2 py-0.5 rounded-full">
+                                      未註冊訪客
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 font-bold text-brand-olive">{item.totalVisits} 次</td>
+                                <td className="px-4 py-2 text-brand-dark">{item.uniqueDevicesCount} 台</td>
+                                <td className="px-4 py-2 text-brand-light">
+                                  {item.lastVisit ? new Date(item.lastVisit).toLocaleString("zh-TW") : "—"}
+                                </td>
+                                <td className="px-4 py-2 text-brand-muted truncate max-w-[200px]" title={item.userAgent}>
+                                  {getFriendlyDevice(item.userAgent)}
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      // Support adding this IP to the list of excluded IPs
+                                      const trimmedNewIp = item.ipAddress.trim();
+                                      if (trimmedNewIp) {
+                                        const currentList = excludedIp 
+                                          ? excludedIp.split(/[\s,，]+/).map(ip => ip.trim()).filter(Boolean)
+                                          : [];
+                                        if (!currentList.includes(trimmedNewIp)) {
+                                          const newList = [...currentList, trimmedNewIp].join(", ");
+                                          setExcludedIp(newList);
+                                          localStorage.setItem("yuanyu_excluded_ip", newList);
+                                        }
+                                      }
+                                    }}
+                                    className="text-[9px] text-brand-olive hover:underline font-bold"
+                                  >
+                                    排除此 IP
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
