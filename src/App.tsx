@@ -8,6 +8,7 @@ import SoulMatchQuiz from "./components/SoulMatchQuiz";
 import AdminEditScreen from "./components/AdminEditScreen";
 import { useAuth } from "./components/AuthContext";
 import { useData } from "./components/DataContext";
+import { getOrCreateDeviceId, trackVisit } from "./data";
 
 export default function App() {
   const { loggedInLadyCode, ladyProfiles, login, logout, register } = useAuth();
@@ -16,6 +17,12 @@ export default function App() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [hasInitializedLady, setHasInitializedLady] = useState(false);
+
+  useEffect(() => {
+    // 記錄每次進入網站的訪客軌跡
+    const devId = getOrCreateDeviceId();
+    void trackVisit(devId);
+  }, []);
 
   useEffect(() => {
     // 這個 effect 專門處理「麗人」登入後的邏輯，僅在剛登入且尚未初始化時執行一次，防止更新 profiles 導致重複導向

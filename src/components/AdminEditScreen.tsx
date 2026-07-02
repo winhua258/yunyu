@@ -39,6 +39,7 @@ import {
   fetchAllLadies,
   updateLadyByAdmin,
   deleteLadyByAdmin,
+  fetchAdminVisits,
 } from "../data";
 import { useData } from "./DataContext";
 
@@ -165,6 +166,18 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [colFilterDevice, setColFilterDevice] = useState("");
   const [colFilterNotes, setColFilterNotes] = useState("");
 
+  // --- Visits/Analytics State ---
+  interface VisitSummaryItem {
+    ipAddress: string;
+    totalVisits: number;
+    uniqueDevicesCount: number;
+    lastVisit: string;
+    userAgent: string;
+  }
+  const [visitsData, setVisitsData] = useState<{ summary: VisitSummaryItem[]; totalLogs: number } | null>(null);
+  const [visitsLoading, setVisitsLoading] = useState(false);
+  const [excludedIp, setExcludedIp] = useState<string>(() => localStorage.getItem("yuanyu_excluded_ip") || "");
+
   const loadLadies = React.useCallback(async () => {
     if (!adminCodes[0]) return;
     setLadiesLoading(true);
@@ -179,6 +192,19 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     }
   }, [adminCodes]);
 
+  const loadVisits = React.useCallback(async () => {
+    if (!adminCodes[0]) return;
+    setVisitsLoading(true);
+    try {
+      const data = await fetchAdminVisits(adminCodes[0]);
+      setVisitsData(data);
+    } catch (e) {
+      console.error("Failed to load visits data", e);
+    } finally {
+      setVisitsLoading(false);
+    }
+  }, [adminCodes]);
+
   const handleSort = (field: string) => {
     if (ladySortField === field) {
       setLadySortDirection(prev => prev === "asc" ? "desc" : "asc");
@@ -189,10 +215,13 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   };
 
   React.useEffect(() => {
-    if (activeTab === "ladies" || activeTab === "analytics") {
+    if (activeTab === "ladies") {
       void loadLadies();
+    } else if (activeTab === "analytics") {
+      void loadLadies();
+      void loadVisits();
     }
-  }, [activeTab, loadLadies]);
+  }, [activeTab, loadLadies, loadVisits]);
 
   const handleOpenEditLady = (lady: LadyProfile) => {
     setEditLady(lady);
@@ -2016,9 +2045,22 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
             "211.": "香港", "210.": "香港", "103.": "香港/東南亞",
             "65.181": "美國/VPN", "192.168": "本地（開發）", "127.": "本地（開發）",
           };
+
+          // Filter visits summary by excludedIp
+          const rawVisits = visitsData?.summary || [];
+          const filteredVisits = excludedIp 
+            ? rawVisits.filter(v => v.ipAddress !== excludedIp)
+            : rawVisits;
+
+          const totalVisitsCount = filteredVisits.reduce((acc, curr) => acc + curr.totalVisits, 0);
+          const uniqueIpsCount = filteredVisits.length;
+          const uniqueDevicesCount = filteredVisits.reduce((acc, curr) => acc + curr.uniqueDevicesCount, 0);
+
+          // Region counts (also exclude excludedIp if configured)
           const regionCounts: Record<string, number> = {};
           ladies.forEach(l => {
             if (!l.ipAddress) return;
+            if (excludedIp && l.ipAddress === excludedIp) return; // Exclude matching IP
             const region = Object.entries(regionMap).find(([prefix]) => (l.ipAddress as string).startsWith(prefix))?.[1] ?? "其他/未知";
             regionCounts[region] = (regionCounts[region] || 0) + 1;
           });
@@ -2030,31 +2072,115 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           const dashOffset = circumference * (1 - quizRate / 100);
 
           const today = new Date().toDateString();
-          const todayNew = ladies.filter(l => l.createdAt && new Date(l.createdAt as string).toDateString() === today).length;
+          // Filter ladies registered today, excluding excludedIp if needed
+          const todayNew = ladies.filter(l => {
+            if (!l.createdAt) return false;
+            if (excludedIp && l.ipAddress === excludedIp) return false;
+            return new Date(l.createdAt as string).toDateString() === today;
+          }).length;
+
           const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          const week7 = ladies.filter(l => l.createdAt && new Date(l.createdAt as string).getTime() >= sevenDaysAgo).length;
+          const week7 = ladies.filter(l => {
+            if (!l.createdAt) return false;
+            if (excludedIp && l.ipAddress === excludedIp) return false;
+            return new Date(l.createdAt as string).getTime() >= sevenDaysAgo;
+          }).length;
 
           return (
             <div className="flex flex-col gap-6">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => void loadLadies()}
-                  disabled={ladiesLoading}
+                  onClick={() => {
+                    void loadLadies();
+                    void loadVisits();
+                  }}
+                  disabled={ladiesLoading || visitsLoading}
                   className="flex items-center gap-2 px-4 py-2 border border-brand-olive/50 rounded-full text-xs font-bold text-brand-olive hover:bg-brand-olive/10 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${ladiesLoading ? "animate-spin" : ""}`} />
-                  <span>{ladiesLoading ? "載入中..." : "重新整理"}</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${ladiesLoading || visitsLoading ? "animate-spin" : ""}`} />
+                  <span>{ladiesLoading || visitsLoading ? "載入中..." : "重新整理"}</span>
                 </button>
                 {ladiesError && <span className="text-xs text-red-500">{ladiesError}</span>}
+              </div>
+
+              {/* Visits Analysis Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Visits KPI Cards */}
+                <div className="md:col-span-2 bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col justify-between gap-4">
+                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
+                    <BarChart2 className="w-4 h-4 text-brand-olive" />
+                    網頁進入訪問統計 {excludedIp && <span className="text-[10px] text-red-500 font-bold">(已啟用 IP 排除)</span>}
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-brand-beige/25 p-4 rounded-xl border border-brand-border/30">
+                      <div className="text-[10px] text-brand-muted uppercase font-bold">總點擊訪問量</div>
+                      <div className="text-2xl font-bold font-serif text-brand-olive mt-1">
+                        {visitsLoading ? "..." : totalVisitsCount} <span className="text-xs font-sans text-brand-light">次</span>
+                      </div>
+                    </div>
+                    <div className="bg-brand-beige/25 p-4 rounded-xl border border-brand-border/30">
+                      <div className="text-[10px] text-brand-muted uppercase font-bold">獨立訪問 IP 數</div>
+                      <div className="text-2xl font-bold font-serif text-emerald-700 mt-1">
+                        {visitsLoading ? "..." : uniqueIpsCount} <span className="text-xs font-sans text-brand-light">個</span>
+                      </div>
+                    </div>
+                    <div className="bg-brand-beige/25 p-4 rounded-xl border border-brand-border/30">
+                      <div className="text-[10px] text-brand-muted uppercase font-bold">獨立物理設備數</div>
+                      <div className="text-2xl font-bold font-serif text-blue-700 mt-1">
+                        {visitsLoading ? "..." : uniqueDevicesCount} <span className="text-xs font-sans text-brand-light">台</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* IP Exclusion Config */}
+                <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col justify-between gap-3">
+                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-brand-olive" />
+                    IP 排除過濾器
+                  </h3>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={excludedIp}
+                      onChange={e => {
+                        const val = e.target.value.trim();
+                        setExcludedIp(val);
+                        localStorage.setItem("yuanyu_excluded_ip", val);
+                      }}
+                      placeholder="輸入欲排除的 IP (如 127.0.0.1)"
+                      className="flex-1 bg-white border border-brand-border rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                    />
+                    {excludedIp && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExcludedIp("");
+                          localStorage.removeItem("yuanyu_excluded_ip");
+                        }}
+                        className="px-3 py-1.5 bg-brand-border/30 hover:bg-brand-border/50 text-brand-dark text-xs font-bold rounded-xl cursor-pointer"
+                      >
+                        清除
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[9px] text-brand-light leading-relaxed">
+                    {excludedIp ? (
+                      <span className="text-red-500 font-bold">✓ 已排除訪問 IP：{excludedIp}</span>
+                    ) : (
+                      <span>* 排除特定 IP (如辦公室/開發者 IP) 可提供純淨業務統計。</span>
+                    )}
+                  </p>
+                </div>
               </div>
 
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "總訪客（已註冊）", value: total, sub: "全時段", icon: <Globe className="w-5 h-5" />, color: "bg-brand-olive" },
-                  { label: "今日新增", value: todayNew, sub: "今天", icon: <Users className="w-5 h-5" />, color: "bg-emerald-600" },
-                  { label: "近 7 日新增", value: week7, sub: "過去一週", icon: <Calendar className="w-5 h-5" />, color: "bg-blue-600" },
+                  { label: "總註冊麗人", value: total, sub: "全時段", icon: <Globe className="w-5 h-5" />, color: "bg-brand-olive" },
+                  { label: "今日新增麗人", value: todayNew, sub: "今天", icon: <Users className="w-5 h-5" />, color: "bg-emerald-600" },
+                  { label: "近 7 日新增麗人", value: week7, sub: "過去一週", icon: <Calendar className="w-5 h-5" />, color: "bg-blue-600" },
                   { label: "已完成答題", value: quizDone, sub: `共 ${total} 位`, icon: <Check className="w-5 h-5" />, color: "bg-amber-600" },
                 ].map((card, i) => (
                   <div key={i} className="bg-white rounded-2xl p-5 shadow border border-brand-border/60 flex flex-col gap-2">
@@ -2162,6 +2288,74 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 </div>
 
               </div>
+
+              {/* Visited IPs Details List */}
+              <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-brand-olive" />
+                    詳細訪問 IP 清單 (最新連線排序)
+                  </h3>
+                  <span className="text-[10px] text-brand-light">
+                    共 {filteredVisits.length} 個 IP，已過濾 {excludedIp ? 1 : 0} 個
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto border border-brand-border/40 rounded-xl">
+                  <div className="max-h-60 overflow-y-auto">
+                    <table className="w-full text-[11px] text-left">
+                      <thead className="bg-brand-beige/55 sticky top-0 border-b border-brand-border/30">
+                        <tr>
+                          <th className="px-4 py-2 text-brand-muted font-bold">IP 位址</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">點擊訪問次數</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">包含設備數</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">最近進入時間</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">設備與瀏覽器描述</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold text-right">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visitsLoading ? (
+                          <tr>
+                            <td colSpan={6} className="text-center py-8 text-brand-muted">載入中...</td>
+                          </tr>
+                        ) : filteredVisits.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="text-center py-8 text-brand-muted">目前尚無訪問記錄</td>
+                          </tr>
+                        ) : (
+                          filteredVisits.map(item => (
+                            <tr key={item.ipAddress} className="border-b border-brand-border/10 hover:bg-brand-beige/10">
+                              <td className="px-4 py-2 font-mono font-semibold text-brand-dark">{item.ipAddress}</td>
+                              <td className="px-4 py-2 font-bold text-brand-olive">{item.totalVisits} 次</td>
+                              <td className="px-4 py-2 text-brand-dark">{item.uniqueDevicesCount} 台</td>
+                              <td className="px-4 py-2 text-brand-light">
+                                {item.lastVisit ? new Date(item.lastVisit).toLocaleString("zh-TW") : "—"}
+                              </td>
+                              <td className="px-4 py-2 text-brand-muted truncate max-w-[200px]" title={item.userAgent}>
+                                {getFriendlyDevice(item.userAgent)}
+                              </td>
+                              <td className="px-4 py-2 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setExcludedIp(item.ipAddress);
+                                    localStorage.setItem("yuanyu_excluded_ip", item.ipAddress);
+                                  }}
+                                  className="text-[9px] text-brand-olive hover:underline font-bold"
+                                >
+                                  排除此 IP
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
             </div>
           );
         })()}{/* end analytics tab */}

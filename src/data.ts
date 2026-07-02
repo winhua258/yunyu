@@ -307,7 +307,7 @@ async function detectPreciseDeviceModel(): Promise<string> {
 }
 
 // 獲取或建立設備唯一識別碼以實施防刷機制
-function getOrCreateDeviceId(): string {
+export function getOrCreateDeviceId(): string {
   let devId = localStorage.getItem("yuanyu_device_id");
   if (!devId) {
     devId = 'dev_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
@@ -596,4 +596,42 @@ export async function updateLadyName(code: string, name: string): Promise<LadyPr
   }
   const { lady } = await response.json();
   return lady;
+}
+
+/**
+ * Guest/User: Track visitor page entry.
+ */
+export async function trackVisit(deviceId: string): Promise<void> {
+  try {
+    await fetch("/api/track-visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId }),
+    });
+  } catch (e) {
+    console.error("Failed to track visit", e);
+  }
+}
+
+/**
+ * Admin: Fetch visit stats and IP logs summary.
+ */
+export async function fetchAdminVisits(adminCode: string): Promise<{
+  summary: Array<{
+    ipAddress: string;
+    totalVisits: number;
+    uniqueDevicesCount: number;
+    lastVisit: string;
+    userAgent: string;
+  }>;
+  totalLogs: number;
+}> {
+  const response = await fetch("/api/admin/visits", {
+    headers: { "x-admin-code": adminCode },
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || "Failed to fetch admin visits");
+  }
+  return response.json();
 }

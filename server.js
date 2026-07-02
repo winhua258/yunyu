@@ -73,8 +73,16 @@ const LadyProfileSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
+const VisitLogSchema = new mongoose.Schema({
+  ipAddress: { type: String, default: "" },
+  deviceId: { type: String, default: "" },
+  userAgent: { type: String, default: "" },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const Config = mongoose.model("Config", ConfigSchema);
 const LadyProfile = mongoose.model("LadyProfile", LadyProfileSchema);
+const VisitLog = mongoose.model("VisitLog", VisitLogSchema);
 
 // --- 自動同步預設資料 ---
 async function synchronizeDefaultData() {
@@ -411,6 +419,26 @@ app.post("/api/lady/register", async (req, res) => {
   }
 });
 
+// POST /api/track-visit: 記錄訪客進入網站的軌跡
+app.post("/api/track-visit", async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    const clientIp = getClientIp(req);
+    const userAgent = req.headers["user-agent"] || "";
+
+    const log = new VisitLog({
+      ipAddress: clientIp || "unknown",
+      deviceId: deviceId || "",
+      userAgent
+    });
+    await log.save();
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error logging visit:", error);
+    res.status(500).json({ error: "Failed to log visit" });
+  }
+});
+
 // POST /api/lady/login: 模擬女性用戶登入
 app.post("/api/lady/login", async (req, res) => {
   try {
@@ -631,6 +659,40 @@ app.delete("/api/admin/lady/:code", adminAuth, async (req, res) => {
   } catch (error) {
     console.error("Error deleting lady by admin:", error);
     res.status(500).json({ message: "刪除失敗。" });
+  }
+});
+
+// GET /api/admin/visits: 獲取所有訪問日誌統計（管理員專用）
+app.get("/api/admin/visits", adminAuth, async (req, res) => {
+  try {
+    const summary = await VisitLog.aggregate([
+      {
+        $group: {
+          _id: "$ipAddress",
+          totalVisits: { $sum: 1 },
+          uniqueDevices: { $addToSet: "$deviceId" },
+          lastVisit: { $max: "$createdAt" },
+          userAgent: { $first: "$userAgent" }
+        }
+      },
+      { $sort: { lastVisit: -1 } }
+    ]);
+
+    const totalLogs = await VisitLog.countDocuments();
+
+    res.json({
+      summary: summary.map(item => ({
+        ipAddress: item._id || "unknown",
+        totalVisits: item.totalVisits || 0,
+        uniqueDevicesCount: (item.uniqueDevices || []).filter(d => d).length,
+        lastVisit: item.lastVisit,
+        userAgent: item.userAgent || ""
+      })),
+      totalLogs
+    });
+  } catch (error) {
+    console.error("Error fetching visits in admin:", error);
+    res.status(500).json({ message: "獲取訪問量失敗。" });
   }
 });
 
