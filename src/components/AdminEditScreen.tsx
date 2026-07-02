@@ -1356,7 +1356,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     className="w-full bg-brand-beige/40 border border-brand-border rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
                   <span className="text-[10px] text-brand-light block mt-1.5 italic">
-                    提示：當麗人解鎖此紳士，並點選「一鍵 LINE 聯絡與對談」時，將會跳轉至您輸入的這個 LINE 網址。
+                    提示：當麗人解鎖此紳士，並點選「一鍵 LINE 聯絡與心動開聊」時，將會跳轉至您輸入的這個 LINE 網址。
                   </span>
                 </div>
 

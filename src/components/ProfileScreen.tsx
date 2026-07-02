@@ -240,7 +240,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
               className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#06C755] text-white px-10 py-4.5 rounded-full text-sm font-bold uppercase tracking-widest shadow-md hover:bg-[#05b04b] hover:shadow-xl transition-all duration-300 transform active:scale-98"
             >
               <Heart className="w-4 h-4 shrink-0 fill-current" />
-              <span>一鍵 LINE 聯絡與對談</span>
+              <span>一鍵 LINE 聯絡與心動開聊</span>
               <ExternalLink className="w-4 h-4 shrink-0" />
             </button>
             
@@ -425,7 +425,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 <div className="flex items-center gap-2">
                   <Heart className="w-5 h-5 text-brand-olive fill-current animate-pulse" />
                   <h3 className="font-serif text-lg text-brand-dark font-bold tracking-wide">
-                    開通與 {profile.name} 的對話通道
+                    開通與 {profile.name} 的心動聊天通道
                   </h3>
                 </div>
                 <button 
@@ -457,7 +457,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 </p>
 
                 <p className="text-[11px] text-brand-light leading-relaxed bg-brand-beige/50 p-3 rounded-xl border border-brand-border/40">
-                  🎁 <strong>專屬提示：</strong> 點擊跳轉後，系統將自動開啟與對方的 LINE 對話，並<strong>預填入專屬問候語</strong>（個人帳號將自動複製至剪貼簿）：<br/>
+                  🎁 <strong>專屬提示：</strong> 點擊跳轉後，系統將自動開啟與對方的 LINE 聊天，並<strong>預填入專屬問候語</strong>（個人帳號將自動複製至剪貼簿）：<br/>
                   <strong className="text-brand-dark italic block mt-1 text-center font-serif">「{selectedGreeting}」</strong>
                 </p>
               </div>

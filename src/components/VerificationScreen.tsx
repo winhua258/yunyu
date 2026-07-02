@@ -772,7 +772,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 >
                   <div className="flex items-center gap-2">
                     <RefreshCw className={`w-4 h-4 ${simulating ? "animate-spin" : ""}`} />
-                    <span>🧪 [DEV] 測試調試器：快速切換女方套餐或驗資狀態</span>
+                    <span>🧪 [DEV] 測試調試器：快速切換女方方案或驗資狀態</span>
                   </div>
                   <span>{showSimulator ? "收合 [-]" : "展開 [+]"}</span>
                 </button>
@@ -786,14 +786,14 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       className="overflow-hidden space-y-4 pt-4 mt-2 border-t border-brand-border/40 text-xs"
                     >
                       <p className="text-[11px] text-brand-light">
-                        您可以切換女方的付費套餐與資產驗證，即可體驗「不同套餐對應解鎖多個卡片預覽數」的判定邏輯。
+                        您可以切換女方的會員方案與資產驗證，即可體驗「不同方案對應解鎖多張卡片預覽數」的判定邏輯。
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         
                         {/* Subscription simulation selector */}
                         <div className="space-y-1.5">
-                          <label className="font-bold text-brand-dark">套餐等級 (Membership Grade)：</label>
+                          <label className="font-bold text-brand-dark">方案等級 (Membership Grade)：</label>
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleSimulateChange("free", lady.assetVerified || "none")}
@@ -1182,7 +1182,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-brand-dark">Crisp 在線客服視窗</p>
-                          <p className="text-[10px] text-brand-light">即時線上文字諮詢對談</p>
+                          <p className="text-[10px] text-brand-light">即時線上文字聊天諮詢</p>
                         </div>
                       </div>
                       <button
@@ -1195,7 +1195,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         }}
                         className="text-[10px] bg-brand-olive text-white px-3 py-1.5 rounded-full font-bold hover:opacity-90 transition-all cursor-pointer font-sans"
                       >
-                        立即對談
+                        立即開聊
                       </button>
                     </div>
                   )}
@@ -1303,7 +1303,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         <Sparkles className="w-4.5 h-4.5" />
                       </div>
                       <div>
-                        <h5 className="text-xs font-bold text-brand-dark">購買「體驗媒合套餐」</h5>
+                        <h5 className="text-xs font-bold text-brand-dark">購買「體驗媒合方案」</h5>
                         <p className="text-[9px] text-brand-muted">解鎖包含靈魂匹配伴侶在內的 2 位名額</p>
                       </div>
                     </div>
@@ -1322,7 +1322,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         <Gem className="w-4.5 h-4.5" />
                       </div>
                       <div>
-                        <h5 className="text-xs font-bold text-brand-dark">升級「尊榮 VIP 奢華套餐」</h5>
+                        <h5 className="text-xs font-bold text-brand-dark">升級「尊榮 VIP 奢華方案」</h5>
                         <p className="text-[9px] text-brand-muted">全平台男賓無限查看、無限跳聯絡資訊</p>
                       </div>
                     </div>

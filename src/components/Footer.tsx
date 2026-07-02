@@ -24,7 +24,7 @@ export default function Footer() {
           03. 專屬媒合
         </span>
         <p className="text-[11px] uppercase tracking-wider text-brand-light mt-1.5 leading-relaxed">
-          由資深專家親自推薦引導，一鍵連接 LINE 暢快對談與互動
+          由資深專家親自推薦引導，一鍵連線 LINE 輕鬆聊天與互動
         </p>
       </div>
     </footer>
