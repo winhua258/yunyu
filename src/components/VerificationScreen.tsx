@@ -896,90 +896,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             {/* Center vertical line */}
             <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
 
-            {/* LEFT COLUMN: GENTLEMEN (紳士通道) */}
-            <div className="flex flex-col justify-between p-2 md:p-4 space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0">
-                    <Lock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                      紳士專屬驗資通道
-                    </h3>
-                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
-                      Gentlemen Verification
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                  為確保交友生態之安全防範與傑出素質，紳士會員須提交實名核驗與資產審核，經理財顧問核准後由專屬專員人工發放<strong>「戀人編號」</strong>登入。
-                </p>
-              </div>
-
-              {/* Secure verification code input */}
-              <form id="form-verification" onSubmit={handleVerify} className="space-y-4 pt-2">
-                <div className="relative">
-                  <input
-                    id="input-verification-code"
-                    type="text"
-                    maxLength={36}
-                    value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value);
-                      if (error) setError("");
-                    }}
-                    disabled={isSuccess}
-                    placeholder="請輸入專屬戀人編號"
-                    className={`w-full bg-brand-beige/50 text-center tracking-[0.25em] font-mono text-base font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3.5 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
-                      error 
-                        ? "border-red-400 focus:border-red-500" 
-                        : "border-brand-border focus:border-brand-olive focus:bg-white"
-                    }`}
-                  />
-                </div>
-
-                {error && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{error}</span>
-                  </motion.p>
-                )}
-
-                <button
-                  id="btn-verify-submit"
-                  type="submit"
-                  disabled={isSuccess}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
-                    isSuccess
-                      ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
-                      : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
-                  }`}
-                >
-                  <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
-                  {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
-                </button>
-              </form>
-
-              <div className="pt-2 text-center">
-                <button
-                  id="btn-show-contact-modal"
-                  type="button"
-                  onClick={() => setShowContactModal(true)}
-                  className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
-                >
-                  無專屬編號？洽詢專屬客服進行驗資
-                </button>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: LADIES (麗人免資產驗證通道) */}
+            {/* LEFT COLUMN: LADIES (麗人免資產驗證通道) */}
             <div className="flex flex-col justify-between p-2 md:p-4 bg-brand-border/10 rounded-2xl md:bg-transparent md:rounded-none space-y-6 relative overflow-hidden">
               <div className="absolute top-2 right-2 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
                 PROMO 限時特許
@@ -1063,7 +980,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                             animate={{ opacity: 1, y: 0 }}
                             className="flex items-center gap-1 text-[10px] text-red-650 font-bold"
                           >
-                            <AlertCircle className="w-3 h-3 shrink-0" />
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>{ladyError}</span>
                           </motion.p>
                         )}
@@ -1091,6 +1008,89 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     )}
                   </AnimatePresence>
                 </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
+            <div className="flex flex-col justify-between p-2 md:p-4 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
+                      紳士專屬驗資通道
+                    </h3>
+                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
+                      Gentlemen Verification
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
+                  為確保交友生態之安全防範與傑出素質，紳士會員須提交實名核驗與資產審核，經理財顧問核准後由專屬專員人工發放<strong>「戀人編號」</strong>登入。
+                </p>
+              </div>
+
+              {/* Secure verification code input */}
+              <form id="form-verification" onSubmit={handleVerify} className="space-y-4 pt-2">
+                <div className="relative">
+                  <input
+                    id="input-verification-code"
+                    type="text"
+                    maxLength={36}
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      if (error) setError("");
+                    }}
+                    disabled={isSuccess}
+                    placeholder="請輸入專屬戀人編號"
+                    className={`w-full bg-brand-beige/50 text-center tracking-[0.25em] font-mono text-base font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3.5 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
+                      error 
+                        ? "border-red-400 focus:border-red-500" 
+                        : "border-brand-border focus:border-brand-olive focus:bg-white"
+                    }`}
+                  />
+                </div>
+
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{error}</span>
+                  </motion.p>
+                )}
+
+                <button
+                  id="btn-verify-submit"
+                  type="submit"
+                  disabled={isSuccess}
+                  className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
+                    isSuccess
+                      ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
+                      : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
+                  }`}
+                >
+                  <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
+                  {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
+                </button>
+              </form>
+
+              <div className="pt-2 text-center">
+                <button
+                  id="btn-show-contact-modal"
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
+                >
+                  無專屬編號？洽詢專屬客服進行驗資
+                </button>
               </div>
             </div>
 
