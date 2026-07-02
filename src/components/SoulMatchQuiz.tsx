@@ -496,15 +496,15 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
 
         // Professional chat-style matching text
         if (next < 20) {
-          setCalculationMessage("正在深度解析您的 20 維生活美學指標...");
+          setCalculationMessage("正在深度解析您的 20 項日常相處與特質指標...");
         } else if (next < 40) {
-          setCalculationMessage("已過濾出敏感與不實偏好，建立獨立特質標籤...");
+          setCalculationMessage("建立個人專屬的特質標籤...");
         } else if (next < 60) {
-          setCalculationMessage("比對高階會員資料庫，建立與 D級, C級, B級, A級 男性相容性權重...");
+          setCalculationMessage("比對高級會員資料庫，計算契合度相容性權重...");
         } else if (next < 80) {
-          setCalculationMessage("分析大腦對『財務成熟度』與『情緒價值』之極致共鳴...");
+          setCalculationMessage("分析雙方對感情成熟度與情緒價值的契合共鳴...");
         } else {
-          setCalculationMessage("成功尋獲相符度高達 " + matchPercentage + "% 的頂級紳士，開通安全通道...");
+          setCalculationMessage("成功配對到契合度高達 " + matchPercentage + "% 的優質男賓！");
         }
 
         return next;
@@ -574,7 +574,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
                     緣友 靈魂共鳴測驗
                   </h3>
                   <p className="text-[10px] md:text-xs uppercase tracking-[0.25em] text-brand-light font-bold">
-                    Yuan-Yu AI Personality Gathering
+                    Yuan-Yu AI Soul Resonance Quiz
                   </p>
                 </div>
 
@@ -583,8 +583,8 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
                     「想更了解妳一點，這樣才能推薦真正適合的人。」
                   </p>
                   <p className="text-[11px] md:text-xs font-normal text-brand-light leading-relaxed">
-                    這是一套為尊榮女性設計的聊天式特質探索，而非枯燥的心理測驗。
-                    我們將透過 7 道輕巧的生活美學對話，默默解析您的<b>金錢觀、愛情觀、財務成熟度與情緒需求</b>等 20 維指標，並精準配對最契合的紳士。
+                    這是一套為麗人會員設計的對話式特質探索，而非枯燥的心理測驗。
+                    我們將透過 7 道生活情境互動，默默分析您的<b>金錢觀、戀愛觀、財務成熟度與情緒需求</b>等指標，並精準媒合最契合的對象。
                   </p>
                 </div>
 
@@ -594,13 +594,13 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
                     onClick={handleStartQuiz}
                     className="w-full py-3 md:py-4 bg-brand-olive text-white rounded-full text-xs md:text-sm font-bold uppercase tracking-widest hover:bg-[#4d4d36] transition-all duration-300 shadow-md cursor-pointer hover:scale-103 active:scale-98 flex items-center justify-center gap-2"
                   >
-                    <span>開啟對話特質採集</span>
+                    <span>開啟 AI 靈魂測驗</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   
                   <div className="flex items-center justify-center gap-1.5 md:gap-2 text-[10px] md:text-[11px] text-brand-light font-medium uppercase tracking-wider">
                     <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand-accent" />
-                    <span>測試完全匿名，每人限配對一次</span>
+                    <span>測驗完全匿名，每人限配對一次</span>
                   </div>
                 </div>
               </motion.div>

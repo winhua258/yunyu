@@ -328,7 +328,7 @@ app.post("/api/lady/register", async (req, res) => {
             if (existingLady) {
               console.log(`[Re-entry scan match] Auto-login for concurrent duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}, Canvas: ${canvasFingerprint}) to code: ${existingLady.code}`);
               return res.status(200).json({ 
-                message: "偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。", 
+                message: "偵測到您已在此設備上登入過，系統已為您找回原有帳號。", 
                 lady: existingLady 
               });
             }
@@ -390,7 +390,7 @@ app.post("/api/lady/register", async (req, res) => {
 
       console.log(`[Scan Match] Auto-login for duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}, Canvas: ${canvasFingerprint}) to code: ${existingLady.code}`);
       return res.status(200).json({ 
-        message: "偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。", 
+        message: "偵測到您已在此設備上登入過，系統已為您找回原有帳號。", 
         lady: existingLady 
       });
     }

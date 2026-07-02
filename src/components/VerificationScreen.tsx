@@ -263,10 +263,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       setLadyAlertCopied(false);
       if (isNew) {
         setLadyAlertTitle("🌸 歡迎加入緣友！");
-        setLadyAlertMessage("您的專屬麗人編號已成功建立。請截圖或複製保存此編號，以便日後更換設備時恢復帳戶。系統已為您自動登入，祝您找到心儀的另一半 ✨");
+        setLadyAlertMessage("您的專屬麗人編號已成功建立。請截圖或複製保存此編號，以便日後換手機或瀏覽器登入時使用。系統已為您自動登入，祝您順利找到對的人 ✨");
       } else {
         setLadyAlertTitle("✅ 歡迎回來！");
-        setLadyAlertMessage("我們偵測到您的設備已有註冊記錄，已自動為您載入原有帳戶。如需查看配對結果，請繼續完成靈魂測驗 💫");
+        setLadyAlertMessage("我們偵測到您先前已在此手機登入過，已自動為您找回帳號。請繼續進行靈魂測驗，查看與您契合的優質紳士 💫");
       }
       setShowLadyAlertModal(true);
     } catch (err: any) {
@@ -432,7 +432,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
           </h1>
           <p className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed px-4">
             為維護極致高端與互信的交友生態，本平台實施尊享隱私通道：<br className="hidden md:inline" />
-            紳士須通過實名驗資，麗人通過 AI 靈魂測驗即可解鎖首位契合伴侶，並依套餐解鎖更多紳士。
+            紳士須通過實名驗資，麗人通過 AI 靈魂測驗即可解鎖首位契合伴侶，並可依不同方案解鎖更多對象。
           </p>
         </div>
 
@@ -639,7 +639,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <span>輸入編號解鎖資料卡</span>
                     </h4>
                     <p className="text-xs text-brand-muted leading-relaxed mt-2">
-                      搭配推薦信或付費方案，輸入其他紳士唯一的推薦編號，即可解鎖看對方的全量資料及 LINE。
+                      搭配推薦信或升級方案，輸入其他紳士的專屬編號，即可解鎖看對方的完整資料與 LINE 聯絡方式。
                     </p>
                   </div>
 
@@ -675,7 +675,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           ? "提示：您當前擁有全站解鎖特權，隨意輸入皆可點擊瀏覽。"
                           : lady.membershipLevel === "experience"
                           ? `體驗會員解鎖上限為 2 位 (目前已使用 ${lady.unlockedGentlemanCodes?.length || 0} / 2)。`
-                          : "免費方案僅限查閱 AI 配對對象，解鎖全量請升級或驗資。"}
+                          : "免費方案僅限查閱 AI 配對對象，解鎖完整檔案請升級方案或進行驗資。"}
                       </p>
                     )}
                   </div>
@@ -909,7 +909,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   </div>
                   <div>
                     <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                      麗人限時推廣通道
+                      麗人限時免驗資通道
                     </h3>
                     <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
                       Ladies Campaign
@@ -918,7 +918,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </div>
 
                 <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                  適逢推廣期間，麗人免除年收驗資！即可直接登入或註冊，完成 2 分鐘 AI 測試後以分配解鎖一位頂級高品質契合紳士。
+                  限時活動！麗人免除年收驗資！免註冊！完成 7 道 AI 測試題目後立即解鎖一位頂級高品質契合紳士。
                 </p>
               </div>
 
@@ -936,7 +936,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     <span>免費開始 AI 靈魂配對測試</span>
                   </button>
                   <p className="text-[9.5px] text-center text-brand-muted font-medium leading-relaxed">
-                    🎯 首次訪問推薦：直接開始測驗，免除資產審核並在配對成功後自動建檔
+                    🎯 首次訪問推薦：直接開始測驗，免除年收驗資並在配對成功後自動為您建立專屬編號
                   </p>
                 </div>
 
@@ -947,7 +947,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2"
                 >
                   <UserPlus className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>註冊新麗人帳戶編號</span>
+                  <span>建立新麗人編號</span>
                 </button>
 
                 {/* 3. Folded Lower Weight Action: Transfer/Login (Toggled) */}
@@ -957,7 +957,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
                     className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors"
                   >
-                    <span>已有麗人帳號？點此進行「設備轉移與登入」</span>
+                    <span>已有麗人帳號？點此進行「換手機/新瀏覽器登入」</span>
                     <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
                   </button>
 
@@ -971,7 +971,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         className="overflow-hidden space-y-3 pt-3"
                       >
                         <p className="text-[9px] text-brand-light leading-relaxed bg-brand-border/5 p-2.5 rounded-xl border border-brand-border/20">
-                          ℹ️ <strong>帳號轉移提示：</strong> 當您在不同手機/電腦，或清除快取後需要恢復資料時，請輸入原有的麗人編號進行載入。
+                          ℹ️ <strong>帳號找回提示：</strong> 當您換新手機、新電腦，或是瀏覽器歷史紀錄被清除時，只需輸入您原來的麗人編號即可登入。
                         </p>
                         
                         {ladyError && (
@@ -993,7 +993,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                               setLadyCodeInput(e.target.value);
                               setLadyError("");
                             }}
-                            placeholder="請輸入麗人編號 (UUID)"
+                            placeholder="請輸入麗人編號"
                             className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                           />
                           <button
@@ -1029,7 +1029,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </div>
 
                 <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                  為確保交友生態之安全防範與傑出素質，紳士會員須提交實名核驗與資產審核，經理財顧問核准後由專屬專員人工發放<strong>「戀人編號」</strong>登入。
+                  為確保交友生態之安全與隱私防護，並維持高品質的會員素質，紳士會員須提交實名核驗與資產審核，經審查核准後由專責人員人工發放<strong>「戀人編號」</strong>登入。
                 </p>
               </div>
 
@@ -1265,8 +1265,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 )}
 
                 <p className="text-xs text-brand-muted leading-relaxed">
-                  很抱歉！根據 <strong>緣友 YUAN-YU</strong> 的安全媒合規範，您的麗人帳戶當前受限，無法查閱此位紳士的卡片。<br/>
-                  請上傳資產證明（或點擊下方模擬動作）進行有感解鎖。
+                  很抱歉！根據 <strong>緣友 YUAN-YU</strong> 的安全媒合規範，您的帳號目前受限，無法查閱這位紳士的個人檔案。<br/>
+                  請上傳資產證明（或點擊下方模擬動作）進行驗資解鎖。
                 </p>
 
                 {/* Option Action Grid */}

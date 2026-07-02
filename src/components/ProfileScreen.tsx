@@ -35,10 +35,10 @@ interface ProfileScreenProps {
 const loadedImagesCache = new Set<string>();
 
 const GREETING_OPTIONS = [
-  "Hello，在緣友的靈魂配對中發現了你。聽說最契合的靈魂總會相遇，看來系統沒有騙我 😊",
-  "你好，我來自緣友。透過 20 維度算法配對，你是系統為我推薦最契合的對象，很高興認識你。",
+  "Hello，在緣友的靈魂配對中發現了你。聽說最契合的靈魂總會相遇，看來系統推薦得真的很準 😊",
+  "你好，我來自緣友。透過 20 項契合度指標比對，你是系統為我推薦最合適的對象，很高興認識你。",
   "Hi！我是從緣友過來的。系統說我們的契合度非常高，希望能從一杯咖啡的時間開始認識你 ☕️",
-  "你好，我在緣友遇見了你的靈魂名片。很高興系統將我們牽引在一起，期待與你開啟對話 ✨"
+  "你好，我在緣友遇見了你的靈魂名片。很高興系統讓我們相遇，期待與你聊聊喔 ✨"
 ];
 
 export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
@@ -245,7 +245,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
             </button>
             
             <p className="text-[10px] md:text-xs text-brand-light text-center sm:text-left leading-normal sm:max-w-xs pl-1">
-              ※ 點擊後將跳轉至第三方通訊軟體。本平台保證安全加密與隱私不外洩。
+              ※ 點擊後將跳轉至 LINE。本平台承諾保護您的隱私安全。
             </p>
           </div>
         </motion.div>
