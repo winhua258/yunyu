@@ -969,22 +969,6 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   </p>
                 </div>
 
-                {/* Trust Badges */}
-                <div className="grid grid-cols-1 gap-2 pt-2 border-t border-brand-border/40 text-[10px] leading-normal text-brand-light">
-                  <div className="flex items-start gap-2 bg-white/40 p-2 rounded-xl border border-brand-border/20">
-                    <span className="shrink-0 text-brand-olive font-bold">🔒 絕對隱私：</span>
-                    <span>所有數據皆通過 AWS 銀行級加密，嚴禁外洩。</span>
-                  </div>
-                  <div className="flex items-start gap-2 bg-white/40 p-2 rounded-xl border border-brand-border/20">
-                    <span className="shrink-0 text-brand-olive font-bold">👤 實名審核：</span>
-                    <span>拒絕機器人與詐騙，打造純淨菁英圈層。</span>
-                  </div>
-                  <div className="flex items-start gap-2 bg-white/40 p-2 rounded-xl border border-brand-border/20">
-                    <span className="shrink-0 text-brand-olive font-bold">❌ 無廣告騷擾：</span>
-                    <span>純淨會員制體驗，絕不主動發送垃圾訊息。</span>
-                  </div>
-                </div>
-
                 {/* 2. Secondary Action: Create Code */}
                 <button
                   type="button"
@@ -1078,6 +1062,28 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </p>
               </div>
 
+              {/* Gentlemen Verification Features */}
+              <div className="bg-brand-beige/40 p-4 rounded-2xl border border-brand-border/40 space-y-3">
+                <h4 className="text-[11px] font-bold text-brand-olive uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🛡️</span>
+                  <span>紳士會員審核規範與權益</span>
+                </h4>
+                <ul className="space-y-2 text-[10.5px] text-brand-light leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-brand-accent mt-0.5">•</span>
+                    <span><strong>實名認證</strong>：所有男賓須提交官方身分核驗，杜絕人頭帳號與詐騙。</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-brand-accent mt-0.5">•</span>
+                    <span><strong>千萬資產認證</strong>：通過專屬資產實力審核（千萬身價認證/年收驗證）方可發放編號。</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-brand-accent mt-0.5">•</span>
+                    <span><strong>隱私保護</strong>：平台採全程代碼與密碼發放機制，嚴密保障雙方個人隱私。</span>
+                  </li>
+                </ul>
+              </div>
+
               {/* Secure verification code input */}
               <form id="form-verification" onSubmit={handleVerify} className="space-y-4 pt-2">
                 <div className="relative">
@@ -1136,6 +1142,33 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 >
                   無專屬編號？洽詢專屬客服進行認證
                 </button>
+              </div>
+            </div>
+
+            {/* BOTTOM FULL-WIDTH ROW: Platform security guarantees (Trust Badges) */}
+            <div className="md:col-span-2 border-t border-brand-border/40 pt-6 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] sm:text-xs leading-relaxed text-brand-light">
+                <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
+                  <span className="shrink-0 text-brand-olive text-sm font-bold">🔒</span>
+                  <div>
+                    <h5 className="font-bold text-brand-dark mb-0.5">絕對隱私保障</h5>
+                    <p className="text-[10px] text-brand-muted">所有數據皆通過 AWS 銀行級加密，嚴防第三方洩漏。</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
+                  <span className="shrink-0 text-brand-olive text-sm font-bold">👤</span>
+                  <div>
+                    <h5 className="font-bold text-brand-dark mb-0.5">實名核驗機制</h5>
+                    <p className="text-[10px] text-brand-muted">嚴格防範機器人與不實交友，確保圈層純淨度。</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
+                  <span className="shrink-0 text-brand-olive text-sm font-bold">❌</span>
+                  <div>
+                    <h5 className="font-bold text-brand-dark mb-0.5">零廣告無騷擾</h5>
+                    <p className="text-[10px] text-brand-muted">採取高質感會員制運營，絕不推送垃圾推廣訊息。</p>
+                  </div>
+                </div>
               </div>
             </div>
 
