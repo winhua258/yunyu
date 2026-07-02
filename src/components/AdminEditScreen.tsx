@@ -138,7 +138,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const { profiles, metrics: allMetrics, adminCodes, refreshData, isDataLoading, setOptimisticData } = useData();
 
   // Main tab state
-  const [activeTab, setActiveTab] = useState<AdminTab>("gentlemen");
+  const [activeTab, setActiveTab] = useState<AdminTab>("analytics");
 
   // --- Ladies Panel State ---
   const [ladies, setLadies] = useState<LadyProfile[]>([]);
@@ -796,9 +796,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
         {/* ===== MAIN TAB SWITCHER ===== */}
         <div className="bg-white p-2 rounded-2xl shadow-md border border-brand-border/60 flex gap-2">
           {([
-            { id: "gentlemen" as AdminTab, icon: <User className="w-4 h-4" />, label: "紳士檔案管理" },
-            { id: "ladies" as AdminTab, icon: <Users className="w-4 h-4" />, label: "麗人帳號管理" },
             { id: "analytics" as AdminTab, icon: <BarChart2 className="w-4 h-4" />, label: "可視化儀表板" },
+            { id: "ladies" as AdminTab, icon: <Users className="w-4 h-4" />, label: "麗人帳號管理" },
+            { id: "gentlemen" as AdminTab, icon: <User className="w-4 h-4" />, label: "紳士檔案管理" },
           ] as { id: AdminTab; icon: React.ReactNode; label: string }[]).map(tab => (
             <button
               key={tab.id}
