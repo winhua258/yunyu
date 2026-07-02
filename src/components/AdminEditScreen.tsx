@@ -1403,14 +1403,14 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         onClick={() => {
                           if (DEFAULT_METRICS["monkeyB"]) {
                             setCurrentMetrics({ ...DEFAULT_METRICS["monkeyB"] });
-                            setSuccessMessage("已成功套用「新能源執行長 (葉家銘)」的屬性指標！請記得點選最下方儲存。");
+                            setSuccessMessage("已成功套用「新能源企業創辦人 (葉家銘)」的屬性指標！請記得點選最下方儲存。");
                             setTimeout(() => setSuccessMessage(""), 5000);
                           }
                         }}
                         className="py-2.5 px-3 bg-white hover:bg-brand-beige border border-brand-border rounded-xl text-left transition-all duration-300 shadow-sm hover:shadow active:scale-97 cursor-pointer"
                       >
                         <div className="text-[10px] font-bold text-brand-light uppercase tracking-wider">風格預設 2</div>
-                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">新能源執行長 (葉家銘)</div>
+                        <div className="text-[11px] font-bold text-brand-dark mt-0.5 truncate">新能源企業創辦人 (葉家銘)</div>
                       </button>
 
                       <button

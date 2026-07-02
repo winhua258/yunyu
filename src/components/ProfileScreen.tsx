@@ -457,7 +457,7 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
                 </p>
 
                 <p className="text-[11px] text-brand-light leading-relaxed bg-brand-beige/50 p-3 rounded-xl border border-brand-border/40">
-                  🎁 <strong>專屬提示：</strong> 點擊跳轉後，系統將自動開啟與對方的 LINE 聊天，並<strong>預填入專屬問候語</strong>（個人帳號將自動複製至剪貼簿）：<br/>
+                  🎁 <strong>專屬提示：</strong> 點擊後將自動複製問候語並跳轉至 LINE，方便您直接貼上發送給對方：<br/>
                   <strong className="text-brand-dark italic block mt-1 text-center font-serif">「{selectedGreeting}」</strong>
                 </p>
               </div>

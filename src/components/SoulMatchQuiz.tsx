@@ -704,7 +704,7 @@ export default function SoulMatchQuiz({ onClose, onMatchComplete }: SoulMatchQui
 
                 <div className="space-y-2 md:space-y-3">
                   <h4 className="font-serif text-xl md:text-2xl font-bold text-brand-dark">
-                    心靈共鳴向量配對中
+                    心靈共鳴向量媒合中
                   </h4>
                   <p className="text-xs text-brand-light uppercase tracking-widest font-mono font-medium">
                     20D Resonance Score: {calculationProgress}%

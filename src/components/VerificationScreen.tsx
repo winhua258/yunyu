@@ -547,15 +547,15 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       {/* Wealth verification badge */}
                       {lady.assetVerified === "approved" ? (
                         <span className="text-[9px] bg-[#06C755]/15 text-[#05b04b] border border-[#06C755]/30 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="w-2.5 h-2.5" /> 已通過官方驗資
+                          <CheckCircle2 className="w-2.5 h-2.5" /> 已通過官方認證
                         </span>
                       ) : lady.assetVerified === "pending" ? (
                         <span className="text-[9px] bg-amber-500/15 text-amber-700 border border-amber-500/30 font-bold px-2 py-0.5 rounded-full animate-pulse">
-                          驗資審核中
+                          認證審核中
                         </span>
                       ) : (
                         <span className="text-[9px] bg-brand-light/10 text-brand-light font-bold px-2 py-0.5 rounded-full border border-brand-border/40">
-                          未驗資
+                          未認證
                         </span>
                       )}
                     </div>
@@ -597,10 +597,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   <div>
                     <h4 className="font-serif text-base font-bold text-brand-dark flex items-center gap-2">
                       <Heart className="w-4.5 h-4.5 text-brand-olive fill-current" />
-                      <span>AI 靈魂共鳴配對</span>
+                      <span>AI 靈魂共鳴媒合</span>
                     </h4>
                     <p className="text-xs text-brand-muted leading-relaxed mt-2">
-                      透過 20 維度的契合度運算法，獲取最切合您的靈魂伴侶。活動期間完全免費解鎖首張名片。
+                      透過 20 項特質指標比對，尋求最契合您的伴侶。活動期間完全免費解鎖首位對象。
                     </p>
                   </div>
 
@@ -614,7 +614,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         <span>查看契合紳士 ({lady.matchedGentlemanCode})</span>
                       </button>
                       <p className="text-[10px] text-center text-brand-light leading-relaxed italic">
-                        * 每人限測配對一次。重複點擊將直接進入該優質男性資料卡。
+                        * 每人限測媒合一次。重複點擊將直接進入該優質男性資料卡。
                       </p>
                     </div>
                   ) : (
@@ -674,8 +674,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         {lady.membershipLevel === "vip" || lady.assetVerified === "approved"
                           ? "提示：您當前擁有全站解鎖特權，隨意輸入皆可點擊瀏覽。"
                           : lady.membershipLevel === "experience"
-                          ? `體驗會員解鎖上限為 2 位 (目前已使用 ${lady.unlockedGentlemanCodes?.length || 0} / 2)。`
-                          : "免費方案僅限查閱 AI 配對對象，解鎖完整檔案請升級方案或進行驗資。"}
+                          ? `體驗會員可用名額上限為 2 位 (剩餘媒合名額：${2 - (lady.unlockedGentlemanCodes?.length || 0)}/2)。`
+                          : "免費方案僅限查閱 AI 媒合對象，解鎖完整檔案請升級方案或進行認證。"}
                       </p>
                     )}
                   </div>
@@ -711,7 +711,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         <div className="absolute top-2 right-2 z-20 flex gap-1">
                           {lady.matchedGentlemanCode === p.code && (
                             <span className="text-[8px] bg-brand-accent text-brand-olive font-bold px-1.5 py-0.5 rounded shadow-sm">
-                              AI 配對
+                              AI 媒合
                             </span>
                           )}
                           {isUnlocked ? (
@@ -933,10 +933,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
                   >
                     <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
-                    <span>免費開始 AI 靈魂配對測試</span>
+                    <span>免費開始 AI 靈魂媒合測試</span>
                   </button>
                   <p className="text-[9.5px] text-center text-brand-muted font-medium leading-relaxed">
-                    🎯 首次訪問推薦：直接開始測驗，免除年收驗資並在配對成功後自動為您建立專屬編號
+                    🎯 首次訪問推薦：直接開始測驗，免除年收認證並在媒合成功後自動為您建立專屬編號
                   </p>
                 </div>
 
@@ -1089,7 +1089,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   onClick={() => setShowContactModal(true)}
                   className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
                 >
-                  無專屬編號？洽詢專屬客服進行驗資
+                  無專屬編號？洽詢專屬客服進行認證
                 </button>
               </div>
             </div>
