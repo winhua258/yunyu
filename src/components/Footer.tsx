@@ -6,7 +6,7 @@ export default function Footer() {
           01. 實名認證
         </span>
         <p className="text-[11px] uppercase tracking-wider text-brand-light mt-1.5 leading-relaxed">
-          100% 真人手動審核，杜絕虛假資訊，保障最真誠的相遇
+          100% 真人手動審核：嚴格排除虛假資訊，確保您遇見的每一位都是真實、有誠意的頂尖菁英。
         </p>
       </div>
 
@@ -15,7 +15,7 @@ export default function Footer() {
           02. 隱私加密
         </span>
         <p className="text-[11px] uppercase tracking-wider text-brand-light mt-1.5 leading-relaxed">
-          採用專屬戀人編號驗證，不對外公開資訊，完全保護您與對方的隱私
+          專屬戀人編號機制：全站資訊不對外公開，採雙向匿名代碼制，極致守護您的社交隱私。
         </p>
       </div>
 
@@ -24,7 +24,7 @@ export default function Footer() {
           03. 專屬媒合
         </span>
         <p className="text-[11px] uppercase tracking-wider text-brand-light mt-1.5 leading-relaxed">
-          由資深專家親自推薦引導，一鍵連線 LINE 輕鬆聊天與互動
+          開啟私密通訊頻道：由資深專家親自推薦引導，一鍵啟用專屬加密對話，安全開啟心動第一步。
         </p>
       </div>
     </footer>

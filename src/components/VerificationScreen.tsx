@@ -121,6 +121,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showGentlemenNormsModal, setShowGentlemenNormsModal] = useState(false);
   const [ladyCodeInput, setLadyCodeInput] = useState("");
   const [ladyError, setLadyError] = useState("");
   const [showLadyLoginInput, setShowLadyLoginInput] = useState(false);
@@ -934,7 +935,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             {/* Center vertical line */}
             <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
 
-            {/* LEFT COLUMN: LADIES (麗人免資產驗證通道) */}
+            {/* LEFT COLUMN: LADIES (名媛限時免財力認證通道) */}
             <div className="flex flex-col justify-between p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden min-h-[460px] md:min-h-[500px]">
               <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
                 PROMO 限時特許
@@ -948,7 +949,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   </div>
                   <div>
                     <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                      麗人限時免驗資通道
+                      名媛限時免財力認證通道
                     </h3>
                     <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
                       Ladies Campaign
@@ -957,7 +958,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </div>
 
                 <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                  限時活動！麗人免除年收驗資！免註冊！完成 7 道 AI 測試題目後立即解鎖一位頂級高品質契合紳士。
+                  限時活動！名媛免除年收審核與財力認證！免註冊！完成 7 道 AI 測試題目後立即解鎖一位頂級高品質契合紳士。
                 </p>
               </div>
 
@@ -986,7 +987,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2"
                 >
                   <UserPlus className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>建立新麗人編號</span>
+                  <span>建立新名媛編號</span>
                 </button>
 
                 {/* 3. Folded Lower Weight Action: Transfer/Login (Toggled) */}
@@ -996,7 +997,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
                     className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors"
                   >
-                    <span>已有麗人帳號？點此進行「換手機/瀏覽器登入」</span>
+                    <span>已有名媛帳號？點此進行「手機/瀏覽器登入」</span>
                     <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
                   </button>
 
@@ -1010,7 +1011,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         className="overflow-hidden space-y-3 pt-3"
                       >
                         <p className="text-[9px] text-brand-light leading-relaxed bg-brand-border/5 p-2.5 rounded-xl border border-brand-border/20">
-                          ℹ️ <strong>帳號找回提示：</strong> 當您換新手機、新電腦，或是瀏覽器歷史紀錄被清除時，只需輸入您原來的麗人編號即可登入。
+                          ℹ️ <strong>帳號找回提示：</strong> 當您換新手機、新電腦，或是瀏覽器歷史紀錄被清除時，只需輸入您原來的名媛編號即可登入。
                         </p>
                         
                         {ladyError && (
@@ -1032,7 +1033,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                               setLadyCodeInput(e.target.value);
                               setLadyError("");
                             }}
-                            placeholder="請輸入麗人編號"
+                            placeholder="請輸入名媛編號"
                             className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                           />
                           <button
@@ -1063,8 +1064,15 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                      紳士專屬驗資通道
+                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide flex items-center flex-wrap gap-x-2">
+                      <span>紳士專屬資產認證通道</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowGentlemenNormsModal(true)}
+                        className="text-[10px] text-brand-light hover:text-brand-olive cursor-pointer underline underline-offset-2 font-sans font-bold"
+                      >
+                        [ 查看審核規範 ]
+                      </button>
                     </h3>
                     <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
                       Gentlemen Verification
@@ -1075,28 +1083,6 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
                   為確保交友生態之安全與隱私防護，並維持高品質的會員素質，紳士會員須提交實名核驗與資產審核，經審查核准後由專責人員人工發放<strong>「戀人編號」</strong>登入。
                 </p>
-
-                {/* Gentlemen Verification Features */}
-                <div className="bg-white/45 p-4 rounded-2xl border border-brand-border/30 space-y-3">
-                  <h4 className="text-[11px] font-bold text-brand-olive uppercase tracking-wider flex items-center gap-1.5 select-none">
-                    <span>🛡️</span>
-                    <span>紳士會員審核規範與權益</span>
-                  </h4>
-                  <ul className="space-y-2 text-[10.5px] text-brand-light leading-relaxed">
-                    <li className="flex items-start gap-2">
-                      <span className="text-brand-accent mt-0.5 select-none">•</span>
-                      <span><strong>實名認證</strong>：所有男賓須提交官方身分核驗，杜絕人頭帳號與詐騙。</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-brand-accent mt-0.5 select-none">•</span>
-                      <span><strong>千萬資產認證</strong>：通過專屬資產實力審核（千萬身價認證/年收驗證）方可發放編號。</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-brand-accent mt-0.5 select-none">•</span>
-                      <span><strong>隱私保護</strong>：平台採全程代碼與密碼發放機制，嚴密保障雙方個人隱私。</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
 
               {/* Bottom Group */}
@@ -1305,6 +1291,87 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   className="text-xs font-bold text-brand-olive uppercase tracking-wider hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   返回驗證
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* GENTLEMEN NORMS MODAL (紳士會員審核規範彈窗) */}
+      <AnimatePresence>
+        {showGentlemenNormsModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGentlemenNormsModal(false)}
+              className="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="bg-white rounded-3xl shadow-2xl border border-brand-border w-full max-w-md overflow-hidden z-10"
+            >
+              <div className="p-6 bg-brand-border/30 border-b border-brand-border text-center">
+                <h3 className="font-serif text-base text-brand-dark font-bold tracking-wide flex items-center justify-center gap-2">
+                  <span>🛡️</span>
+                  <span>紳士會員審核規範與權益</span>
+                </h3>
+                <p className="text-[10px] text-brand-light uppercase tracking-wider mt-1 font-mono">
+                  Gentlemen Membership Audit & Privileges
+                </p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-brand-muted leading-relaxed">
+                  為維護極致高端與互信的交友生態，本平台實施嚴格的會員核驗機制。紳士會員入會審核標準如下：
+                </p>
+
+                <div className="space-y-3.5 bg-brand-beige/30 p-5 rounded-2xl border border-brand-border/40">
+                  <div className="space-y-1">
+                    <h5 className="text-xs font-bold text-brand-olive flex items-center gap-1.5">
+                      <span className="text-brand-accent">•</span>
+                      <span>實名認證（100% 真人審核）</span>
+                    </h5>
+                    <p className="text-[10.5px] text-brand-muted leading-relaxed pl-3.5">
+                      所有申請男賓均須提交台灣官方有效身分證明文件，由專人手動核對年齡與真實性，徹底杜絕人頭帳號與詐騙行為。
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h5 className="text-xs font-bold text-brand-olive flex items-center gap-1.5">
+                      <span className="text-brand-accent">•</span>
+                      <span>千萬資產/財力審核</span>
+                    </h5>
+                    <p className="text-[10.5px] text-brand-muted leading-relaxed pl-3.5">
+                      男賓須通過專屬資產實力認證（年收入、不動產或大額動產等財力證明），符合頂級菁英標準方可核發「專屬戀人編號」。
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h5 className="text-xs font-bold text-brand-olive flex items-center gap-1.5">
+                      <span className="text-brand-accent">•</span>
+                      <span>雙向加密隱私保護</span>
+                    </h5>
+                    <p className="text-[10.5px] text-brand-muted leading-relaxed pl-3.5">
+                      全站實施高規格匿名代表發碼制，個人聯絡資訊、隱私照片不對外公開，保障雙方最高安全防波。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-brand-border/20 border-t border-brand-border/50 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowGentlemenNormsModal(false)}
+                  className="text-xs font-bold text-brand-olive uppercase tracking-wider hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                  返回主頁
                 </button>
               </div>
             </motion.div>
