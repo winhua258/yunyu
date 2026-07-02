@@ -64,7 +64,7 @@ export default function Header({ onBackToVerify, showBack = false, onSoulMatchCl
             <div className="flex items-center gap-1.5 sm:gap-2.5">
               <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-brand-olive">
                 <User className="w-4 h-4 text-brand-accent" />
-                <span>麗人 {loggedInLadyCode}</span>
+                <span>麗人 {currentLady.name || "會員"}</span>
               </div>
               <button
                 onClick={logout}
