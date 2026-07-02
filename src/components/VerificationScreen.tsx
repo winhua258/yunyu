@@ -447,6 +447,23 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             <span className="text-brand-accent">•</span>
             <span>#誠意</span>
           </div>
+
+          {/* Simulated dynamic online counts */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center bg-brand-beige/35 py-2 px-5 rounded-2xl border border-brand-border/30 max-w-lg mx-auto mt-4.5 shadow-sm select-none">
+            <div className="flex items-center gap-1.5 justify-center">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-[10.5px] text-brand-olive font-bold">
+                目前有 324 位用戶正在進行靈魂媒合測驗...
+              </span>
+            </div>
+            <span className="hidden sm:inline text-brand-border/80">|</span>
+            <p className="text-[10px] text-brand-muted font-bold tracking-wide">
+              今日已有 1,248 位台北/台中菁英完成媒合
+            </p>
+          </div>
         </div>
 
         {isSuccess ? (
@@ -918,21 +935,22 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
 
             {/* LEFT COLUMN: LADIES (麗人免資產驗證通道) */}
-            <div className="flex flex-col justify-between p-2 md:p-4 bg-brand-border/10 rounded-2xl md:bg-transparent md:rounded-none space-y-6 relative overflow-hidden">
-              <div className="absolute top-2 right-2 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+            <div className="flex flex-col justify-between p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden min-h-[460px] md:min-h-[500px]">
+              <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
                 PROMO 限時特許
               </div>
 
+              {/* Top Group */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner shrink-0 select-none">
                     <Heart className="w-5 h-5 text-brand-olive fill-current" />
                   </div>
                   <div>
                     <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
                       麗人限時免驗資通道
                     </h3>
-                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
+                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
                       Ladies Campaign
                     </span>
                   </div>
@@ -943,41 +961,22 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </p>
               </div>
 
-              {/* Login/Registration logic */}
-              <div className="space-y-4 pt-2">
-                {/* Simulated dynamic online counts */}
-                <div className="flex flex-col items-center justify-center space-y-0.5 text-center bg-brand-border/10 p-2.5 rounded-2xl border border-brand-border/30">
-                  <div className="flex items-center gap-1.5 justify-center">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[10px] text-brand-olive font-semibold">
-                      目前有 324 位用戶正在進行靈魂媒合測驗...
-                    </span>
-                  </div>
-                  <p className="text-[9.5px] text-brand-muted font-medium tracking-wide">
-                    今日已有 1,248 位台北/台中菁英完成媒合
-                  </p>
-                </div>
-
-                {/* 1. Primary Action: AI test (Highest Weight) */}
-                <div className="space-y-2.5">
-                  <div className="text-center text-[10.5px] text-brand-light font-bold">
-                    💡 僅需 30 秒，透過 7 題核心特質，為您速配今日契合靈魂（免註冊即可體驗）
+              {/* Bottom Group */}
+              <div className="space-y-4 pt-4 border-t border-brand-border/20">
+                {/* 1. Primary Action: AI test */}
+                <div className="space-y-3">
+                  <div className="text-center text-[10px] sm:text-[10.5px] text-brand-light font-bold leading-normal">
+                    💡 首次體驗推薦：免註冊直接開始 7 題 AI 測驗（僅需 30 秒），免除年收認證並在媒合成功後自動建立編號。
                   </div>
                   <button
                     id="btn-guest-soul-match-direct"
                     type="button"
                     onClick={onSoulMatchClick}
-                    className="w-full py-4 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale"
+                    className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale"
                   >
                     <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
                     <span>免費開始 AI 靈魂媒合測試</span>
                   </button>
-                  <p className="text-[9.5px] text-center text-brand-muted font-medium leading-relaxed">
-                    🎯 首次訪問推薦：直接開始測驗，免除年收認證並在媒合成功後自動為您建立專屬編號
-                  </p>
                 </div>
 
                 {/* 2. Secondary Action: Create Code */}
@@ -991,13 +990,13 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </button>
 
                 {/* 3. Folded Lower Weight Action: Transfer/Login (Toggled) */}
-                <div className="pt-3 border-t border-brand-border/30">
+                <div className="pt-2 border-t border-brand-border/30">
                   <button
                     type="button"
                     onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
                     className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors"
                   >
-                    <span>已有麗人帳號？點此進行「換手機/新瀏覽器登入」</span>
+                    <span>已有麗人帳號？點此進行「換手機/瀏覽器登入」</span>
                     <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
                   </button>
 
@@ -1052,17 +1051,22 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             </div>
 
             {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
-            <div className="flex flex-col justify-between p-2 md:p-4 space-y-6">
+            <div className="flex flex-col justify-between p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden min-h-[460px] md:min-h-[500px]">
+              <div className="absolute top-3 right-3 bg-brand-olive/10 text-brand-olive text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-brand-olive/20 select-none">
+                GENTLEMEN 通道
+              </div>
+
+              {/* Top Group */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0 select-none">
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
                       紳士專屬驗資通道
                     </h3>
-                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono">
+                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
                       Gentlemen Verification
                     </span>
                   </div>
@@ -1071,88 +1075,91 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
                   為確保交友生態之安全與隱私防護，並維持高品質的會員素質，紳士會員須提交實名核驗與資產審核，經審查核准後由專責人員人工發放<strong>「戀人編號」</strong>登入。
                 </p>
-              </div>
 
-              {/* Gentlemen Verification Features */}
-              <div className="bg-brand-beige/40 p-4 rounded-2xl border border-brand-border/40 space-y-3">
-                <h4 className="text-[11px] font-bold text-brand-olive uppercase tracking-wider flex items-center gap-1.5">
-                  <span>🛡️</span>
-                  <span>紳士會員審核規範與權益</span>
-                </h4>
-                <ul className="space-y-2 text-[10.5px] text-brand-light leading-relaxed">
-                  <li className="flex items-start gap-2">
-                    <span className="text-brand-accent mt-0.5">•</span>
-                    <span><strong>實名認證</strong>：所有男賓須提交官方身分核驗，杜絕人頭帳號與詐騙。</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-brand-accent mt-0.5">•</span>
-                    <span><strong>千萬資產認證</strong>：通過專屬資產實力審核（千萬身價認證/年收驗證）方可發放編號。</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-brand-accent mt-0.5">•</span>
-                    <span><strong>隱私保護</strong>：平台採全程代碼與密碼發放機制，嚴密保障雙方個人隱私。</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Secure verification code input */}
-              <form id="form-verification" onSubmit={handleVerify} className="space-y-4 pt-2">
-                <div className="relative">
-                  <input
-                    id="input-verification-code"
-                    type="text"
-                    maxLength={36}
-                    value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value);
-                      if (error) setError("");
-                    }}
-                    disabled={isSuccess}
-                    placeholder="請輸入專屬戀人編號"
-                    className={`w-full bg-brand-beige/50 text-center tracking-[0.25em] font-mono text-base font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3.5 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
-                      error 
-                        ? "border-red-400 focus:border-red-500" 
-                        : "border-brand-border focus:border-brand-olive focus:bg-white"
-                    }`}
-                  />
+                {/* Gentlemen Verification Features */}
+                <div className="bg-white/45 p-4 rounded-2xl border border-brand-border/30 space-y-3">
+                  <h4 className="text-[11px] font-bold text-brand-olive uppercase tracking-wider flex items-center gap-1.5 select-none">
+                    <span>🛡️</span>
+                    <span>紳士會員審核規範與權益</span>
+                  </h4>
+                  <ul className="space-y-2 text-[10.5px] text-brand-light leading-relaxed">
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-accent mt-0.5 select-none">•</span>
+                      <span><strong>實名認證</strong>：所有男賓須提交官方身分核驗，杜絕人頭帳號與詐騙。</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-accent mt-0.5 select-none">•</span>
+                      <span><strong>千萬資產認證</strong>：通過專屬資產實力審核（千萬身價認證/年收驗證）方可發放編號。</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-accent mt-0.5 select-none">•</span>
+                      <span><strong>隱私保護</strong>：平台採全程代碼與密碼發放機制，嚴密保障雙方個人隱私。</span>
+                    </li>
+                  </ul>
                 </div>
+              </div>
 
-                {error && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
+              {/* Bottom Group */}
+              <div className="space-y-4 pt-4 border-t border-brand-border/20">
+                {/* Secure verification code input */}
+                <form id="form-verification" onSubmit={handleVerify} className="space-y-4">
+                  <div className="relative">
+                    <input
+                      id="input-verification-code"
+                      type="text"
+                      maxLength={36}
+                      value={code}
+                      onChange={(e) => {
+                        setCode(e.target.value);
+                        if (error) setError("");
+                      }}
+                      disabled={isSuccess}
+                      placeholder="請輸入專屬戀人編號"
+                      className={`w-full bg-white text-center tracking-[0.25em] font-mono text-xs font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
+                        error 
+                          ? "border-red-400 focus:border-red-500" 
+                          : "border-brand-border focus:border-brand-olive"
+                      }`}
+                    />
+                  </div>
+
+                  {error && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
+                    >
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{error}</span>
+                    </motion.p>
+                  )}
+
+                  <button
+                    id="btn-verify-submit"
+                    type="submit"
+                    disabled={isSuccess}
+                    className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
+                      isSuccess
+                        ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
+                        : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
+                    }`}
                   >
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{error}</span>
-                  </motion.p>
-                )}
+                    <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
+                    {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
+                  </button>
+                </form>
 
-                <button
-                  id="btn-verify-submit"
-                  type="submit"
-                  disabled={isSuccess}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
-                    isSuccess
-                      ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
-                      : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
-                  }`}
-                >
-                  <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
-                  {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
-                </button>
-              </form>
-
-              <div className="pt-2 text-center">
-                <button
-                  id="btn-show-contact-modal"
-                  type="button"
-                  onClick={() => setShowContactModal(true)}
-                  className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
-                >
-                  無專屬編號？洽詢專屬客服進行認證
-                </button>
+                <div className="text-center">
+                  <button
+                    id="btn-show-contact-modal"
+                    type="button"
+                    onClick={() => setShowContactModal(true)}
+                    className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
+                  >
+                    無專屬編號？洽詢專屬客服進行認證
+                  </button>
+                </div>
               </div>
             </div>
 
