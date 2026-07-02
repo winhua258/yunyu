@@ -1173,6 +1173,32 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       撥打電話
                     </a>
                   </div>
+
+                  {typeof window !== "undefined" && !!(window as any).$crisp && (
+                    <div className="flex items-center justify-between p-3 bg-brand-beige/40 rounded-2xl border border-brand-border/40 hover:bg-brand-beige/70 transition-colors animate-fade-in animate-duration-300">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-brand-olive/10 flex items-center justify-center text-brand-olive">
+                          <MessageSquare className="w-4 h-4 text-brand-olive" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-brand-dark">Crisp 在線客服視窗</p>
+                          <p className="text-[10px] text-brand-light">即時線上文字諮詢對談</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if ((window as any).$crisp) {
+                            (window as any).$crisp.push(["do", "chat:open"]);
+                            setShowContactModal(false);
+                          }
+                        }}
+                        className="text-[10px] bg-brand-olive text-white px-3 py-1.5 rounded-full font-bold hover:opacity-90 transition-all cursor-pointer font-sans"
+                      >
+                        立即對談
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -696,6 +696,11 @@ app.get("/api/admin/visits", adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/crisp-config: 獲取 Crisp 線上客服設定
+app.get("/api/crisp-config", (req, res) => {
+  res.json({ crispWebsiteId: process.env.CRISP_WEBSITE_ID || "" });
+});
+
 // POST /api/generate: Google GenAI API (暫時停用，待適配新版SDK)
 app.post("/api/generate", async (req, res) => {
   return res.status(503).json({ message: "AI 生成功能暫時維護中。" });

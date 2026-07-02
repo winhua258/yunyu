@@ -22,6 +22,22 @@ export default function App() {
     // 記錄每次進入網站的訪客軌跡
     const devId = getOrCreateDeviceId();
     void trackVisit(devId);
+
+    // 獲取 Crisp 設定並動態載入線上客服
+    fetch("/api/crisp-config")
+      .then(res => res.json())
+      .then(data => {
+        if (data.crispWebsiteId) {
+          (window as any).$crisp = [];
+          (window as any).CRISP_WEBSITE_ID = data.crispWebsiteId;
+          const d = document;
+          const s = d.createElement("script");
+          s.src = "https://client.crisp.chat/l.js";
+          s.async = true;
+          d.getElementsByTagName("head")[0].appendChild(s);
+        }
+      })
+      .catch(err => console.error("Failed to load Crisp configuration:", err));
   }, []);
 
   useEffect(() => {
