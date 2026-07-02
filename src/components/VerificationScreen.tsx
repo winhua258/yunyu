@@ -122,6 +122,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [isSuccess, setIsSuccess] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showGentlemenNormsModal, setShowGentlemenNormsModal] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<"female" | "male">("female");
   
   // Real-time ticking online/matched statistics
   const [onlineCount, setOnlineCount] = useState(324);
@@ -948,15 +949,50 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             )}
           </div>
         ) : (
-          // GUEST VIEW: Split verification for Gentlemen + Ladies
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
-            
-            {/* Center vertical line */}
-            <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
+          <div className="space-y-6">
+            {/* Gender Selection Segment Switcher */}
+            <div className="flex justify-center">
+              <div className="bg-brand-beige/40 p-1.5 rounded-full border border-brand-border/60 flex items-center gap-1.5 shadow-inner">
+                <button
+                  type="button"
+                  id="btn-gender-select-female"
+                  onClick={() => setSelectedGender("female")}
+                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                    selectedGender === "female"
+                      ? "bg-brand-olive text-white shadow-md hover:opacity-95"
+                      : "text-brand-light hover:text-brand-olive hover:bg-brand-border/10"
+                  }`}
+                >
+                  🌸 我是女賓 ➔ 名媛通道
+                </button>
+                <button
+                  type="button"
+                  id="btn-gender-select-male"
+                  onClick={() => setSelectedGender("male")}
+                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                    selectedGender === "male"
+                      ? "bg-brand-olive text-white shadow-md hover:opacity-95"
+                      : "text-brand-light hover:text-brand-olive hover:bg-brand-border/10"
+                  }`}
+                >
+                  🎩 我是男賓 ➔ 紳士通道
+                </button>
+              </div>
+            </div>
 
-            {/* LEFT COLUMN: LADIES (名媛限時免財力認證通道) */}
-            <div className="flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden space-y-6 h-full">
-              <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
+            {/* GUEST VIEW: Split verification for Gentlemen + Ladies */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
+              
+              {/* Center vertical line */}
+              <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
+
+              {/* LEFT COLUMN: LADIES (名媛限時免財力認證通道) */}
+              <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${
+                selectedGender === "female"
+                  ? "opacity-100 border-brand-olive/50 shadow-lg"
+                  : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
+              }`}>
+                <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
                 PROMO 限時特許
               </div>
 
@@ -992,7 +1028,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     id="btn-guest-soul-match-direct"
                     type="button"
                     onClick={onSoulMatchClick}
-                    className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale"
+                    disabled={selectedGender !== "female"}
+                    className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
                     <span>免費開始 AI 靈魂媒合測試</span>
@@ -1003,7 +1040,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 <button
                   type="button"
                   onClick={handleLadyRegister}
-                  className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2"
+                  disabled={selectedGender !== "female"}
+                  className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <UserPlus className="w-4 h-4 text-brand-olive shrink-0" />
                   <span>建立新名媛編號</span>
@@ -1014,7 +1052,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   <button
                     type="button"
                     onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
-                    className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors"
+                    disabled={selectedGender !== "female"}
+                    className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>已有名媛帳號？點此進行「手機/瀏覽器登入」</span>
                     <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
@@ -1052,13 +1091,15 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                               setLadyCodeInput(e.target.value);
                               setLadyError("");
                             }}
+                            disabled={selectedGender !== "female"}
                             placeholder="請輸入名媛編號"
-                            className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
+                            className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           />
                           <button
                             type="button"
                             onClick={handleLadyLogin}
-                            className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
+                            disabled={selectedGender !== "female"}
+                            className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             確認登入
                           </button>
@@ -1071,7 +1112,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             </div>
 
             {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
-            <div className="flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border border-brand-border/40 relative overflow-hidden space-y-6 h-full">
+            <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${
+              selectedGender === "male"
+                ? "opacity-100 border-brand-olive/50 shadow-lg"
+                : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
+            }`}>
               <div className="absolute top-3 right-3 bg-brand-olive/10 text-brand-olive text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-brand-olive/20 select-none">
                 GENTLEMEN 通道
               </div>
@@ -1088,7 +1133,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <button
                         type="button"
                         onClick={() => setShowGentlemenNormsModal(true)}
-                        className="text-[10px] text-brand-light hover:text-brand-olive cursor-pointer underline underline-offset-2 font-sans font-bold"
+                        disabled={selectedGender !== "male"}
+                        className="text-[10px] text-brand-light hover:text-brand-olive cursor-pointer underline underline-offset-2 font-sans font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         [ 查看審核規範 ]
                       </button>
@@ -1118,9 +1164,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         setCode(e.target.value);
                         if (error) setError("");
                       }}
-                      disabled={isSuccess}
-                      placeholder="請輸入專屬戀人編號"
-                      className={`w-full bg-white text-center tracking-[0.25em] font-mono text-xs font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 ${
+                      disabled={selectedGender !== "male" || isSuccess}
+                      placeholder="輸入紳士帳號，即可查看配對資料"
+                      className={`w-full bg-white text-center tracking-[0.25em] font-mono text-xs font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive disabled:opacity-50 disabled:cursor-not-allowed ${
                         error 
                           ? "border-red-400 focus:border-red-500" 
                           : "border-brand-border focus:border-brand-olive"
@@ -1143,8 +1189,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   <button
                     id="btn-verify-submit"
                     type="submit"
-                    disabled={isSuccess}
-                    className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer ${
+                    disabled={selectedGender !== "male" || isSuccess}
+                    className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                       isSuccess
                         ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
                         : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
@@ -1160,7 +1206,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     id="btn-show-contact-modal"
                     type="button"
                     onClick={() => setShowContactModal(true)}
-                    className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive"
+                    disabled={selectedGender !== "male"}
+                    className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     無專屬編號？洽詢專屬客服進行認證
                   </button>
@@ -1196,6 +1243,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             </div>
 
           </div>
+        </div>
         )}
       </motion.div>
 
