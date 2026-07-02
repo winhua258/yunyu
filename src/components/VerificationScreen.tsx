@@ -433,9 +433,20 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             緣友 YUAN-YU
           </h1>
           <p className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed px-4">
-            為維護極致高端與互信的交友生態，本平台實施尊享隱私通道：<br className="hidden md:inline" />
-            紳士須通過實名驗資，麗人通過 AI 靈魂測驗即可解鎖首位契合伴侶，並可依不同方案解鎖更多對象。
+            為高端、值得信賴的交友生態系統提供私密菁英媒合服務。<br />
+            緣友是專為頂級客群設計的會員制專屬交友平台，運用 AI 靈魂測驗與人工資產認證，在安全、加密且高度私密的環境中，為認證男士與優質伴侶建立真誠連結。
           </p>
+          <div className="flex items-center justify-center gap-3 text-[10px] md:text-xs font-bold text-brand-light mt-1.5 tracking-wider select-none">
+            <span>#隱私</span>
+            <span className="text-brand-accent">•</span>
+            <span>#安全</span>
+            <span className="text-brand-accent">•</span>
+            <span>#可信</span>
+            <span className="text-brand-accent">•</span>
+            <span>#獨家</span>
+            <span className="text-brand-accent">•</span>
+            <span>#誠意</span>
+          </div>
         </div>
 
         {isSuccess ? (
