@@ -518,7 +518,15 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           </button>
                         </div>
                       )}
-                      <span className="text-[10px] text-brand-light font-mono font-bold bg-white px-2 py-0.5 rounded">
+                      <span 
+                        onClick={() => {
+                          void copyToClipboard(lady.code).then(() => {
+                            showToast("已複製麗人編號 🌸", "success");
+                          });
+                        }}
+                        className="text-[10px] text-brand-light font-mono font-bold bg-white hover:bg-brand-border/20 px-2 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 active:scale-95 select-none"
+                        title="點擊複製編號"
+                      >
                         編號: {lady.code.slice(0, 8)}...
                       </span>
                       {lady.pendingPhotoUrl && (
