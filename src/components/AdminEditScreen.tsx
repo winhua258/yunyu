@@ -2040,31 +2040,42 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           const approvedCount = ladies.filter(l => l.assetVerified === "approved").length;
           const pendingCount = ladies.filter(l => l.assetVerified === "pending").length;
 
-          // IP region grouping (static prefix mapping)
+          // IP region grouping (static prefix mapping, expanded with IPv6 support)
           const regionMap: Record<string, string> = {
+            // IPv4 Taiwan Prefixes
             "202.160": "台灣（中華電信）", "61.": "台灣（台灣大哥大）", "114.": "台灣（遠傳）",
             "218.": "台灣（亞太）", "223.": "台灣（台灣之星）", "1.": "台灣（台灣固網）",
+            // IPv4 Other
             "211.": "香港", "210.": "香港", "103.": "香港/東南亞",
             "65.181": "美國/VPN", "192.168": "本地（開發）", "127.": "本地（開發）",
+            
+            // IPv6 Taiwan
+            "2001:b0": "台灣（中華電信 IPv6）",
+            "2001:b4": "台灣（遠傳電信 IPv6）",
+            "2001:b02": "台灣（台灣大哥大 IPv6）",
+            "2001:288": "台灣（學術網路 TANet IPv6）",
+            "2404:0": "台灣 IPv6",
+            
+            // IPv6 Local & Dev
+            "::1": "本地開發 (localhost IPv6)",
+            "fe80:": "本地開發 (Link-Local IPv6)",
+            "fc00:": "本地開發 (Unique-Local IPv6)",
+            "fd00:": "本地開發 (Unique-Local IPv6)"
           };
 
-          // Parse excluded IPs list (supporting multiple IPs separated by comma, spaces)
-          const excludedIpList = excludedIp 
-            ? excludedIp.split(/[\s,，]+/).map(ip => ip.trim()).filter(Boolean)
-            : [];
+          // Excluded IPs list mapped directly from our database configuration
+          const excludedIpList = ipMetadataList.filter(item => item.isExcluded).map(item => item.ipAddress);
 
-          // Filter visits summary by excludedIp list
+          // Filter visits summary by excludedIp list for statistics only
           const rawVisits = visitsData?.summary || [];
-          const visitsForStats = excludedIpList.length > 0 
-            ? rawVisits.filter(v => !excludedIpList.includes(v.ipAddress))
-            : rawVisits;
+          const visitsForStats = rawVisits.filter(v => !excludedIpList.includes(v.ipAddress));
 
           const totalVisitsCount = visitsForStats.reduce((acc, curr) => acc + curr.totalVisits, 0);
           const uniqueIpsCount = visitsForStats.length;
           const uniqueDevicesCount = visitsForStats.reduce((acc, curr) => acc + curr.uniqueDevicesCount, 0);
 
-          // Detailed visits list after applying status filter
-          const filteredVisits = visitsForStats.filter(v => {
+          // Detailed visits list after applying status filter (shows ALL visits including excluded ones, so we can manage them!)
+          const filteredVisits = rawVisits.filter(v => {
             const matchingLadiesForIp = ladies.filter(l => l.ipAddress === v.ipAddress);
             const isRegistered = matchingLadiesForIp.length > 0;
             const hasTakenQuiz = matchingLadiesForIp.some(l => l.quizTaken);
@@ -2127,12 +2138,12 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               </div>
 
               {/* Visits Analysis Section */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 {/* Visits KPI Cards */}
-                <div className="md:col-span-2 bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col justify-between gap-4">
+                <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col justify-between gap-4">
                   <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
                     <BarChart2 className="w-4 h-4 text-brand-olive" />
-                    網頁進入訪問統計 {excludedIp && <span className="text-[10px] text-red-500 font-bold">(已啟用 IP 排除)</span>}
+                    網頁進入訪問統計 {excludedIpList.length > 0 && <span className="text-[10px] text-red-500 font-bold">(已啟用 {excludedIpList.length} 個 IP 排除)</span>}
                   </h3>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-brand-beige/25 p-4 rounded-xl border border-brand-border/30">
@@ -2154,46 +2165,6 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* IP Exclusion Config */}
-                <div className="bg-white rounded-2xl p-6 shadow border border-brand-border/60 flex flex-col justify-between gap-3">
-                  <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-brand-olive" />
-                    IP 排除過濾器
-                  </h3>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={excludedIp}
-                      onChange={e => {
-                        const val = e.target.value.trim();
-                        setExcludedIp(val);
-                        localStorage.setItem("yuanyu_excluded_ip", val);
-                      }}
-                      placeholder="輸入欲排除的 IP (如 127.0.0.1)"
-                      className="flex-1 bg-white border border-brand-border rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                    />
-                    {excludedIp && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setExcludedIp("");
-                          localStorage.removeItem("yuanyu_excluded_ip");
-                        }}
-                        className="px-3 py-1.5 bg-brand-border/30 hover:bg-brand-border/50 text-brand-dark text-xs font-bold rounded-xl cursor-pointer"
-                      >
-                        清除
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[9px] text-brand-light leading-relaxed">
-                    {excludedIp ? (
-                      <span className="text-red-500 font-bold">✓ 已排除訪問 IP：{excludedIp}</span>
-                    ) : (
-                      <span>* 排除特定 IP (如辦公室/開發者 IP) 可提供純淨業務統計。</span>
-                    )}
-                  </p>
                 </div>
               </div>
 

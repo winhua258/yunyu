@@ -12,11 +12,11 @@ export default function Header({ onBackToVerify, showBack = false, onSoulMatchCl
   const currentLady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
 
   return (
-    <nav className="h-20 px-2 sm:px-6 md:px-12 flex items-center justify-between border-b border-brand-border bg-brand-beige select-none w-full">
+    <nav className="sticky top-0 z-50 h-15 px-2 sm:px-6 md:px-12 flex items-center justify-between border-b border-brand-border bg-brand-beige select-none w-full">
       {/* Brand Logo - auto adjusts to fit screens */}
       <div className="flex items-center shrink-0 mr-1 sm:mr-3">
         <span className="text-sm sm:text-lg md:text-2xl font-serif tracking-normal sm:tracking-widest uppercase text-brand-olive font-bold">
-          緣友<span className="hidden sm:inline"> YUAN-YU</span>
+          緣友 YUAN-YU
         </span>
       </div>
 

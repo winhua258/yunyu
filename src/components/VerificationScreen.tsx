@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Lock, 
-  ArrowRight, 
-  ShieldCheck, 
-  Mail, 
-  Phone, 
-  MessageSquare, 
-  AlertCircle, 
-  Heart, 
-  UserPlus, 
-  Sparkles, 
-  LogOut, 
-  CheckCircle2, 
-  ChevronRight, 
+import {
+  Lock,
+  ArrowRight,
+  ShieldCheck,
+  Mail,
+  Phone,
+  MessageSquare,
+  AlertCircle,
+  Heart,
+  UserPlus,
+  Sparkles,
+  LogOut,
+  CheckCircle2,
+  ChevronRight,
   ChevronDown,
-  Gem, 
-  UploadCloud, 
-  Search, 
+  Gem,
+  UploadCloud,
+  Search,
   RefreshCw,
   Edit2,
   Camera,
@@ -116,14 +116,14 @@ interface VerificationScreenProps {
 export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }: VerificationScreenProps) {
   const { profiles, isDataLoading, refreshData } = useData();
   const { loggedInLadyCode, login, register, ladyProfiles, logout, simulateAssets, updateLadyProfile } = useAuth();
-  
+
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showGentlemenNormsModal, setShowGentlemenNormsModal] = useState(false);
   const [selectedGender, setSelectedGender] = useState<"female" | "male">("female");
-  
+
   // Real-time ticking online/matched statistics
   const [onlineCount, setOnlineCount] = useState(324);
   const [matchedCount, setMatchedCount] = useState(1248);
@@ -145,7 +145,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [ladyCodeInput, setLadyCodeInput] = useState("");
   const [ladyError, setLadyError] = useState("");
   const [showLadyLoginInput, setShowLadyLoginInput] = useState(false);
-  
+
   // Dashboard & Unlock states
   const [gentlemanCodeInput, setGentlemanCodeInput] = useState("");
   const [unlockError, setUnlockError] = useState("");
@@ -261,12 +261,12 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     try {
       setError("");
       const response = await verifyAuthCode(sanitizedCode);
-      
+
       // 如果是管理員角色，背景刷新後台資料（不阻塞流程）
       if (response.role === "admin") {
         void refreshData(sanitizedCode);
       }
-      
+
       setIsSuccess(true);
       // 直接把 server 回傳的 role 傳給父層，不依賴非同步 adminCodes 狀態
       setTimeout(() => {
@@ -367,7 +367,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       } catch (err: any) {
         setUnlockError("解鎖資料卡失敗，請重試");
       }
-    } 
+    }
     // 2. 體驗會員：限制解鎖最多 2 位
     else if (level === "experience") {
       if (unlockedList.length < 2) {
@@ -382,7 +382,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         setUpgradeTargetProfile(targetProfile);
         setShowUpgradeModal(true);
       }
-    } 
+    }
     // 3. 免費方案：禁止解鎖配對以外的紳士
     else {
       setUpgradeTargetProfile(targetProfile);
@@ -458,19 +458,19 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             緣友是專為頂級客群設計的會員制專屬交友平台，運用 AI 靈魂測驗與人工資產認證，在安全、加密且高度私密的環境中，為認證男士與優質伴侶建立真誠連結。
           </p>
           <div className="flex items-center justify-center gap-3 text-[10px] md:text-xs font-bold text-brand-light mt-1.5 tracking-wider select-none">
-            <span>#隱私</span>
+            <span>隱私</span>
             <span className="text-brand-accent">•</span>
-            <span>#安全</span>
+            <span>安全</span>
             <span className="text-brand-accent">•</span>
-            <span>#可信</span>
+            <span>可信</span>
             <span className="text-brand-accent">•</span>
-            <span>#獨家</span>
+            <span>獨家</span>
             <span className="text-brand-accent">•</span>
-            <span>#誠意</span>
+            <span>誠意</span>
           </div>
 
-          {/* Simulated dynamic online counts */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center bg-brand-beige/35 py-2 px-5 rounded-2xl border border-brand-border/30 max-w-lg mx-auto mt-4.5 shadow-sm select-none">
+          {/* 模拟动态在线计数 */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center bg-brand-beige/35 py-0.5 px-5 rounded-2xl border border-brand-border/30 max-w-lg mx-auto mt-4.5 shadow-sm select-none">
             <div className="flex items-center gap-1.5 justify-center">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -482,7 +482,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             </div>
             <span className="hidden sm:inline text-brand-border/80">|</span>
             <p className="text-[10px] text-brand-muted font-bold tracking-wide">
-              今日已有 {matchedCount.toLocaleString("zh-TW")} 位台北/台中菁英完成媒合
+              今日已有 {matchedCount.toLocaleString("zh-TW")} 位會員完成媒合
             </p>
           </div>
         </div>
@@ -511,9 +511,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 bg-brand-border/10 rounded-2xl border border-brand-border/40 gap-4">
                 <div className="flex items-center gap-4">
                   <div className="relative cursor-pointer group" onClick={handleAvatarClick} title="點擊上傳新頭像">
-                    <img 
-                      src={lady.photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2"} 
-                      alt={lady.name} 
+                    <img
+                      src={lady.photoUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2"}
+                      alt={lady.name}
                       className="w-14 h-14 rounded-full object-cover border-2 border-brand-olive/40 group-hover:opacity-85 transition-all"
                     />
                     <div className="absolute -bottom-1 -right-1 bg-brand-accent text-brand-olive p-0.5 rounded-full border border-white">
@@ -569,7 +569,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           </button>
                         </div>
                       )}
-                      <span 
+                      <span
                         onClick={() => {
                           void copyToClipboard(lady.code).then(() => {
                             showToast("已複製名媛編號 🌸", "success");
@@ -650,7 +650,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
               {/* Upper Section: Match and Lookup grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* Action 1: AI Soul Match */}
                 <div className="p-5 bg-brand-beige/30 rounded-2xl border border-brand-border/40 flex flex-col justify-between space-y-4">
                   <div>
@@ -688,7 +688,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </div>
 
                 {/* Action 2: Unlock Card by Code */}
-                <form 
+                <form
                   onSubmit={handleUnlockCodeSubmit}
                   className="p-5 bg-brand-beige/30 rounded-2xl border border-brand-border/40 flex flex-col justify-between space-y-4"
                 >
@@ -722,7 +722,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         <span>解鎖</span>
                       </button>
                     </div>
-                    
+
                     {unlockError ? (
                       <p className="text-[10px] text-red-500 font-bold flex items-center gap-1">
                         <AlertCircle className="w-3 h-3 shrink-0" />
@@ -733,8 +733,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         {lady.membershipLevel === "vip" || lady.assetVerified === "approved"
                           ? "提示：您當前擁有全站解鎖特權，隨意輸入皆可點擊瀏覽。"
                           : lady.membershipLevel === "experience"
-                          ? `體驗會員可用名額上限為 2 位 (剩餘媒合名額：${2 - (lady.unlockedGentlemanCodes?.length || 0)}/2)。`
-                          : "免費方案僅限查閱 AI 媒合對象，解鎖完整檔案請升級方案或進行認證。"}
+                            ? `體驗會員可用名額上限為 2 位 (剩餘媒合名額：${2 - (lady.unlockedGentlemanCodes?.length || 0)}/2)。`
+                            : "免費方案僅限查閱 AI 媒合對象，解鎖完整檔案請升級方案或進行認證。"}
                       </p>
                     )}
                   </div>
@@ -760,11 +760,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <div
                         key={p.code}
                         onClick={() => executeUnlockFlow(p)}
-                        className={`group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-between transition-all duration-300 cursor-pointer ${
-                          isUnlocked
-                            ? "bg-brand-beige/20 hover:bg-brand-beige/50 border-brand-border hover:shadow-md"
-                            : "bg-brand-light/5 border-dashed border-brand-border/60 hover:border-brand-olive/40"
-                        }`}
+                        className={`group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-between transition-all duration-300 cursor-pointer ${isUnlocked
+                          ? "bg-brand-beige/20 hover:bg-brand-beige/50 border-brand-border hover:shadow-md"
+                          : "bg-brand-light/5 border-dashed border-brand-border/60 hover:border-brand-olive/40"
+                          }`}
                       >
                         {/* Status Label Overlay */}
                         <div className="absolute top-2 right-2 z-20 flex gap-1">
@@ -789,9 +788,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           <img
                             src={p.imageUrl}
                             alt=""
-                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                              isUnlocked ? "" : "blur-md opacity-40"
-                            }`}
+                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isUnlocked ? "" : "blur-md opacity-40"
+                              }`}
                           />
                           {!isUnlocked && (
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -849,7 +847,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        
+
                         {/* Subscription simulation selector */}
                         <div className="space-y-1.5">
                           <label className="font-bold text-brand-dark">方案等級 (Membership Grade)：</label>
@@ -857,33 +855,30 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                             <button
                               onClick={() => handleSimulateChange("free", lady.assetVerified || "none")}
                               disabled={simulating}
-                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                                lady.membershipLevel === "free" || !lady.membershipLevel
-                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
-                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
-                              }`}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${lady.membershipLevel === "free" || !lady.membershipLevel
+                                ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                                }`}
                             >
                               免費體驗 (Free)
                             </button>
                             <button
                               onClick={() => handleSimulateChange("experience", lady.assetVerified || "none")}
                               disabled={simulating}
-                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                                lady.membershipLevel === "experience"
-                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
-                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
-                              }`}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${lady.membershipLevel === "experience"
+                                ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                                }`}
                             >
                               體驗方案 (Limit 2)
                             </button>
                             <button
                               onClick={() => handleSimulateChange("vip", lady.assetVerified || "none")}
                               disabled={simulating}
-                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                                lady.membershipLevel === "vip"
-                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
-                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
-                              }`}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${lady.membershipLevel === "vip"
+                                ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                                }`}
                             >
                               尊榮 VIP
                             </button>
@@ -897,33 +892,30 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                             <button
                               onClick={() => handleSimulateChange(lady.membershipLevel || "free", "none")}
                               disabled={simulating}
-                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                                lady.assetVerified === "none" || !lady.assetVerified
-                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
-                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
-                              }`}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${lady.assetVerified === "none" || !lady.assetVerified
+                                ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                                }`}
                             >
                               未驗資 (none)
                             </button>
                             <button
                               onClick={() => handleSimulateChange(lady.membershipLevel || "free", "pending")}
                               disabled={simulating}
-                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                                lady.assetVerified === "pending"
-                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
-                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
-                              }`}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${lady.assetVerified === "pending"
+                                ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                                }`}
                             >
                               審核中 (pending)
                             </button>
                             <button
                               onClick={() => handleSimulateChange(lady.membershipLevel || "free", "approved")}
                               disabled={simulating}
-                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                                lady.assetVerified === "approved"
-                                  ? "bg-white border-brand-olive text-brand-olive shadow-sm"
-                                  : "bg-transparent border-brand-border hover:bg-white text-brand-light"
-                              }`}
+                              className={`flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all ${lady.assetVerified === "approved"
+                                ? "bg-white border-brand-olive text-brand-olive shadow-sm"
+                                : "bg-transparent border-brand-border hover:bg-white text-brand-light"
+                                }`}
                             >
                               驗資成功 (approved)
                             </button>
@@ -957,11 +949,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   type="button"
                   id="btn-gender-select-female"
                   onClick={() => setSelectedGender("female")}
-                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                    selectedGender === "female"
-                      ? "bg-brand-olive text-white shadow-md hover:opacity-95"
-                      : "text-brand-light hover:text-brand-olive hover:bg-brand-border/10"
-                  }`}
+                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${selectedGender === "female"
+                    ? "bg-brand-olive text-white shadow-md hover:opacity-95"
+                    : "text-brand-light hover:text-brand-olive hover:bg-brand-border/10"
+                    }`}
                 >
                   🌸 我是女賓 ➔ 名媛通道
                 </button>
@@ -969,11 +960,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                   type="button"
                   id="btn-gender-select-male"
                   onClick={() => setSelectedGender("male")}
-                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                    selectedGender === "male"
-                      ? "bg-brand-olive text-white shadow-md hover:opacity-95"
-                      : "text-brand-light hover:text-brand-olive hover:bg-brand-border/10"
-                  }`}
+                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${selectedGender === "male"
+                    ? "bg-brand-olive text-white shadow-md hover:opacity-95"
+                    : "text-brand-light hover:text-brand-olive hover:bg-brand-border/10"
+                    }`}
                 >
                   🎩 我是男賓 ➔ 紳士通道
                 </button>
@@ -982,154 +972,161 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
             {/* GUEST VIEW: Split verification for Gentlemen + Ladies */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
-              
+
               {/* Center vertical line */}
               <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
 
               {/* LEFT COLUMN: LADIES (名媛限時免財力認證通道) */}
-              <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${
-                selectedGender === "female"
-                  ? "opacity-100 border-brand-olive/50 shadow-lg"
-                  : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
-              }`}>
-                <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
-                PROMO 限時特許
-              </div>
-
-              {/* Top Group */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner shrink-0 select-none">
-                    <Heart className="w-5 h-5 text-brand-olive fill-current" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
-                      名媛限時免財力認證通道
-                    </h3>
-                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
-                      Ladies Campaign
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                  限時活動！名媛免除年收審核與財力認證！免註冊！完成 7 道 AI 測試題目後立即解鎖一位頂級高品質契合紳士。
-                </p>
-              </div>
-
-              {/* Bottom Group */}
-              <div className="space-y-4 pt-4 border-t border-brand-border/20">
-                {/* 1. Primary Action: AI test */}
-                <div className="space-y-3">
-                  <div className="text-center text-[10px] sm:text-[10.5px] text-brand-light font-bold leading-normal">
-                    💡 首次體驗推薦：免註冊直接開始 7 題 AI 測驗（僅需 30 秒），免除年收認證並在媒合成功後自動建立編號。
-                  </div>
-                  <button
-                    id="btn-guest-soul-match-direct"
-                    type="button"
-                    onClick={onSoulMatchClick}
-                    disabled={selectedGender !== "female"}
-                    className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
-                    <span>免費開始 AI 靈魂媒合測試</span>
-                  </button>
-                </div>
-
-                {/* 2. Secondary Action: Create Code */}
-                <button
-                  type="button"
-                  onClick={handleLadyRegister}
-                  disabled={selectedGender !== "female"}
-                  className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <UserPlus className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>建立新名媛編號</span>
-                </button>
-
-                {/* 3. Folded Lower Weight Action: Transfer/Login (Toggled) */}
-                <div className="pt-2 border-t border-brand-border/30">
-                  <button
-                    type="button"
-                    onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
-                    disabled={selectedGender !== "female"}
-                    className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span>已有名媛帳號？點此進行「手機/瀏覽器登入」</span>
-                    <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {showLadyLoginInput && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden space-y-3 pt-3"
-                      >
-                        <p className="text-[9px] text-brand-light leading-relaxed bg-brand-border/5 p-2.5 rounded-xl border border-brand-border/20">
-                          ℹ️ <strong>帳號找回提示：</strong> 當您換新手機、新電腦，或是瀏覽器歷史紀錄被清除時，只需輸入您原來的名媛編號即可登入。
-                        </p>
-                        
-                        {ladyError && (
-                          <motion.p
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-1 text-[10px] text-red-650 font-bold"
-                          >
-                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                            <span>{ladyError}</span>
-                          </motion.p>
-                        )}
-
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={ladyCodeInput}
-                            onChange={(e) => {
-                              setLadyCodeInput(e.target.value);
-                              setLadyError("");
-                            }}
-                            disabled={selectedGender !== "female"}
-                            placeholder="請輸入名媛編號"
-                            className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleLadyLogin}
-                            disabled={selectedGender !== "female"}
-                            className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            確認登入
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
-            <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${
-              selectedGender === "male"
+              <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${selectedGender === "female"
                 ? "opacity-100 border-brand-olive/50 shadow-lg"
                 : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
-            }`}>
-              <div className="absolute top-3 right-3 bg-brand-olive/10 text-brand-olive text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-brand-olive/20 select-none">
-                GENTLEMEN 通道
+                }`}>
+                <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
+                  PROMO 限時特許
+                </div>
+
+                {/* Top Group */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-olive border border-brand-accent/30 shadow-inner shrink-0 select-none">
+                      <Heart className="w-5 h-5 text-brand-olive fill-current" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide">
+                        名媛限時免認證通道
+                      </h3>
+                      <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
+                        Ladies Campaign
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
+                    第一次使用嗎？免註冊，只需 10 秒完成 7 題 AI 智能媒合測驗，就能遇見與您靈魂契合的頂尖紳士。
+                  </p>
+                </div>
+
+                {/* Bottom Group */}
+                <div className="space-y-4 pt-4 border-t border-brand-border/20">
+                  {/* 1. Primary Action: AI test */}
+                  <div className="space-y-3">
+                    <div className="text-center text-[10px] sm:text-[10.5px] text-brand-light font-bold leading-normal">
+                      💡 首次體驗推薦：
+                      <br />
+                      推廣期間專屬特許，名媛限時免除年收審核與財力認證！
+                      <br />
+                      完成測驗即可立即解鎖一位高品質菁英男賓資料，安全開啟您的尊榮社交旅程。全程免費，無任何隱藏費用。
+                    </div>
+                    <button
+                      id="btn-guest-soul-match-direct"
+                      type="button"
+                      onClick={onSoulMatchClick}
+                      disabled={selectedGender !== "female"}
+                      className="w-full py-3.5 px-6 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 hover:scale-102 active:scale-98 animate-pulse-scale disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Heart className="w-4 h-4 text-brand-accent fill-current animate-pulse animate-duration-1000 animate-infinite" />
+                      <span>免費開始 AI 靈魂媒合測試</span>
+                    </button>
+                  </div>
+
+                  {/* 2. Secondary Action: Create Code */}
+                  <button
+                    type="button"
+                    onClick={handleLadyRegister}
+                    disabled={selectedGender !== "female"}
+                    className="w-full py-2.5 px-6 bg-white border border-brand-border hover:bg-brand-border/10 text-brand-olive text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-101 active:scale-99 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <UserPlus className="w-4 h-4 text-brand-olive shrink-0" />
+                    <span>建立新名媛編號</span>
+                  </button>
+
+                  {/* 3. Folded Lower Weight Action: Transfer/Login (Toggled) */}
+                  <div className="pt-2 border-t border-brand-border/30">
+                    <button
+                      type="button"
+                      onClick={() => setShowLadyLoginInput(!showLadyLoginInput)}
+                      disabled={selectedGender !== "female"}
+                      className="w-full text-center text-[10px] text-brand-light hover:text-brand-olive font-bold tracking-wider flex items-center justify-center gap-1.5 py-1 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span>已有名媛帳號？點此進行「手機/瀏覽器登入」</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showLadyLoginInput ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <AnimatePresence>
+                      {showLadyLoginInput && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden space-y-3 pt-3"
+                        >
+                          <p className="text-[9px] text-brand-light leading-relaxed bg-brand-border/5 p-2.5 rounded-xl border border-brand-border/20">
+                            ℹ️ <strong>帳號找回提示：</strong> 當您換新手機、新電腦，或是瀏覽器歷史紀錄被清除時，只需輸入您原來的名媛編號即可登入。
+                          </p>
+
+                          {ladyError && (
+                            <motion.p
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex items-center gap-1 text-[10px] text-red-650 font-bold"
+                            >
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>{ladyError}</span>
+                            </motion.p>
+                          )}
+
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={ladyCodeInput}
+                              onChange={(e) => {
+                                setLadyCodeInput(e.target.value);
+                                setLadyError("");
+                              }}
+                              disabled={selectedGender !== "female"}
+                              placeholder="請輸入名媛編號"
+                              className="flex-1 min-w-0 bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleLadyLogin}
+                              disabled={selectedGender !== "female"}
+                              className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              確認登入
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               </div>
 
-              {/* Top Group */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0 select-none">
-                    <Lock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide flex items-center flex-wrap gap-x-2">
-                      <span>紳士專屬資產認證通道</span>
+              {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
+              <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${selectedGender === "male"
+                ? "opacity-100 border-brand-olive/50 shadow-lg"
+                : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
+                }`}>
+                <div className="absolute top-3 right-3 bg-brand-olive/10 text-brand-olive text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-brand-olive/20 select-none">
+                  GENTLEMEN 通道
+                </div>
+
+                {/* Top Group */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive border border-brand-olive/20 shadow-inner shrink-0 select-none">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-lg md:text-xl font-bold text-brand-dark tracking-wide flex items-center flex-wrap gap-x-2">
+                        <span>紳士專屬資產認證通道</span>
+
+                      </h3>
+                      <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
+                        Gentlemen Verification
+                      </span>
                       <button
                         type="button"
                         onClick={() => setShowGentlemenNormsModal(true)}
@@ -1138,112 +1135,108 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       >
                         [ 查看審核規範 ]
                       </button>
-                    </h3>
-                    <span className="text-[9px] md:text-[10px] text-brand-light font-bold uppercase tracking-widest font-mono select-none">
-                      Gentlemen Verification
-                    </span>
+                    </div>
                   </div>
+
+                  <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
+                    為維護高品質私密生態，紳士會員須提交實名與財力審查。通過後將核發<strong>「紳士編號」，此編號非登入帳號，僅用於查閱與修改您的個人資料卡。</strong>
+                    <br />
+                    請注意，必須成功建立資料卡，您才能在女性會員答題時被精準匹配並開啟後續互動。
+                  </p>
                 </div>
 
-                <p className="text-xs md:text-sm text-brand-muted leading-relaxed">
-                  為確保交友生態之安全與隱私防護，並維持高品質的會員素質，紳士會員須提交實名核驗與資產審核，經審查核准後由專責人員人工發放<strong>「戀人編號」</strong>登入。
-                </p>
-              </div>
-
-              {/* Bottom Group */}
-              <div className="space-y-4 pt-4 border-t border-brand-border/20">
-                {/* Secure verification code input */}
-                <form id="form-verification" onSubmit={handleVerify} className="space-y-4">
-                  <div className="relative">
-                    <input
-                      id="input-verification-code"
-                      type="text"
-                      maxLength={36}
-                      value={code}
-                      onChange={(e) => {
-                        setCode(e.target.value);
-                        if (error) setError("");
-                      }}
-                      disabled={selectedGender !== "male" || isSuccess}
-                      placeholder="輸入紳士帳號，即可查看配對資料"
-                      className={`w-full bg-white text-center tracking-[0.25em] font-mono text-xs font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive disabled:opacity-50 disabled:cursor-not-allowed ${
-                        error 
-                          ? "border-red-400 focus:border-red-500" 
+                {/* Bottom Group */}
+                <div className="space-y-4 pt-4 border-t border-brand-border/20">
+                  {/* Secure verification code input */}
+                  <form id="form-verification" onSubmit={handleVerify} className="space-y-4">
+                    <div className="relative">
+                      <input
+                        id="input-verification-code"
+                        type="text"
+                        maxLength={36}
+                        value={code}
+                        onChange={(e) => {
+                          setCode(e.target.value);
+                          if (error) setError("");
+                        }}
+                        disabled={selectedGender !== "male" || isSuccess}
+                        placeholder="請輸入您的紳士編號"
+                        className={`w-full bg-white text-center tracking-[0.25em] font-mono text-xs font-bold placeholder:tracking-normal placeholder:font-sans placeholder:font-normal placeholder:text-xs placeholder:text-brand-light/70 text-brand-dark py-3 px-6 rounded-full border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive disabled:opacity-50 disabled:cursor-not-allowed ${error
+                          ? "border-red-400 focus:border-red-500"
                           : "border-brand-border focus:border-brand-olive"
-                      }`}
-                    />
-                  </div>
+                          }`}
+                      />
+                    </div>
 
-                  {error && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
-                    >
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{error}</span>
-                    </motion.p>
-                  )}
+                    {error && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        className="flex items-center justify-center gap-1.5 text-xs text-red-650 font-bold"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{error}</span>
+                      </motion.p>
+                    )}
 
-                  <button
-                    id="btn-verify-submit"
-                    type="submit"
-                    disabled={selectedGender !== "male" || isSuccess}
-                    className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isSuccess
+                    <button
+                      id="btn-verify-submit"
+                      type="submit"
+                      disabled={selectedGender !== "male" || isSuccess}
+                      className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${isSuccess
                         ? "bg-brand-accent text-brand-dark shadow-sm cursor-default"
                         : "bg-brand-olive text-white hover:bg-[#4d4d36] hover:shadow-lg active:scale-98"
-                    }`}
-                  >
-                    <span>{isSuccess ? "驗證成功，正在載入" : "認證並進入系統"}</span>
-                    {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
-                  </button>
-                </form>
+                        }`}
+                    >
+                      <span>{isSuccess ? "識別成功，正在載入" : "解鎖/管理 個人資料卡"}</span>
+                      {!isSuccess && <ArrowRight className="w-3.5 h-3.5" />}
+                    </button>
+                  </form>
 
-                <div className="text-center">
-                  <button
-                    id="btn-show-contact-modal"
-                    type="button"
-                    onClick={() => setShowContactModal(true)}
-                    disabled={selectedGender !== "male"}
-                    className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    無專屬編號？洽詢專屬客服進行認證
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* BOTTOM FULL-WIDTH ROW: Platform security guarantees (Trust Badges) */}
-            <div className="md:col-span-2 border-t border-brand-border/40 pt-6 mt-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] sm:text-xs leading-relaxed text-brand-light">
-                <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
-                  <span className="shrink-0 text-brand-olive text-sm font-bold">🔒</span>
-                  <div>
-                    <h5 className="font-bold text-brand-dark mb-0.5">絕對隱私保障</h5>
-                    <p className="text-[10px] text-brand-muted">所有數據皆通過 AWS 銀行級加密，嚴防第三方洩漏。</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
-                  <span className="shrink-0 text-brand-olive text-sm font-bold">👤</span>
-                  <div>
-                    <h5 className="font-bold text-brand-dark mb-0.5">實名核驗機制</h5>
-                    <p className="text-[10px] text-brand-muted">嚴格防範機器人與不實交友，確保圈層純淨度。</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
-                  <span className="shrink-0 text-brand-olive text-sm font-bold">❌</span>
-                  <div>
-                    <h5 className="font-bold text-brand-dark mb-0.5">零廣告無騷擾</h5>
-                    <p className="text-[10px] text-brand-muted">採取高質感會員制運營，絕不推送垃圾推廣訊息。</p>
+                  <div className="text-center">
+                    <button
+                      id="btn-show-contact-modal"
+                      type="button"
+                      onClick={() => setShowContactModal(true)}
+                      disabled={selectedGender !== "male"}
+                      className="text-[11px] text-brand-light hover:text-brand-olive font-bold tracking-wider uppercase transition-colors duration-200 underline underline-offset-4 decoration-brand-border hover:decoration-brand-olive disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      無專屬編號？洽詢專屬客服進行認證
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
 
+              {/* BOTTOM FULL-WIDTH ROW: Platform security guarantees (Trust Badges) */}
+              <div className="md:col-span-2 border-t border-brand-border/40 pt-6 mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] sm:text-xs leading-relaxed text-brand-light">
+                  <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
+                    <span className="shrink-0 text-brand-olive text-sm font-bold">🔒</span>
+                    <div>
+                      <h5 className="font-bold text-brand-dark mb-0.5">絕對隱私保障</h5>
+                      <p className="text-[10px] text-brand-muted">所有數據皆通過 AWS 銀行級加密，嚴防第三方洩漏。</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
+                    <span className="shrink-0 text-brand-olive text-sm font-bold">👤</span>
+                    <div>
+                      <h5 className="font-bold text-brand-dark mb-0.5">實名核驗機制</h5>
+                      <p className="text-[10px] text-brand-muted">嚴格防範機器人與不實交友，確保圈層純淨度。</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 bg-brand-border/10 p-3.5 rounded-2xl border border-brand-border/30">
+                    <span className="shrink-0 text-brand-olive text-sm font-bold">❌</span>
+                    <div>
+                      <h5 className="font-bold text-brand-dark mb-0.5">零廣告無騷擾</h5>
+                      <p className="text-[10px] text-brand-muted">採取高質感會員制運營，絕不推送垃圾推廣訊息。</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
         )}
       </motion.div>
 
@@ -1330,8 +1323,8 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           <MessageSquare className="w-4 h-4 text-brand-olive" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-brand-dark">Crisp 在線客服視窗</p>
-                          <p className="text-[10px] text-brand-light">即時線上文字聊天諮詢</p>
+                          <p className="text-xs font-semibold text-brand-dark">緣友 在線客服視窗</p>
+                          <p className="text-[10px] text-brand-light">即時線上諮詢</p>
                         </div>
                       </div>
                       <button
@@ -1480,9 +1473,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               <div className="p-6 space-y-4 flex-1">
                 {upgradeTargetProfile && (
                   <div className="flex items-center gap-3 p-3 bg-brand-beige/50 rounded-2xl border border-brand-border/40">
-                    <img 
-                      src={upgradeTargetProfile.imageUrl} 
-                      alt="" 
+                    <img
+                      src={upgradeTargetProfile.imageUrl}
+                      alt=""
                       className="w-12 h-12 rounded-xl object-cover blur-[4px] opacity-70"
                     />
                     <div>
@@ -1495,13 +1488,13 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 )}
 
                 <p className="text-xs text-brand-muted leading-relaxed">
-                  很抱歉！根據 <strong>緣友 YUAN-YU</strong> 的安全媒合規範，您的帳號目前受限，無法查閱這位紳士的個人檔案。<br/>
+                  很抱歉！根據 <strong>緣友 YUAN-YU</strong> 的安全媒合規範，您的帳號目前受限，無法查閱這位紳士的個人檔案。<br />
                   請上傳資產證明（或點擊下方模擬動作）進行驗資解鎖。
                 </p>
 
                 {/* Option Action Grid */}
                 <div className="space-y-2.5 pt-2">
-                  
+
                   {/* Option 1: Mock upload asset validation */}
                   <button
                     onClick={() => {
@@ -1665,13 +1658,12 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={`px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold tracking-wide flex items-center justify-center gap-2 w-full text-center pointer-events-auto ${
-                toast.type === "success"
-                  ? "bg-[#4d4d36]/95 border-brand-accent/20 text-white"
-                  : toast.type === "error"
+              className={`px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border text-xs font-bold tracking-wide flex items-center justify-center gap-2 w-full text-center pointer-events-auto ${toast.type === "success"
+                ? "bg-[#4d4d36]/95 border-brand-accent/20 text-white"
+                : toast.type === "error"
                   ? "bg-red-950/95 border-red-500/20 text-white"
                   : "bg-brand-dark/95 border-brand-border/20 text-white"
-              }`}
+                }`}
             >
               {toast.type === "success" && <Sparkles className="w-3.5 h-3.5 text-brand-accent fill-current shrink-0" />}
               {toast.type === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />}

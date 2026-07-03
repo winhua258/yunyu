@@ -80,9 +80,16 @@ const VisitLogSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const IpMetadataSchema = new mongoose.Schema({
+  ipAddress: { type: String, required: true, unique: true },
+  note: { type: String, default: "" },
+  isExcluded: { type: Boolean, default: false }
+});
+
 const Config = mongoose.model("Config", ConfigSchema);
 const LadyProfile = mongoose.model("LadyProfile", LadyProfileSchema);
 const VisitLog = mongoose.model("VisitLog", VisitLogSchema);
+const IpMetadata = mongoose.model("IpMetadata", IpMetadataSchema);
 
 // --- 自動同步預設資料 ---
 async function synchronizeDefaultData() {
@@ -283,11 +290,15 @@ app.post("/api/profile-config", adminAuth, async (req, res) => {
 
 // 獲取客戶端 IP 的輔助函式
 function getClientIp(req) {
+  let ip = req.ip;
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    ip = forwarded.split(',')[0].trim();
   }
-  return req.ip;
+  if (ip && ip.startsWith("::ffff:")) {
+    ip = ip.substring(7);
+  }
+  return ip;
 }
 
 // 記憶體中的 IP 註冊追蹤 (IP -> timestamps array)
@@ -694,6 +705,42 @@ app.get("/api/admin/visits", adminAuth, async (req, res) => {
   } catch (error) {
     console.error("Error fetching visits in admin:", error);
     res.status(500).json({ message: "獲取訪問量失敗。" });
+  }
+});
+
+// GET /api/admin/ip-metadata: 獲取所有 IP 的備註與排除狀態
+app.get("/api/admin/ip-metadata", adminAuth, async (req, res) => {
+  try {
+    const metadata = await IpMetadata.find({});
+    res.json(metadata);
+  } catch (error) {
+    console.error("Error fetching ip metadata in admin:", error);
+    res.status(500).json({ message: "獲取 IP 備註與排除狀態失敗。" });
+  }
+});
+
+// POST /api/admin/ip-metadata: 更新特定 IP 的備註或排除狀態
+app.post("/api/admin/ip-metadata", adminAuth, async (req, res) => {
+  try {
+    const { ipAddress, note, isExcluded } = req.body;
+    if (!ipAddress) {
+      return res.status(400).json({ message: "缺少 IP 位址。" });
+    }
+    
+    const updateData = {};
+    if (note !== undefined) updateData.note = note;
+    if (isExcluded !== undefined) updateData.isExcluded = isExcluded;
+
+    const metadata = await IpMetadata.findOneAndUpdate(
+      { ipAddress },
+      { $set: updateData },
+      { new: true, upsert: true }
+    );
+
+    res.json(metadata);
+  } catch (error) {
+    console.error("Error updating ip metadata in admin:", error);
+    res.status(500).json({ message: "更新 IP 資料失敗。" });
   }
 });
 

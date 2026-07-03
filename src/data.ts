@@ -635,3 +635,40 @@ export async function fetchAdminVisits(adminCode: string): Promise<{
   }
   return response.json();
 }
+
+export interface IpMetadataItem {
+  ipAddress: string;
+  note: string;
+  isExcluded: boolean;
+}
+
+export async function fetchIpMetadata(adminCode: string): Promise<IpMetadataItem[]> {
+  const response = await fetch("/api/admin/ip-metadata", {
+    headers: { "x-admin-code": adminCode },
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || "Failed to fetch IP metadata");
+  }
+  return response.json();
+}
+
+export async function updateIpMetadata(
+  adminCode: string,
+  ipAddress: string,
+  updates: { note?: string; isExcluded?: boolean }
+): Promise<IpMetadataItem> {
+  const response = await fetch("/api/admin/ip-metadata", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-code": adminCode,
+    },
+    body: JSON.stringify({ ipAddress, ...updates }),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || "Failed to update IP metadata");
+  }
+  return response.json();
+}
