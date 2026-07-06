@@ -126,14 +126,14 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
   // Real-time ticking online/matched statistics
   const [onlineCount, setOnlineCount] = useState(324);
-  const [matchedCount, setMatchedCount] = useState(1248);
+  const [matchedCount, setMatchedCount] = useState(560);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
       setOnlineCount(prev => {
         const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
         const next = prev + delta;
-        return Math.max(310, Math.min(345, next));
+        return Math.max(210, Math.min(245, next));
       });
       if (Math.random() > 0.6) {
         setMatchedCount(prev => prev + 1);
