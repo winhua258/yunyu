@@ -669,8 +669,10 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [isSaving, setIsSaving] = React.useState(false);
 
   // 自動儲存：可不傳入強制覆寫的編輯資料
-  const handleAutoSave = async (overrideEditData?: typeof editData) => {
+  // 自動儲存：可不傳入強制覆寫的編輯資料
+  const handleAutoSave = async (overrideEditData?: typeof editData, overrideMetrics?: PersonalityMetrics) => {
     const data = overrideEditData ?? editData;
+    const metricsToUse = overrideMetrics ?? currentMetrics;
     const finalCode = data.code.trim();
     if (!finalCode) { setErrorMessage("登入編號不可為空"); return; }
     if (!data.name.trim()) { setErrorMessage("姓名不可為空"); return; }
@@ -708,7 +710,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
     const newMetrics = { ...allMetrics };
     if (finalCode !== selectedCode) { delete newMetrics[selectedCode]; }
-    newMetrics[finalCode] = { ...currentMetrics };
+    newMetrics[finalCode] = { ...metricsToUse };
 
     setIsSaving(true);
     const result = await handleSync(newProfiles, newMetrics, adminCodes);
@@ -1173,8 +1175,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                 type="button"
                 onClick={() => {
                   const { profile: genProfile, metrics: genMetrics } = generateTaiwanGentlemanData();
-                  setEditData(prev => ({
-                    ...prev,
+                  const updatedData = {
+                    ...editData,
                     name: genProfile.name,
                     age: genProfile.age,
                     location: genProfile.location,
@@ -1184,10 +1186,10 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     lifestyleStr: genProfile.lifestyle.join(", "),
                     cardDetail: genProfile.cardDetail,
                     idealMatch: genProfile.idealMatch,
-                  }));
+                  };
+                  setEditData(updatedData);
                   setCurrentMetrics(genMetrics);
-                  setSuccessMessage("✨ 已自動填入隨機生成資料，請確認後點擊儲存。");
-                  setTimeout(() => setSuccessMessage(""), 4000);
+                  void handleAutoSave(updatedData, genMetrics);
                 }}
                 className="w-full py-3 px-4 bg-gradient-to-r from-brand-olive to-[#5a5a3a] hover:from-[#4d4d36] hover:to-brand-olive text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-99 shadow-md"
               >
