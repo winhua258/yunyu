@@ -1256,3 +1256,25 @@
 2.  **打包與部署**：
     *   TypeScript 及 Vite 順利編譯通過，重啟伺服器並順利推送到遠端（Commit: `ef45389`）。
 
+
+---
+
+## 2026-07-08 主控密碼與紳士編輯/對話密碼分流安全改進記錄
+
+- **本輪目標**：將「主控管理登入密碼」與「紳士編輯與對話密碼」完全分開，避免兩者共用同一組密碼，並提升身分驗證的安全性。
+- **是否真實可複現**：是（TypeScript 與 Vite 建置編譯通過，前後端完整運行）
+
+### 修改詳情
+1.  **資料庫與後端端點設計 (`server.js`)**：
+    *   在 `ConfigSchema` 中新增 `gentlemanEditCodes: [String]` 用於單獨存放紳士卡片的安全編輯密碼。
+    *   新增安全性的後端驗證端點 `POST /api/gentleman/verify-password`，讓紳士輸入編輯密碼時，由後端隱密比對，不再將整份密碼清單暴露給前端客戶端瀏覽器。
+    *   修改 `POST /api/profile-config` 及 `GET /api/admin/config` 使其正確支援 `gentlemanEditCodes` 的資料同步與分流管理。
+2.  **前端資料流與驗證調整 (`DataContext.tsx` & `data.ts`)**：
+    *   在全域 `DataContext` 中新增 `gentlemanEditCodes` 快取，並確保背景自動同步時不引發數據遺失。
+    *   `ProfileScreen.tsx` 的紳士卡片密碼驗證改為呼叫後端 API（`POST /api/gentleman/verify-password`），兼顧安全性與邏輯分離。
+3.  **主控管理介面升級 (`AdminEditScreen.tsx`)**：
+    *   將左側密碼管理面板分拆為兩大部分：**「主控管理安全密碼」**與**「紳士編輯與對話密碼」**，分別提供自訂密碼的展示、新增、防呆刪除機制。
+    *   自動防呆：兩組安全密碼皆至少需保留一組，防範意外 lockout。
+4.  **打包與部署**：
+    *   打包成功（Commit: `5c07767`），後端服務重新啟動。
+
