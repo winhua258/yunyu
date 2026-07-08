@@ -21,14 +21,14 @@ export default function Header({ onBackToVerify, showBack = false, onSoulMatchCl
       </div>
 
       {/* Main Nav Items: 專屬媒合 // 隱私 Ethos // 安全加密 // AI配對 */}
-      <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-6 md:gap-8 mx-1 sm:mx-4 shrink min-w-0 overflow-x-auto scrollbar-none flex-nowrap">
-        <span className="cursor-default hover:text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest text-brand-muted whitespace-nowrap transition-colors duration-200 opacity-80 shrink-0">
+      <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-6 md:gap-8 mx-1 sm:mx-4 shrink min-w-0">
+        <span className="cursor-default hover:text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest text-brand-muted whitespace-nowrap transition-colors duration-200 opacity-80">
           專屬媒合
         </span>
-        <span className="cursor-default hover:text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest text-brand-muted whitespace-nowrap transition-colors duration-200 opacity-80 shrink-0">
+        <span className="cursor-default hover:text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest text-brand-muted whitespace-nowrap transition-colors duration-200 opacity-80">
           隱私 Ethos
         </span>
-        <span className="cursor-default hover:text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest text-brand-muted whitespace-nowrap transition-colors duration-200 opacity-80 shrink-0">
+        <span className="cursor-default hover:text-brand-olive text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest text-brand-muted whitespace-nowrap transition-colors duration-200 opacity-80">
           安全加密
         </span>
 

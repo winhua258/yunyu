@@ -216,7 +216,7 @@ export default function GentlemanDashboard({
   const progressPct = Math.min((totalLadyMsgs / 20) * 100, 100);
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-brand-beige/30 font-sans">
+    <div className="flex-1 flex flex-col md:flex-row md:h-[calc(100vh-60px)] md:max-h-[calc(100vh-60px)] overflow-hidden bg-brand-beige/30 font-sans">
       
       {/* LEFT SIDEBAR: Chats List */}
       <div className="w-full md:w-80 border-r border-brand-border/40 bg-white flex flex-col shrink-0">
