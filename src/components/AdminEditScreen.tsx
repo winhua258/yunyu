@@ -1242,54 +1242,24 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               </button>
             </div>
 
-            {/* 系統安全密碼管理（包含主控與紳士編輯密碼分流） */}
+            {/* 系統安全密碼管理（包含主控與紳士編輯密碼更換） */}
             <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-brand-border/60 space-y-6">
               
               {/* Part 1: 主控安全登入密碼 */}
               <div className="space-y-3">
-                <h3 className="font-serif text-xs font-bold text-brand-dark tracking-wider uppercase border-b border-brand-border pb-2.5 flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5 text-brand-olive" />
-                  <span>主控管理安全密碼</span>
-                </h3>
+                <div className="flex items-center justify-between border-b border-brand-border pb-2.5">
+                  <h3 className="font-serif text-xs font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 text-brand-olive" />
+                    <span>主控管理安全密碼</span>
+                  </h3>
+                  <span className="text-xs font-mono font-bold text-brand-olive bg-brand-beige border border-brand-border px-2.5 py-0.5 rounded-lg shadow-sm">
+                    {adminCodes[0] || "admin"}
+                  </span>
+                </div>
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   管理員登入本主控台所使用的授權密碼。
                 </p>
 
-                {/* 密碼清單展示 */}
-                <div className="space-y-1.5">
-                  <span className="text-[9px] font-bold text-brand-light uppercase tracking-wider block">目前授權的主控密碼：</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {adminCodes.length === 0 ? (
-                      <span className="text-[10px] italic text-brand-light">無自訂密碼</span>
-                    ) : (
-                      adminCodes.map((code) => (
-                        <div key={code} className="flex items-center gap-1 bg-brand-beige border border-brand-border px-2 py-0.5 rounded-lg text-xs font-mono font-bold text-brand-olive shadow-sm">
-                          <span>{code}</span>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (adminCodes.length <= 1) {
-                                setAdminCodeSuccess("錯誤：主控必須保留至少一組密碼！");
-                                return;
-                              }
-                              const updatedCodes = adminCodes.filter(c => c !== code);
-                              const result = await handleSync(profiles, allMetrics, updatedCodes);
-                              if (result && result.success) {
-                                setAdminCodeSuccess(`已刪除主控密碼「${code}」`);
-                                setTimeout(() => setAdminCodeSuccess(""), 3000);
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700 cursor-pointer pl-1 text-[10px] flex items-center justify-center"
-                            title="刪除此密碼"
-                          >
-                            <X className="w-2.5 h-2.5 shrink-0" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-                
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1309,19 +1279,19 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         setAdminCodeSuccess("請輸入有效的密碼");
                         return;
                       }
-                      if (adminCodes.includes(cleanInput)) {
-                        setAdminCodeSuccess("錯誤：密碼已在主控列表中");
+                      if (cleanInput === adminCodes[0]) {
+                        setAdminCodeSuccess("新密碼與當前密碼相同");
                         return;
                       }
                       if (profiles[cleanInput]) {
                         setAdminCodeSuccess(`錯誤：此密碼「${cleanInput}」與紳士編號重複！`);
                         return;
                       }
-                      const updatedCodes = [...adminCodes, cleanInput];
-                      const result = await handleSync(profiles, allMetrics, updatedCodes);
+                      // 直接更換（將陣列置換為僅含新密碼）
+                      const result = await handleSync(profiles, allMetrics, [cleanInput]);
                       if (result && result.success) {
                         setAdminCodeInput("");
-                        setAdminCodeSuccess(`已成功新增主控密碼「${cleanInput}」！`);
+                        setAdminCodeSuccess(`主控密碼已變更為「${cleanInput}」！`);
                         setTimeout(() => setAdminCodeSuccess(""), 4000);
                       } else {
                         setAdminCodeSuccess(`錯誤：${result?.message}`);
@@ -1329,7 +1299,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     }}
                     className="py-1.5 px-3 bg-brand-olive hover:bg-[#4d4d36] text-white text-[11px] font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
                   >
-                    新增
+                    更換
                   </button>
                 </div>
                 {adminCodeSuccess && (
@@ -1342,49 +1312,19 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
 
               {/* Part 2: 紳士編輯卡片密碼 */}
               <div className="space-y-3 pt-3 border-t border-brand-border">
-                <h3 className="font-serif text-xs font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5 text-brand-olive" />
-                  <span>紳士編輯與對話密碼</span>
-                </h3>
+                <div className="flex items-center justify-between pb-2.5">
+                  <h3 className="font-serif text-xs font-bold text-brand-dark tracking-wider uppercase flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 text-brand-olive" />
+                    <span>紳士編輯與對話密碼</span>
+                  </h3>
+                  <span className="text-xs font-mono font-bold text-brand-olive bg-brand-beige border border-brand-border px-2.5 py-0.5 rounded-lg shadow-sm">
+                    {gentlemanEditCodes[0] || "8888"}
+                  </span>
+                </div>
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   紳士在卡片點擊「編輯資料與回覆消息」所需的安全驗證密碼。
                 </p>
 
-                {/* 密碼清單展示 */}
-                <div className="space-y-1.5">
-                  <span className="text-[9px] font-bold text-brand-light uppercase tracking-wider block">目前授權的紳士密碼：</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {gentlemanEditCodes.length === 0 ? (
-                      <span className="text-[10px] italic text-brand-light">使用系統預設 (admin/8888)</span>
-                    ) : (
-                      gentlemanEditCodes.map((code) => (
-                        <div key={code} className="flex items-center gap-1 bg-brand-beige border border-brand-border px-2 py-0.5 rounded-lg text-xs font-mono font-bold text-brand-olive shadow-sm">
-                          <span>{code}</span>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (gentlemanEditCodes.length <= 1) {
-                                setGentlemanCodeSuccess("錯誤：至少需保留一組紳士密碼！");
-                                return;
-                              }
-                              const updatedCodes = gentlemanEditCodes.filter(c => c !== code);
-                              const result = await handleSync(profiles, allMetrics, adminCodes, updatedCodes);
-                              if (result && result.success) {
-                                setGentlemanCodeSuccess(`已刪除紳士密碼「${code}」`);
-                                setTimeout(() => setGentlemanCodeSuccess(""), 3000);
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700 cursor-pointer pl-1 text-[10px] flex items-center justify-center"
-                            title="刪除此密碼"
-                          >
-                            <X className="w-2.5 h-2.5 shrink-0" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-                
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1404,19 +1344,19 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                         setGentlemanCodeSuccess("請輸入有效的密碼");
                         return;
                       }
-                      if (gentlemanEditCodes.includes(cleanInput)) {
-                        setGentlemanCodeSuccess("錯誤：密碼已在列表中");
+                      if (cleanInput === gentlemanEditCodes[0]) {
+                        setGentlemanCodeSuccess("新密碼與當前密碼相同");
                         return;
                       }
                       if (profiles[cleanInput]) {
                         setGentlemanCodeSuccess(`錯誤：此密碼「${cleanInput}」與紳士編號重複！`);
                         return;
                       }
-                      const updatedCodes = [...gentlemanEditCodes, cleanInput];
-                      const result = await handleSync(profiles, allMetrics, adminCodes, updatedCodes);
+                      // 直接更換（將陣列置換為僅含新密碼）
+                      const result = await handleSync(profiles, allMetrics, adminCodes, [cleanInput]);
                       if (result && result.success) {
                         setGentlemanCodeInput("");
-                        setGentlemanCodeSuccess(`已成功新增紳士密碼「${cleanInput}」！`);
+                        setGentlemanCodeSuccess(`紳士密碼已變更為「${cleanInput}」！`);
                         setTimeout(() => setGentlemanCodeSuccess(""), 4000);
                       } else {
                         setGentlemanCodeSuccess(`錯誤：${result?.message}`);
@@ -1424,7 +1364,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     }}
                     className="py-1.5 px-3 bg-brand-olive hover:bg-[#4d4d36] text-white text-[11px] font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
                   >
-                    新增
+                    更換
                   </button>
                 </div>
                 {gentlemanCodeSuccess && (

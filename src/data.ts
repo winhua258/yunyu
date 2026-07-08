@@ -224,13 +224,20 @@ export async function syncSharedConfig(config: {
   gentlemanEditCodes?: string[];
 }, adminCode: string): Promise<{ success: boolean; message: string }> {
   try {
+    const payloadToSend = {
+      profiles: config.profiles,
+      metrics: config.metrics,
+      adminCode: config.adminCodes[0] || "admin",
+      gentlemanEditCode: config.gentlemanEditCodes ? config.gentlemanEditCodes[0] : undefined
+    };
+
     const response = await fetch("/api/profile-config", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Admin-Code": adminCode,
       },
-      body: JSON.stringify(config)
+      body: JSON.stringify(payloadToSend)
     });
 
     if (!response.ok) {

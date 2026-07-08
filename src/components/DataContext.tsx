@@ -28,8 +28,13 @@ function normalizeData(payload: any) {
     });
 
     const finalMetrics = (typeof payload.metrics === "object" && payload.metrics ? { ...payload.metrics } : {});
-    const finalAdminCodes = Array.isArray(payload.adminCodes) ? payload.adminCodes : [];
-    const finalGentlemanEditCodes = Array.isArray(payload.gentlemanEditCodes) ? payload.gentlemanEditCodes : [];
+    
+    // 將 server 端傳回的單一字串 adminCode 與 gentlemanEditCode 包裝成 Array 格式以相容於 React 各元件
+    const serverAdminCode = payload.adminCode || "";
+    const finalAdminCodes = serverAdminCode ? [serverAdminCode] : (Array.isArray(payload.adminCodes) ? payload.adminCodes : []);
+    
+    const serverGentlemanCode = payload.gentlemanEditCode || "";
+    const finalGentlemanEditCodes = serverGentlemanCode ? [serverGentlemanCode] : (Array.isArray(payload.gentlemanEditCodes) ? payload.gentlemanEditCodes : []);
 
     return { finalProfiles, finalMetrics, finalAdminCodes, finalGentlemanEditCodes };
 }

@@ -47,8 +47,8 @@ const ConfigSchema = new mongoose.Schema({
   singletonId: { type: String, default: "YUANYU_CONFIG", unique: true },
   profiles: { type: Map, of: ProfileSchema },
   metrics: { type: Map, of: MetricsSchema },
-  adminCodes: { type: [String], default: [] },
-  gentlemanEditCodes: { type: [String], default: [] }
+  adminCode: { type: String, default: "admin" },
+  gentlemanEditCode: { type: String, default: "8888" }
 });
 
 const LadyProfileSchema = new mongoose.Schema({
@@ -114,7 +114,8 @@ async function synchronizeDefaultData() {
       config = new Config({
         profiles: DEFAULT_PROFILES,
         metrics: DEFAULT_METRICS,
-        adminCodes: []
+        adminCode: "admin",
+        gentlemanEditCode: "8888"
       });
       needsSave = true;
     } else {
@@ -191,7 +192,7 @@ const adminAuth = async (req, res, next) => {
   // 檢查資料庫中由 UI 管理的密碼
   try {
     const config = await Config.findOne({ singletonId: "YUANYU_CONFIG" });
-    if (config && config.adminCodes && config.adminCodes.includes(authCode)) {
+    if (config && config.adminCode === authCode) {
       return next();
     }
   } catch (e) { /* 忽略資料庫錯誤，下方會統一拒絕 */ }
@@ -211,8 +212,8 @@ app.get("/api/profile-config", async (req, res) => {
     res.json({
       profiles: config.profiles ? Object.fromEntries(config.profiles) : {},
       metrics: config.metrics ? Object.fromEntries(config.metrics) : {},
-      adminCodes: [], // 👈 安全性修補：移除實際的管理密鑰，只回傳空陣列
-      gentlemanEditCodes: [], // 👈 安全性修補：移除實際的紳士卡片編輯密鑰，只回傳空陣列
+      adminCode: "", // 👈 安全性修補
+      gentlemanEditCode: "", // 👈 安全性修補
     });
   } catch (error) {
     console.error("Error fetching config:", error);
@@ -230,8 +231,8 @@ app.get("/api/admin/config", adminAuth, async (req, res) => {
     res.json({
       profiles: config.profiles ? Object.fromEntries(config.profiles) : {},
       metrics: config.metrics ? Object.fromEntries(config.metrics) : {},
-      adminCodes: config.adminCodes || [], // 只在已授權的管理帳號下回傳
-      gentlemanEditCodes: config.gentlemanEditCodes || [],
+      adminCode: config.adminCode || "admin",
+      gentlemanEditCode: config.gentlemanEditCode || "8888",
     });
   } catch (error) {
     console.error("Error fetching config:", error);
@@ -255,7 +256,7 @@ app.post("/api/auth/verify", async (req, res) => {
     }
 
     let config = await Config.findOne({ singletonId: "YUANYU_CONFIG" });
-    if (config && config.adminCodes && config.adminCodes.includes(sanitizedCode)) {
+    if (config && config.adminCode === sanitizedCode) {
       return res.json({ role: "admin", code: sanitizedCode });
     }
 
@@ -281,10 +282,10 @@ app.post("/api/auth/verify", async (req, res) => {
 // POST /api/profile-config: 更新所有設定 (需要管理員權限)
 app.post("/api/profile-config", adminAuth, async (req, res) => {
   try {
-    const { profiles, metrics, adminCodes, gentlemanEditCodes } = req.body;
+    const { profiles, metrics, adminCode, gentlemanEditCode } = req.body;
     const updateObj = { profiles, metrics };
-    if (adminCodes !== undefined) updateObj.adminCodes = adminCodes;
-    if (gentlemanEditCodes !== undefined) updateObj.gentlemanEditCodes = gentlemanEditCodes;
+    if (adminCode !== undefined) updateObj.adminCode = adminCode;
+    if (gentlemanEditCode !== undefined) updateObj.gentlemanEditCode = gentlemanEditCode;
 
     const updatedConfig = await Config.findOneAndUpdate(
       { singletonId: "YUANYU_CONFIG" },
@@ -295,8 +296,8 @@ app.post("/api/profile-config", adminAuth, async (req, res) => {
       message: "設定已成功同步至資料庫！",
       profiles: updatedConfig.profiles ? Object.fromEntries(updatedConfig.profiles) : {},
       metrics: updatedConfig.metrics ? Object.fromEntries(updatedConfig.metrics) : {},
-      adminCodes: updatedConfig.adminCodes || [],
-      gentlemanEditCodes: updatedConfig.gentlemanEditCodes || [],
+      adminCode: updatedConfig.adminCode || "admin",
+      gentlemanEditCode: updatedConfig.gentlemanEditCode || "8888",
     });
   } catch (error) {
     console.error("Error saving config:", error);
@@ -770,9 +771,8 @@ app.post("/api/gentleman/verify-password", async (req, res) => {
       return res.status(400).json({ valid: false, message: "密碼不可為空。" });
     }
     const config = await Config.findOne({ singletonId: "YUANYU_CONFIG" });
-    const gentlemanEditCodes = config ? config.gentlemanEditCodes || [] : [];
-    // 預設密碼 "admin" 或 "8888" 作為預設編輯密碼
-    const isValid = gentlemanEditCodes.includes(password) || password === "admin" || password === "8888";
+    const gentlemanEditCode = config ? config.gentlemanEditCode : "8888";
+    const isValid = (password === gentlemanEditCode);
     res.json({ valid: isValid });
   } catch (error) {
     console.error("Error verifying gentleman password:", error);
