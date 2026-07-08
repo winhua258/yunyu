@@ -1278,3 +1278,24 @@
 4.  **打包與部署**：
     *   打包成功（Commit: `5c07767`），後端服務重新啟動。
 
+
+---
+
+## 2026-07-08 密碼管理重構為「更換密碼」與「刪除預設值」記錄
+
+- **本輪目標**：應使用者要求，將密碼管理方式從「新增多組密碼清單」改為「單一密碼更換/替代」，並移除任何硬編碼的預設密碼比較 fallback。
+- **是否真實可複現**：是（建置編譯順利通過，伺服器成功更新並重啟）
+
+### 修改詳情
+1.  **後端模型與驗證邏輯重構 (`server.js`)**：
+    *   將 `ConfigSchema` 原有的 `adminCodes` 及 `gentlemanEditCodes` 陣列修改為單一字串屬性 `adminCode` (預設 "admin") 與 `gentlemanEditCode` (預設 "8888")。
+    *   重構 `adminAuth` 與 `POST /api/auth/verify` 使其直接比對單一字串 `adminCode`。
+    *   重構 `POST /api/gentleman/verify-password`，改為直接且僅比對 `config.gentlemanEditCode`，**徹底刪除程式碼中原有的 "admin" 與 "8888" 等預設 fallback 比較值**，確保安全度。
+    *   更新 `POST /api/profile-config` 及 `GET /api/admin/config` 端點，以單一密碼屬性進行讀寫和安全遮蔽。
+2.  **前端資料介面處理與 UI 升級 (`DataContext.tsx` & `data.ts` & `AdminEditScreen.tsx`)**：
+    *   `DataContext.tsx` 在 `normalizeData` 中，將後端回傳的單一字串 `adminCode` 與 `gentlemanEditCode` 自動包裝成 React 原有期待的陣列格式，以避免大範圍破壞其他元件的型態與解構逻辑。
+    *   `data.ts` 的 `syncSharedConfig` 序列化時將陣列屬性之首位元素 `adminCodes[0]` 與 `gentlemanEditCodes[0]` 對應回傳給後端 API 欄位。
+    *   `AdminEditScreen.tsx` 的 UI 全面重構：由原先展示 badges 清單與 X 刪除按鈕，替換為精緻的 **「目前密碼顯示」** + **「輸入新密碼」** + **「更換按鈕」** 交互介面，實現更換即替代原有密碼的完整流程。
+3.  **部署**：
+    *   完成 Vite 生產環境建置並重啟 Node.js Port 3000 伺服器，已 Push 到遠端（Commit: `8be79df`）。
+
