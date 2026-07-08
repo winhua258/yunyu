@@ -11,9 +11,11 @@ import GentlemanDashboard from "./components/GentlemanDashboard";
 import { useAuth } from "./components/AuthContext";
 import { useData } from "./components/DataContext";
 import { getOrCreateDeviceId, trackVisit } from "./data";
+import LadiesDashboard from "./components/LadiesDashboard";
+import OnboardingGuide from "./components/OnboardingGuide";
 
 export default function App() {
-  const { loggedInLadyCode, ladyProfiles, login, logout, register } = useAuth();
+  const { loggedInLadyCode, ladyProfiles, login, logout, register, simulateAssets } = useAuth();
   const { profiles, adminCodes, isDataLoading } = useData();
   const [verifiedCode, setVerifiedCode] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -23,6 +25,115 @@ export default function App() {
   const [hasInitializedLady, setHasInitializedLady] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockModalCode, setUnlockModalCode] = useState<string | null>(null);
+
+  // New lady lobby states
+  const [ladyMatchCounts, setLadyMatchCounts] = useState(3);
+  const [ladyUnlockedCodes, setLadyUnlockedCodes] = useState<string[]>([]);
+  const [ladyVerifiedStatus, setLadyVerifiedStatus] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Synchronize local states with active LadyProfile from AuthContext
+  useEffect(() => {
+    if (loggedInLadyCode && ladyProfiles[loggedInLadyCode]) {
+      const lady = ladyProfiles[loggedInLadyCode];
+      
+      // Initialize/Sync unlocked codes list
+      setLadyUnlockedCodes(lady.unlockedGentlemanCodes || []);
+      
+      // Initialize/Sync verification status
+      setLadyVerifiedStatus(lady.assetVerified === "approved");
+      
+      // Initialize/Sync match counts (sync with localStorage isolated by lady code)
+      const localCounts = localStorage.getItem(`yuanyu_match_counts_${loggedInLadyCode}`);
+      if (localCounts !== null) {
+        setLadyMatchCounts(Number(localCounts));
+      } else {
+        // Fallback default based on membership level
+        const defaultCounts = lady.membershipLevel === "vip" 
+          ? 999 
+          : lady.membershipLevel === "experience" 
+            ? 2 
+            : 3;
+        setLadyMatchCounts(defaultCounts);
+        localStorage.setItem(`yuanyu_match_counts_${loggedInLadyCode}`, String(defaultCounts));
+      }
+    }
+  }, [loggedInLadyCode, ladyProfiles]);
+
+  // Handle Onboarding Guide trigger
+  useEffect(() => {
+    if (loggedInLadyCode) {
+      const hasCompletedOnboarding = localStorage.getItem(`yuanyu_onboarding_completed_${loggedInLadyCode}`);
+      if (hasCompletedOnboarding !== "true") {
+        setShowOnboarding(true);
+      }
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [loggedInLadyCode]);
+
+  const handleSetLadyUnlockedCodes = async (codesOrFn: string[] | ((prev: string[]) => string[])) => {
+    if (!loggedInLadyCode) return;
+    const lady = ladyProfiles[loggedInLadyCode];
+    if (!lady) return;
+
+    let nextCodes: string[];
+    if (typeof codesOrFn === "function") {
+      nextCodes = codesOrFn(ladyUnlockedCodes);
+    } else {
+      nextCodes = codesOrFn;
+    }
+
+    setLadyUnlockedCodes(nextCodes);
+    localStorage.setItem(`yuanyu_unlocked_codes_${loggedInLadyCode}`, JSON.stringify(nextCodes));
+
+    // Persist to backend database via AuthContext
+    try {
+      await simulateAssets(
+        lady.membershipLevel || "free",
+        lady.assetVerified || "none",
+        nextCodes,
+        lady.quizTaken,
+        lady.matchedGentlemanCode
+      );
+    } catch (err) {
+      console.error("Failed to sync unlocked codes to backend:", err);
+    }
+  };
+
+  const handleSetLadyVerifiedStatus = async (verified: boolean) => {
+    if (!loggedInLadyCode) return;
+    const lady = ladyProfiles[loggedInLadyCode];
+    if (!lady) return;
+
+    setLadyVerifiedStatus(verified);
+    // Persist to backend database via AuthContext
+    try {
+      await simulateAssets(
+        lady.membershipLevel || "free",
+        verified ? "approved" : "none",
+        ladyUnlockedCodes,
+        lady.quizTaken,
+        lady.matchedGentlemanCode
+      );
+    } catch (err) {
+      console.error("Failed to sync verification status to backend:", err);
+    }
+  };
+
+  const handleSetLadyMatchCounts = (countsOrFn: number | ((prev: number) => number)) => {
+    if (!loggedInLadyCode) return;
+    setLadyMatchCounts(prev => {
+      let nextCounts: number;
+      if (typeof countsOrFn === "function") {
+        nextCounts = countsOrFn(prev);
+      } else {
+        nextCounts = countsOrFn;
+      }
+      localStorage.setItem(`yuanyu_match_counts_${loggedInLadyCode}`, String(nextCounts));
+      return nextCounts;
+    });
+  };
 
   useEffect(() => {
     // 記錄每次進入網站的訪客軌跡
@@ -153,18 +264,33 @@ export default function App() {
             </motion.div>
           ) : verifiedCode === null || !currentProfile ? (
             <motion.div
-              key="verification"
-              id="view-verification"
+              key={loggedInLadyCode ? "ladies-dashboard" : "verification"}
+              id={loggedInLadyCode ? "view-ladies-dashboard" : "view-verification"}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="flex-1 flex flex-col"
+              className="flex-1 flex flex-col min-h-0"
             >
-              <VerificationScreen 
-                onVerifySuccess={handleVerifySuccess} 
-                onSoulMatchClick={handleSoulMatchTrigger}
-              />
+              {loggedInLadyCode ? (
+                <LadiesDashboard
+                  profiles={profiles}
+                  matchCounts={ladyMatchCounts}
+                  setMatchCounts={handleSetLadyMatchCounts}
+                  unlockedCodes={ladyUnlockedCodes}
+                  setUnlockedCodes={handleSetLadyUnlockedCodes}
+                  isLadyVerified={ladyVerifiedStatus}
+                  setIsLadyVerified={handleSetLadyVerifiedStatus}
+                  onViewProfile={(code) => setVerifiedCode(code)}
+                  onStartQuiz={handleSoulMatchTrigger}
+                  onExit={logout}
+                />
+              ) : (
+                <VerificationScreen 
+                  onVerifySuccess={handleVerifySuccess} 
+                  onSoulMatchClick={handleSoulMatchTrigger}
+                />
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -237,6 +363,18 @@ export default function App() {
               setShowUnlockModal(false);
               setVerifiedCode(unlockModalCode);
               setUnlockModalCode(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Onboarding Guide Modal Overlay */}
+      <AnimatePresence>
+        {showOnboarding && loggedInLadyCode && (
+          <OnboardingGuide 
+            onClose={() => {
+              setShowOnboarding(false);
+              localStorage.setItem(`yuanyu_onboarding_completed_${loggedInLadyCode}`, "true");
             }}
           />
         )}

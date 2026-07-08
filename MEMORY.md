@@ -1413,3 +1413,37 @@
 - **驗證命令和結果**：
   - 執行 `npm run build`：Vite 生產建置順利完成，打包無報錯。
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-08 緣友會籍入口視覺升級與麗人專屬大廳整合優化記錄
+
+- **本輪目標**：在未登入時以 Gateway（指紋掃描開屏）引導單頁滾動並整合頂奢 Lifestyle 與會籍支柱；登入後展示全新專屬麗人大廳，並對接後端完成資料同步持久化。
+- **發現的問題**：
+  1. PreludeGateway、CinemaVlog、ClubPositioning、OnboardingGuide 以及 LadiesDashboard 組件處於孤立狀態，未與主控大廳及登入/驗證路由做任何結合。
+  2. LadiesDashboard 之前的實名驗證及解鎖功能僅與 local storage 直接對接，如果用戶重新整理頁面、更換設備或在不同瀏覽器登入，數據將會重置丟失（數據孤島問題）。
+  3. 卡片解鎖後沒有提供直連 LINE 通道且產生加密對談序號的保密入口，降低了會籍的高端隱私感。
+- **是否真實可複現**：是（修改前上述組件沒有任何檔案導入及調用，實名及卡片解鎖無任何 server 交互）。
+- **複現命令或驗證方式**：閱讀原始碼。
+- **修改內容**：
+  - **`VerificationScreen.tsx`**：
+    - 導入 `PreludeGateway`、`CinemaVlog` 和 `ClubPositioning` 三個美學展示組件。
+    - 定義以 Unsplash 精美大圖配置的 `vlogStories` 常量，代表四位核心男賓的 Lifestyle 情境故事與心靈對白。
+    - 定義 `scanState` 及 `vlogProgress` 自動播放、生物指紋掃描等 Effect 狀態。
+    - 調整 return layout 結構：未登入（Guest）時展示 PreludeGateway -> CinemaVlog -> ClubPositioning -> Access Terminal (ID: `access-portal`) 滾動效果，且支援橫向 scroll 隱藏。
+  - **`App.tsx`**：
+    - 導入 `LadiesDashboard` 及 `OnboardingGuide`。
+    - 新增麗人專屬的配對次數 `ladyMatchCounts`、已解鎖列表 `ladyUnlockedCodes` 及實名審查 `ladyVerifiedStatus` 狀態變數。
+    - 使用 `useEffect` 於麗人登入後同步加載其 MongoDB 個人 profile 資料，並以帳戶 code 隔離 local storage 防止多帳號串頻。
+    - 重構路由：若麗人已登入且未點選檢視詳情卡片，直接渲染新版 `<LadiesDashboard />` 代替舊 we 簡版控制面板。
+    - 當麗人解鎖卡片或提交實名資料時，呼叫 `AuthContext` 的 `simulateAssets` API 即時同步寫入 MongoDB。
+    - 新增 `showOnboarding` 引導彈窗，麗人登入後若本地未標記為已完成，自動顯示 Onboarding 步進說明。
+  - **`LadiesDashboard.tsx`**：
+    - 新增 `openLineModal` 專屬彈窗，解鎖卡片後為其提供「一鍵建立 專屬通道」高亮綠色按鈕。
+    - 點擊「一鍵建立 專屬通道」彈出精美磨砂對話窗，展示生成的加密戀人序號（防枚舉）並可一鍵複製，點擊直接跳轉至紳士的 LINE 顧問代表網址。
+    - 新增「暫不配對」狀態防護，若紳士已設為不接受匹配，防護將阻斷解鎖並提示 Toast。
+- **刪除或減少了什麼代碼、文件、配置、狀態或入口**：
+  - 移除了 `VerificationScreen.tsx` 原有的舊版簡陋麗人控制台，完全由高質感的獨立 `LadiesDashboard.tsx` 替代。
+- **驗證命令 and 結果**：
+  - 執行 `npm run build`：Vite 生產建置打包順利通過，零 TypeScript 錯誤，包大小正常。
+- **是否已經收斂**：是。

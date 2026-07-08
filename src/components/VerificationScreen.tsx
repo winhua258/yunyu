@@ -28,7 +28,104 @@ import { useData } from "./DataContext";
 import { copyToClipboard } from "../utils";
 import { verifyAuthCode, TEMPLATE_EXCLUDED_CODES, requestPhotoChange, updateLadyName } from "../data";
 import { Profile } from "../types";
+import PreludeGateway from "./PreludeGateway";
+import CinemaVlog, { VlogStory } from "./CinemaVlog";
+import ClubPositioning from "./ClubPositioning";
 
+const vlogStories: VlogStory[] = [
+  {
+    id: "monkeyB",
+    name: "葉家銘",
+    age: 47,
+    role: "新能源企業創辦人 // 得盛科技",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+    vlogCover: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&q=80&w=800",
+    title: "在雲端俯瞰城市時，我常想，企業的廣度決定起點，但生活的溫度決定終點。",
+    match: "98% 靈魂共鳴",
+    views: "1.2k views",
+    duration: "0:45",
+    location: "臺北市",
+    tags: ["私人飛機", "精品手沖咖啡", "溫柔暖男"],
+    subtitles: [
+      "在雲端俯瞰城市時，我常想，企業的廣度決定起點，但生活的溫度決定終點。",
+      "我熱愛沖泡精品手沖咖啡，因為在熱水注入的那一刻，時間彷彿慢了下來。",
+      "期待遇到一個同樣對世界好奇，能在冬夜一起喝熱可可的女孩。"
+    ],
+    comments: [
+      { user: "林雅筑", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100", text: "葉先生對生活的見解真的很深刻，很溫柔" },
+      { user: "陳詩涵", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100", text: "精品咖啡的生活品味很有質感！" }
+    ]
+  },
+  {
+    id: "daiC",
+    name: "吴建铭",
+    age: 40,
+    role: "研發總監 // 跨國軟體集團",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150",
+    vlogCover: "https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&q=80&w=800",
+    title: "打高爾夫和 debug 很像，每一個揮桿都必須排除多餘的噪音，保持核心的穩定。",
+    match: "95% 契合度",
+    views: "850 views",
+    duration: "0:38",
+    location: "桃園市",
+    tags: ["高爾夫俱樂部", "晨間自律跑步", "系統化思維"],
+    subtitles: [
+      "打高爾夫和 debug 很像，每一個揮桿都必須排除多餘的噪音，保持核心的穩定。",
+      "我喜歡在清晨晨跑，用結構化的步頻開啟有節奏、高效的一天。",
+      "一段好的關係，需要有目標的互相扶持，也需要共同出遊時的溫存留白。"
+    ],
+    comments: [
+      { user: "徐佩君", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100", text: "結構化思維好有安全感，而且高爾夫打得真棒" },
+      { user: "王紫薇", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=100", text: "早起跑步的自律性太吸引人了" }
+    ]
+  },
+  {
+    id: "deerD",
+    name: "陳界衡",
+    age: 42,
+    role: "科技公司創辦人 // 智引未來科技",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150",
+    vlogCover: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800",
+    title: "科技解決未來的痛點，而藝術和紅酒，則能療癒此時此刻的靈魂個體。",
+    match: "96% 心靈共鳴",
+    views: "920 views",
+    duration: "0:42",
+    location: "桃園市",
+    tags: ["當代藝術畫廊", "紅酒私人收藏", "深度閱讀"],
+    subtitles: [
+      "科技解決未來的痛點，而藝術和紅酒，則能療癒此時此刻的靈魂個體。",
+      "我熱愛當代藝術，因為在畫作的光影前，我能直面最真實的自己。",
+      "期待與妳在微醺的爵士樂聲中，暢談對生活與美學的無限想像。"
+    ],
+    comments: [
+      { user: "許晴晴", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100", text: "紅酒與藝術品味太有共鳴了，好想交流！" },
+      { user: "周美琪", avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=100", text: "感性與理性的交融非常迷人" }
+    ]
+  },
+  {
+    id: "huaA",
+    name: "鄭永昌",
+    age: 42,
+    role: "家族辦公室策略運營 // 華昌資本",
+    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150",
+    vlogCover: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&q=80&w=800",
+    title: "在深海潛水或是策馬奔騰時，那種與自然、重力的博弈，能讓人看清最純粹的自己。",
+    match: "97% 頻率對齊",
+    views: "1.1k views",
+    duration: "0:50",
+    location: "新北市",
+    tags: ["私人遊艇出海", "皇家馬術訓練", "自由深潛"],
+    subtitles: [
+      "在深海潛水或是策馬奔騰時，那種與自然、重力的博弈，能讓人看清最純粹的自己。",
+      "我的生活多數時間在規劃精準配置，但我更愛在無人的山野中隨性露營。",
+      "生活是場跨界探險，我期待一位有生命力的伴侶，與我一同探索世界。"
+    ],
+    comments: [
+      { user: "黃莉婷", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=100", text: "馬術和自由潛水太酷了，非常有活力！" },
+      { user: "江宛真", avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&q=80&w=100", text: "能在家族辦公室與極限戶外跨界的人太少見了" }
+    ]
+  }
+];
 
 // 僅在開發環境顯示調試工具（生產環境自動隱藏）
 const IS_DEV = (import.meta as any).env?.DEV === true || (import.meta as any).env?.MODE === "development";
@@ -123,6 +220,74 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [showContactModal, setShowContactModal] = useState(false);
   const [showGentlemenNormsModal, setShowGentlemenNormsModal] = useState(false);
   const [selectedGender, setSelectedGender] = useState<"female" | "male">("female");
+
+  // Pre-login dynamic landing page states
+  const [scanState, setScanState] = useState<"idle" | "scanning" | "complete">("idle");
+  const [scanProgress, setScanProgress] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const [vlogProgress, setVlogProgress] = useState(0);
+  const [bgSubtitleIndex, setBgSubtitleIndex] = useState(0);
+  const [activeVlog, setActiveVlog] = useState<VlogStory>(vlogStories[0]);
+
+  const getSubtitleIndex = (vlog: VlogStory, progressVal: number): number => {
+    const total = vlog.subtitles.length;
+    if (total === 0) return 0;
+    const part = 100 / total;
+    const index = Math.floor(progressVal / part);
+    return Math.min(index, total - 1);
+  };
+
+  const handleSetActiveVlog = (story: VlogStory) => {
+    setActiveVlog(story);
+    setVlogProgress(0);
+  };
+
+  const scrollToSection = (sectionId: string, _index?: number) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Biometric scanner simulation logic
+  React.useEffect(() => {
+    if (scanState === "scanning") {
+      setScanProgress(0);
+      const interval = setInterval(() => {
+        setScanProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            setScanState("complete");
+            // Biometric match success - scroll to next segment
+            setTimeout(() => {
+              scrollToSection("cinema-vlog");
+            }, 1000);
+            return 100;
+          }
+          return prev + 5;
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    } else if (scanState === "idle") {
+      setScanProgress(0);
+    }
+  }, [scanState]);
+
+  // Cinematic story auto-play logic
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setVlogProgress((prev) => {
+        if (prev >= 100) {
+          const currentIndex = vlogStories.findIndex(v => v.id === activeVlog.id);
+          const nextIndex = (currentIndex + 1) % vlogStories.length;
+          setActiveVlog(vlogStories[nextIndex]);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 150);
+    return () => clearInterval(interval);
+  }, [activeVlog]);
 
   // Real-time ticking online/matched statistics
   const [onlineCount, setOnlineCount] = useState(324);
@@ -443,59 +608,68 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       return 0;
     });
 
+  const isGuestView = !lady && !isSuccess;
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center relative py-12 px-4 md:px-12 bg-brand-beige overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-[-100px] left-[-100px] w-[300px] md:w-[400px] h-[300px] md:h-[400px] bg-brand-border/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-150px] right-[-100px] w-[400px] md:w-[500px] h-[400px] md:h-[500px] bg-brand-border/50 rounded-full blur-3xl pointer-events-none" />
+    <div className={`flex-1 flex flex-col relative bg-brand-beige ${
+      isGuestView 
+        ? "overflow-x-hidden" 
+        : "items-center justify-center py-12 px-4 md:px-12 overflow-hidden"
+    }`}>
+      {!isGuestView && (
+        <>
+          <div className="absolute top-[-100px] left-[-100px] w-[300px] md:w-[400px] h-[300px] md:h-[400px] bg-brand-border/40 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-[-150px] right-[-100px] w-[400px] md:w-[500px] h-[400px] md:h-[500px] bg-brand-border/50 rounded-full blur-3xl pointer-events-none" />
+        </>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full max-w-4xl relative z-10"
+        className={isGuestView ? "w-full" : "w-full max-w-4xl relative z-10"}
       >
-        {/* Intro Header */}
-        <div className="text-center mb-8 space-y-2">
-          <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-brand-light font-bold">
-            Private Elite Matchmaking // 會員制尊榮媒合
-          </span>
-          <h1 className="text-3xl md:text-4xl font-serif text-brand-dark font-semibold leading-tight tracking-widest">
-            緣友 YUAN-YU
-          </h1>
-          <p className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed px-4">
-            為高端、值得信賴的交友生態系統提供私密菁英媒合服務。<br />
-            緣友是專為頂級客群設計的會員制專屬交友平台，運用 AI 靈魂測驗與人工資產認證，在安全、加密且高度私密的環境中，為認證男士與優質伴侶建立真誠連結。
-          </p>
-          <div className="flex items-center justify-center gap-3 text-[10px] md:text-xs font-bold text-brand-light mt-1.5 tracking-wider select-none">
-            <span>隱私</span>
-            <span className="text-brand-accent">•</span>
-            <span>安全</span>
-            <span className="text-brand-accent">•</span>
-            <span>可信</span>
-            <span className="text-brand-accent">•</span>
-            <span>獨家</span>
-            <span className="text-brand-accent">•</span>
-            <span>誠意</span>
-          </div>
-
-          {/* 模拟动态在线计数 */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center bg-brand-beige/35 py-0.5 px-5 rounded-2xl border border-brand-border/30 max-w-lg mx-auto mt-4.5 shadow-sm select-none">
-            <div className="flex items-center gap-1.5 justify-center">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-[10.5px] text-brand-olive font-bold">
-                目前有 {onlineCount} 位用戶正在進行靈魂媒合測驗...
-              </span>
-            </div>
-            <span className="hidden sm:inline text-brand-border/80">|</span>
-            <p className="text-[10px] text-brand-muted font-bold tracking-wide">
-              今日已有 {matchedCount.toLocaleString("zh-TW")} 位會員完成媒合
+        {!isGuestView && (
+          <div className="text-center mb-8 space-y-2">
+            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-brand-light font-bold">
+              Private Elite Matchmaking // 會員制尊榮媒合
+            </span>
+            <h1 className="text-3xl md:text-4xl font-serif text-brand-dark font-semibold leading-tight tracking-widest">
+              緣友 YUAN-YU
+            </h1>
+            <p className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed px-4">
+              為高端、值得信賴的交友生態系統提供私密菁英媒合服務。<br />
+              緣友是專為頂級客群設計的會員制專屬交友平台，運用 AI 靈魂測驗與人工資產認證，在安全、加密且高度私密的環境中，為認證男士與優質伴侶建立真誠連結。
             </p>
+            <div className="flex items-center justify-center gap-3 text-[10px] md:text-xs font-bold text-brand-light mt-1.5 tracking-wider select-none">
+              <span>隱私</span>
+              <span className="text-brand-accent">•</span>
+              <span>安全</span>
+              <span className="text-brand-accent">•</span>
+              <span>可信</span>
+              <span className="text-brand-accent">•</span>
+              <span>獨家</span>
+              <span className="text-brand-accent">•</span>
+              <span>誠意</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center bg-brand-beige/35 py-0.5 px-5 rounded-2xl border border-brand-border/30 max-w-lg mx-auto mt-4.5 shadow-sm select-none">
+              <div className="flex items-center gap-1.5 justify-center">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10.5px] text-brand-olive font-bold">
+                  目前有 {onlineCount} 位用戶正在進行靈魂媒合測驗...
+                </span>
+              </div>
+              <span className="hidden sm:inline text-brand-border/80">|</span>
+              <p className="text-[10px] text-brand-muted font-bold tracking-wide">
+                今日已有 {matchedCount.toLocaleString("zh-TW")} 位會員完成媒合
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {isSuccess ? (
           // Success login animation overlay
@@ -977,8 +1151,78 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             )}
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Gender Selection Segment Switcher */}
+          <div className="flex flex-col w-full bg-brand-beige">
+            <PreludeGateway
+              scanState={scanState}
+              setScanState={setScanState}
+              scanProgress={scanProgress}
+              scrollToSection={scrollToSection}
+            />
+            <CinemaVlog
+              activeVlog={activeVlog}
+              setActiveVlog={handleSetActiveVlog}
+              vlogProgress={vlogProgress}
+              isMuted={isMuted}
+              setIsMuted={setIsMuted}
+              bgSubtitleIndex={bgSubtitleIndex}
+              vlogStories={vlogStories}
+              getSubtitleIndex={getSubtitleIndex}
+              scrollToSection={scrollToSection}
+            />
+            <ClubPositioning scrollToSection={scrollToSection} />
+
+            <div 
+              id="access-portal"
+              className="w-full min-h-screen flex items-center justify-center relative py-12 px-4 md:px-12 bg-brand-beige overflow-hidden scroll-mt-20"
+            >
+              {/* Background decoration inside access portal */}
+              <div className="absolute top-[-100px] left-[-100px] w-[300px] md:w-[400px] h-[300px] md:h-[400px] bg-brand-border/40 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-[-150px] right-[-100px] w-[400px] md:w-[500px] h-[400px] md:h-[500px] bg-brand-border/50 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="w-full max-w-4xl relative z-10 space-y-6">
+                {/* 重新在首頁登入框頂部渲染 Header Title 資訊 */}
+                <div className="text-center mb-8 space-y-2">
+                  <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-brand-light font-bold">
+                    Private Elite Matchmaking // 會員制尊榮媒合
+                  </span>
+                  <h1 className="text-3xl md:text-4xl font-serif text-brand-dark font-semibold leading-tight tracking-widest">
+                    緣友 YUAN-YU
+                  </h1>
+                  <p className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed px-4">
+                    為高端、值得信賴的交友生態系統提供私密菁英媒合服務。<br />
+                    緣友是專為頂級客群設計的會員制專屬交友平台，運用 AI 靈魂測驗與人工資產認證，在安全、加密且高度私密的環境中，為認證男士與優質伴侶建立真誠連結。
+                  </p>
+                  <div className="flex items-center justify-center gap-3 text-[10px] md:text-xs font-bold text-brand-light mt-1.5 tracking-wider select-none">
+                    <span>隱私</span>
+                    <span className="text-brand-accent">•</span>
+                    <span>安全</span>
+                    <span className="text-brand-accent">•</span>
+                    <span>可信</span>
+                    <span className="text-brand-accent">•</span>
+                    <span>獨家</span>
+                    <span className="text-brand-accent">•</span>
+                    <span>誠意</span>
+                  </div>
+
+                  {/* 模擬動態在線計數 */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center bg-brand-beige/35 py-0.5 px-5 rounded-2xl border border-brand-border/30 max-w-lg mx-auto mt-4.5 shadow-sm select-none">
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <span className="text-[10.5px] text-brand-olive font-bold">
+                        目前有 {onlineCount} 位用戶正在進行靈魂媒合測驗...
+                      </span>
+                    </div>
+                    <span className="hidden sm:inline text-brand-border/80">|</span>
+                    <p className="text-[10px] text-brand-muted font-bold tracking-wide">
+                      今日已有 {matchedCount.toLocaleString("zh-TW")} 位會員完成媒合
+                    </p>
+                  </div>
+                </div>
+
+                {/* Gender Selection Segment Switcher */}
             <div className="flex justify-center">
               <div className="bg-brand-beige/40 p-1.5 rounded-full border border-brand-border/60 flex items-center gap-1.5 shadow-inner">
                 <button
@@ -1271,9 +1515,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                 </div>
               </div>
 
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </motion.div>
 
       {/* ========================================================================= */}
