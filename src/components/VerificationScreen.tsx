@@ -1175,6 +1175,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               id="access-portal"
               className="w-full min-h-screen flex items-center justify-center relative py-12 px-4 md:px-12 bg-brand-beige overflow-hidden scroll-mt-20"
             >
+              {/* 階段 03 至階段 04 的深色平滑漸變過渡層 */}
+              <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-[#0D0D0B] to-transparent pointer-events-none" />
+
               {/* Background decoration inside access portal */}
               <div className="absolute top-[-100px] left-[-100px] w-[300px] md:w-[400px] h-[300px] md:h-[400px] bg-brand-border/40 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute bottom-[-150px] right-[-100px] w-[400px] md:w-[500px] h-[400px] md:h-[500px] bg-brand-border/50 rounded-full blur-3xl pointer-events-none" />
