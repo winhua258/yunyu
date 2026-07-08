@@ -179,6 +179,24 @@ if (MONGODB_URI) {
   console.warn("⚠️ MONGODB_URI not set in .env file. Database features will be unavailable.");
 }
 
+// 全域防參數污染與重複 Query/Header 阻斷中介軟體
+app.use((req, res, next) => {
+  // 1. 拒絕重複的 Query 參數 (防止多值 Array 導致繞過或 Mongoose 查詢出錯)
+  for (const key of Object.keys(req.query)) {
+    if (Array.isArray(req.query[key])) {
+      return res.status(400).json({ message: `拒絕重複的 Query 參數: ${key}` });
+    }
+  }
+  
+  // 2. 拒絕重複的敏感 Header (Express 會將多個 Header 合併為以逗號分隔的字串)
+  const adminHeader = req.headers["x-admin-code"];
+  if (typeof adminHeader === "string" && adminHeader.includes(",")) {
+    return res.status(400).json({ message: "拒絕重複的驗證 Header 行。" });
+  }
+
+  next();
+});
+
 // --- 中介軟體 (Middleware) ---
 const adminAuth = async (req, res, next) => {
   const authCode = req.headers["x-admin-code"];
@@ -353,8 +371,12 @@ app.post("/api/lady/register", async (req, res) => {
           await new Promise(r => setTimeout(r, 100));
           if (!ongoingRegistrations.has(lockKey)) {
             let existingLady = null;
-            if (deviceId) existingLady = await LadyProfile.findOne({ deviceId });
-            if (!existingLady && canvasFingerprint) existingLady = await LadyProfile.findOne({ canvasFingerprint });
+            if (deviceId && typeof deviceId === "string" && deviceId.trim() !== "") {
+              existingLady = await LadyProfile.findOne({ deviceId: deviceId.trim() });
+            }
+            if (!existingLady && canvasFingerprint && typeof canvasFingerprint === "string" && canvasFingerprint.trim() !== "") {
+              existingLady = await LadyProfile.findOne({ canvasFingerprint: canvasFingerprint.trim() });
+            }
             if (existingLady) {
               console.log(`[Re-entry scan match] Auto-login for concurrent duplicate visitor (IP: ${clientIp}, DeviceId: ${deviceId}, Canvas: ${canvasFingerprint}) to code: ${existingLady.code}`);
               return res.status(200).json({ 
@@ -385,12 +407,12 @@ app.post("/api/lady/register", async (req, res) => {
 
     // 2. 設備指紋與帆布硬體指紋雙重攔截機制：防止重複註冊多個帳號
     let existingLady = null;
-    if (deviceId) {
-      existingLady = await LadyProfile.findOne({ deviceId });
+    if (deviceId && typeof deviceId === "string" && deviceId.trim() !== "") {
+      existingLady = await LadyProfile.findOne({ deviceId: deviceId.trim() });
     }
-    if (!existingLady && canvasFingerprint) {
+    if (!existingLady && canvasFingerprint && typeof canvasFingerprint === "string" && canvasFingerprint.trim() !== "") {
       // 就算用戶清空了 localStorage (deviceId 變新)，只要硬體帆布指紋相同，依然能進行加載/攔截！
-      existingLady = await LadyProfile.findOne({ canvasFingerprint });
+      existingLady = await LadyProfile.findOne({ canvasFingerprint: canvasFingerprint.trim() });
     }
 
     if (existingLady) {

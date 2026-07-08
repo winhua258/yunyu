@@ -1447,3 +1447,30 @@
 - **驗證命令 and 結果**：
   - 執行 `npm run build`：Vite 生產建置打包順利通過，零 TypeScript 錯誤，包大小正常。
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-08 金融級安全收斂與指紋空值防碰撞升級記錄
+
+- **本輪目標**：對 `server.js` 進行金融級安全防禦加固，阻斷 HTTP 參數污染與重複 validation Header 行，並徹底修復註冊登入中設備指紋空值查詢的越權碰撞漏洞。
+- **發現的問題**：
+  1. **HTTP 參數污染 (HPP)**：`/api/chat/history` 等敏感路由在使用 Express 解析時，若惡意傳入重複 Query 參數（如 `?user1=A&user1=B`），引發類型從 `string` 轉為 `Array`。Mongoose 在執行查詢時若直接使用 Array 參數會產生非預期行為或報錯漏洞。
+  2. **重複 Header 繞過**：`x-admin-code` 在多次傳入時，Express 會將其合併為逗號分隔的字串，可能導致部分敏感端點的鑑權判斷失效。
+  3. **空指紋帳號越權碰撞**：`/api/lady/register` 中，當設備無法讀取 `deviceId` 或 `canvasFingerprint` 傳回空字串時，Mongoose 會執行 `findOne({ canvasFingerprint: "" })` 查詢。這會導致所有指紋失敗的訪客碰撞同一個無指紋用戶帳號，發生嚴重的越權 Account Takeover。
+- **是否真實可複現**：是。
+- **複現命令或驗證方式**：
+  - 參數污染驗證：`curl -i "http://localhost:3000/api/chat/history?user1=A&user1=B&user2=C"`
+  - 重複 Header 驗證：`curl -i -H "x-admin-code: A" -H "x-admin-code: B" http://localhost:3000/api/admin/ladies`
+  - 越權碰撞驗證：通過源碼靜態審計分析 `LadyProfile.findOne({ canvasFingerprint: "" })` 的執行流。
+- **修改內容**：
+  - **`server.js`**：
+    - 新增全域 HTTP 參數污染與重複 Header 阻斷中介軟體。凡偵測到任意 Query 參數被解析為 Array 陣列，或敏感 `x-admin-code` Header 包含逗號（重複傳送），立即返回 `400 Bad Request`，採用 fail closed 閉環原則。
+    - 重構 `/api/lady/register` 併發鎖及防重入查詢邏輯。強制限制 `deviceId` 與 `canvasFingerprint` 必須為非空且長度大於 0 的 `string` 類型時才允許進入 `findOne` 資料庫比對流程，全面杜絕 falsy value 造成的帳號越權碰撞。
+- **刪除或減少了什麼代碼、文件、配置、狀態或入口**：
+  - 移除了因 empty fingerprint 而引發的自動越權登入入口漏洞。
+- **驗證命令 and 結果**：
+  - `curl -i "http://localhost:3000/api/chat/history?user1=A&user1=B"` -> 返回 `400 Bad Request`，提示 `"拒絕重複的 Query 參數: user1"`。
+  - `curl -i -H "x-admin-code: A" -H "x-admin-code: B" ...` -> 返回 `400 Bad Request`，提示 `"拒絕重複的驗證 Header 行。"`。
+  - `npm run build` -> Vite 生產打包建置成功，零錯誤。
+  - `pm2 restart yuanyu` -> 後端正式熱加載並重啟服務，功能一切正常。
+- **是否已經收斂**：是。
