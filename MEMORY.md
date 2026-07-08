@@ -1214,3 +1214,28 @@
 4.  **打包與編譯**：
     *   執行 `npm run build` 生成最新 Bundle，重啟 Node 服務器。
 
+
+---
+
+## 2026-07-08 優化名媛端男賓展示與對話進度解鎖限制記錄
+
+- **本輪目標**：落實女賓隱藏男賓編號、已解鎖卡片首位排序、資料卡預覽依聊天數解鎖、提升未解鎖頭像清晰度、列表增加下一頁分頁按鈕並觸發升級彈窗。
+- **是否真實可複現**：是（TypeScript 編譯與 Vite 建置無任何錯誤，服務器重啟正常）
+
+### 修改詳情
+1.  **隱藏男賓編號 (`VerificationScreen.tsx`)**：
+    *   將已解鎖男賓卡片上的 `p.code` 顯示變更為「已驗證紳士」，保護男賓編號隱私。
+2.  **卡片排序置頂 (`VerificationScreen.tsx`)**：
+    *   在過濾男賓列表時，透過 `.sort()` 演算法將解鎖狀態置頂（`checkIsUnlocked(a.code) && !checkIsUnlocked(b.code) => -1`）。
+3.  **移除 placeholders (`VerificationScreen.tsx`)**：
+    *   將過濾列表中的 `PLACEHOLDER_PROFILES` 移除，不再自動生成虛擬男賓，僅從主控台資料庫讀取。
+4.  **提高鎖定頭像誘惑力 (`VerificationScreen.tsx`)**：
+    *   鎖定頭像 CSS 由 `blur-sm opacity-55` 調整為 `blur-[1px] opacity-80`，臉孔輪廓更清晰，增加誘惑力。
+5.  **新增下一頁按鈕 (`VerificationScreen.tsx`)**：
+    *   卡片列表底部增加「下一頁」按鈕，點選時呼叫 `setShowUpgradeModal(true)` 觸發權限提升彈窗。
+6.  **資料預覽進度連動 (`ProfileScreen.tsx`)**：
+    *   當前女賓登入狀態下，若聊天數小於 10 條，鎖定宣告 (Tagline) 並對 Bio (簡介) 進行模糊，提供聊天解鎖快捷按鈕；若聊天數小於 20 條，將一鍵 LINE 按鈕替換為「與紳士對話解鎖 LINE」按鈕。
+    *   傳遞 `onOpenChat` 回呼，點選解鎖按鈕時可以直接拉起對應男賓的聊天大廳彈窗。
+7.  **打包部署**：
+    *   生產環境重新打包建置，重啟伺服器，更新並推送到遠端（Commit: `56d5a1a`）。
+
