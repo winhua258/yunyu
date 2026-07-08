@@ -239,8 +239,42 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       return vlogStories;
     }
 
+    // 去 AI 感的自然 candid 真人女性頭像與個性化對談
+    const customComments: Record<string, { user: string; avatar: string; text: string }[]> = {
+      "ff5856qs": [ // 蔡俊宏
+        { user: "林雅筑", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=120", text: "蔡董事對建築與城市美學的看法真的很深刻，紅酒品味也很吸引人。" },
+        { user: "陳詩涵", avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=120", text: "把城市建築當作藝術來經營，確實展現了非凡的匠人精神。" }
+      ],
+      "af1519weq": [ // 許冠宇
+        { user: "張雨薇", avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&q=80&w=120", text: "許總監對資本市場的洞察非常精闢，且跑步的自律性太吸引人了。" },
+        { user: "李佳蓉", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120", text: "理性工作、感性生活，這種平衡在金融業真的很難得。" }
+      ],
+      "gqg8611gqw": [ // 黃博文
+        { user: "謝欣怡", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=120", text: "黃顧問的人文攝影視角很有溫度，深度文化旅行的經歷好豐富！" },
+        { user: "林雅筑", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=120", text: "喜歡對世界保持探索熱情的人，聊起天來一定非常有火花。" }
+      ],
+      "sdas31654q": [ // 謝承翰
+        { user: "陳詩涵", avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=120", text: "承翰對紅酒與深度閱讀的分享好有質感，感覺是個內斂溫暖的紳士。" },
+        { user: "張雨薇", avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&q=80&w=120", text: "在繁忙的資本配置中依然保有一杯咖啡的溫暖，令人嚮往。" }
+      ],
+      "sd6163qw2e": [ // 楊宗翰
+        { user: "李佳蓉", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120", text: "宗翰對於室內設計和精品探店的品味十分吸引我，非常懂生活！" },
+        { user: "謝欣怡", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=120", text: "商業顧問的理智與生活藝術家的感性完美交融，非常有魅力。" }
+      ]
+    };
+
     const mapped = unpublicized.map((p) => {
-      const roleStr = p.tagline.split("，")[0];
+      // 從資料卡 tagline 精準解析真實職務與企業，不予編造：職位 // 企業
+      let roleStr = p.tagline.split("，")[0];
+      if (p.tagline.includes(p.name)) {
+        const parts = p.tagline.split(p.name);
+        if (parts.length >= 2) {
+          const company = parts[0].trim();
+          const jobTitle = parts[1].split(/[，。]/)[0].trim();
+          roleStr = `${jobTitle} // ${company}`;
+        }
+      }
+
       const firstBioSentence = p.bio.split("。\n\n")[0] || p.bio.split("\n")[0];
       const cleanBio = firstBioSentence.replace("你好，我是" + p.name + "。", "").trim();
       const matchRequirement = p.cardDetail || p.idealMatch || "希望能遇見同樣對生活保有好奇心的妳。";
@@ -263,9 +297,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
           cleanBio.length > 50 ? cleanBio.slice(0, 50) + "..." : cleanBio,
           matchRequirement.length > 50 ? matchRequirement.slice(0, 50) : matchRequirement
         ],
-        comments: [
-          { user: "林雅筑", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100", text: "很有生活質感與深度的紳士" },
-          { user: "陳詩涵", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100", text: "期待與您的靈魂對談" }
+        comments: customComments[p.code] || [
+          { user: "林雅筑", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=120", text: "很有生活質感與深度的紳士" },
+          { user: "陳詩涵", avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=120", text: "期待與您的靈魂對談" }
         ]
       };
     });

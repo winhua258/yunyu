@@ -18,7 +18,7 @@ export default function PreludeGateway({
   return (
     <section
       id="prelude-gateway"
-      className="w-full h-screen min-h-screen relative flex flex-col items-center justify-center px-4 overflow-hidden bg-gradient-to-b from-brand-beige via-brand-beige via-80% to-[#161614] text-brand-text scroll-mt-36 md:scroll-mt-32"
+      className="select-none w-full h-screen min-h-screen relative flex flex-col items-center justify-center px-4 overflow-hidden bg-gradient-to-b from-brand-beige via-brand-beige via-80% to-[#161614] text-brand-text scroll-mt-36 md:scroll-mt-32"
     >
       {/* Ambient Glowing Spheres */}
       <div className="absolute top-[20%] left-[15%] w-96 h-96 rounded-full bg-brand-accent/20 blur-[100px] pointer-events-none animate-pulse" />
@@ -118,7 +118,7 @@ export default function PreludeGateway({
             onTouchEnd={() => {
               if (scanState === "scanning") setScanState("idle");
             }}
-            className={`relative z-20 w-44 h-44 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-500 border backdrop-blur-xl ${
+            className={`select-none relative z-20 w-44 h-44 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-500 border backdrop-blur-xl ${
               scanState === "scanning"
                 ? "bg-brand-accent/20 border-brand-olive shadow-[0_0_30px_rgba(90,90,64,0.15)]"
                 : scanState === "complete"
