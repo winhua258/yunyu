@@ -22,14 +22,17 @@ import {
   CheckCircle,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Lock
 } from "lucide-react";
 import { Profile } from "../types";
 import { copyToClipboard } from "../utils";
+import { useData } from "./DataContext";
 
 interface ProfileScreenProps {
   profile: Profile;
   onBack: () => void;
+  onEnterEditMode?: (password: string) => void;
 }
 
 const loadedImagesCache = new Set<string>();
@@ -41,8 +44,12 @@ const GREETING_OPTIONS = [
   "你好，我在緣友遇見了你的靈魂名片。很高興系統讓我們相遇，期待與你聊聊喔 ✨"
 ];
 
-export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
+export default function ProfileScreen({ profile, onBack, onEnterEditMode }: ProfileScreenProps) {
+  const { adminCodes } = useData();
   const [showRedirectModal, setShowRedirectModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [selectedGreeting, setSelectedGreeting] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
@@ -243,6 +250,21 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
               <span>一鍵 LINE 聯絡與心動開聊</span>
               <ExternalLink className="w-4 h-4 shrink-0" />
             </button>
+
+            {onEnterEditMode && (
+              <button
+                id="btn-gentleman-manage"
+                onClick={() => {
+                  setPasswordInput("");
+                  setPasswordError("");
+                  setShowPasswordModal(true);
+                }}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-brand-olive text-brand-olive hover:bg-brand-olive hover:text-white px-8 py-4.5 rounded-full text-sm font-bold uppercase tracking-wider shadow-sm transition-all duration-300 transform active:scale-98 cursor-pointer"
+              >
+                <Lock className="w-4 h-4 shrink-0" />
+                <span>編輯資料與回覆消息</span>
+              </button>
+            )}
             
             <p className="text-[10px] md:text-xs text-brand-light text-center sm:text-left leading-normal sm:max-w-xs pl-1">
               ※ 點擊後將跳轉至 LINE。本平台承諾保護您的隱私安全。
@@ -481,6 +503,81 @@ export default function ProfileScreen({ profile, onBack }: ProfileScreenProps) {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Password Prompt Modal */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <motion.div
+            key="password-modal-backdrop"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-brand-dark/70 backdrop-blur-sm" onClick={() => setShowPasswordModal(false)} />
+            
+            <motion.div
+              key="password-modal-card"
+              className="relative bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm flex flex-col z-10 border border-brand-border/40"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+            >
+              <h3 className="font-serif font-bold text-base text-brand-dark mb-2">安全身分驗證</h3>
+              <p className="text-xs text-brand-muted mb-4 leading-relaxed">
+                此區域為專屬回覆大廳與資料編輯通道。請輸入密碼以存取權限。
+              </p>
+              
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const cleanPassword = passwordInput.trim();
+                  if (adminCodes.includes(cleanPassword) || cleanPassword === "admin") {
+                    setShowPasswordModal(false);
+                    onEnterEditMode?.(cleanPassword);
+                  } else {
+                    setPasswordError("密碼錯誤，請重新輸入");
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <input
+                    type="password"
+                    value={passwordInput}
+                    onChange={(e) => {
+                      setPasswordInput(e.target.value);
+                      setPasswordError("");
+                    }}
+                    placeholder="請輸入密碼..."
+                    className="w-full bg-brand-beige/60 border border-brand-border rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
+                    autoFocus
+                  />
+                  {passwordError && (
+                    <p className="text-[10px] text-red-600 mt-1 font-bold">{passwordError}</p>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className="flex-1 py-2.5 bg-brand-beige hover:bg-brand-border/40 text-brand-olive text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    驗證登入
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

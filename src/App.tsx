@@ -18,8 +18,9 @@ export default function App() {
   const [verifiedCode, setVerifiedCode] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [unlockedGentlemanCodes, setUnlockedGentlemanCodes] = useState<Record<string, boolean>>({});
+  const [gentlemanAuthCode, setGentlemanAuthCode] = useState<string | null>(null);
   const [hasInitializedLady, setHasInitializedLady] = useState(false);
-  // 解鎖資料卡彈窗：AI 測驗完成後先顯示彈窗，確認後才進入完整紳士頁
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockModalCode, setUnlockModalCode] = useState<string | null>(null);
 
@@ -180,10 +181,23 @@ export default function App() {
                   profile={currentProfile} 
                   onBack={handleBackToVerify} 
                 />
-              ) : (
+              ) : unlockedGentlemanCodes[verifiedCode!] ? (
                 <GentlemanDashboard
-                  gentlemanCode={verifiedCode}
+                  gentlemanCode={verifiedCode!}
                   onLogout={handleBackToVerify}
+                  onBackToProfile={() => {
+                    setUnlockedGentlemanCodes(prev => ({ ...prev, [verifiedCode!]: false }));
+                  }}
+                  adminCode={gentlemanAuthCode!}
+                />
+              ) : (
+                <ProfileScreen 
+                  profile={currentProfile} 
+                  onBack={handleBackToVerify}
+                  onEnterEditMode={(password) => {
+                    setGentlemanAuthCode(password);
+                    setUnlockedGentlemanCodes(prev => ({ ...prev, [verifiedCode!]: true }));
+                  }}
                 />
               )}
             </motion.div>
