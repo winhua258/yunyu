@@ -91,6 +91,16 @@ const LadyProfile = mongoose.model("LadyProfile", LadyProfileSchema);
 const VisitLog = mongoose.model("VisitLog", VisitLogSchema);
 const IpMetadata = mongoose.model("IpMetadata", IpMetadataSchema);
 
+// 聊天消息 Schema
+const ChatMessageSchema = new mongoose.Schema({
+  senderCode: { type: String, required: true },   // 發送者代碼 (名媛或紳士編號)
+  receiverCode: { type: String, required: true }, // 接收者代碼
+  text: { type: String, required: true },         // 消息文字
+  createdAt: { type: Date, default: Date.now }    // 發送時間
+});
+
+const ChatMessage = mongoose.model("ChatMessage", ChatMessageSchema);
+
 // --- 自動同步預設資料 ---
 async function synchronizeDefaultData() {
   try {
@@ -747,6 +757,100 @@ app.post("/api/admin/ip-metadata", adminAuth, async (req, res) => {
 // GET /api/crisp-config: 獲取 Crisp 線上客服設定
 app.get("/api/crisp-config", (req, res) => {
   res.json({ crispWebsiteId: process.env.CRISP_WEBSITE_ID || "" });
+});
+
+// --- 雙向聊天 API ---
+
+// GET /api/chat/history: 獲取名媛與紳士之間的聊天記錄
+app.get("/api/chat/history", async (req, res) => {
+  try {
+    const { user1, user2 } = req.query;
+    if (!user1 || !user2) {
+      return res.status(400).json({ message: "缺少必要參數。" });
+    }
+    const messages = await ChatMessage.find({
+      $or: [
+        { senderCode: user1, receiverCode: user2 },
+        { senderCode: user2, receiverCode: user1 }
+      ]
+    }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching chat history:", error);
+    res.status(500).json({ message: "獲取聊天記錄失敗。" });
+  }
+});
+
+// POST /api/chat/send: 發送聊天訊息
+app.post("/api/chat/send", async (req, res) => {
+  try {
+    const { senderCode, receiverCode, text } = req.body;
+    if (!senderCode || !receiverCode || !text) {
+      return res.status(400).json({ message: "缺少必要參數。" });
+    }
+    const newMessage = new ChatMessage({ senderCode, receiverCode, text });
+    await newMessage.save();
+    res.json(newMessage);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ message: "發送消息失敗。" });
+  }
+});
+
+// GET /api/gentleman/chats: 獲取給該紳士發過訊息的名媛列表
+app.get("/api/gentleman/chats", async (req, res) => {
+  try {
+    const { gentlemanCode } = req.query;
+    if (!gentlemanCode) {
+      return res.status(400).json({ message: "缺少必要參數。" });
+    }
+
+    // 找出所有與該紳士相關的消息
+    const messages = await ChatMessage.find({
+      $or: [
+        { senderCode: gentlemanCode },
+        { receiverCode: gentlemanCode }
+      ]
+    }).sort({ createdAt: -1 });
+
+    // 提取不重複的麗人/名媛 Codes
+    const ladyCodes = new Set();
+    messages.forEach(msg => {
+      if (msg.senderCode !== gentlemanCode) ladyCodes.add(msg.senderCode);
+      if (msg.receiverCode !== gentlemanCode) ladyCodes.add(msg.receiverCode);
+    });
+
+    const chatsList = [];
+    for (const ladyCode of ladyCodes) {
+      // 獲取最後一條訊息
+      const lastMsg = messages.find(msg => 
+        (msg.senderCode === ladyCode && msg.receiverCode === gentlemanCode) ||
+        (msg.senderCode === gentlemanCode && msg.receiverCode === ladyCode)
+      );
+
+      // 獲取該名媛的個人資訊
+      const lady = await LadyProfile.findOne({ code: ladyCode });
+      chatsList.push({
+        ladyCode,
+        ladyName: lady ? lady.name : "未命名名媛",
+        ladyPhoto: lady ? lady.photoUrl : "",
+        lastMessage: lastMsg ? lastMsg.text : "",
+        lastMessageAt: lastMsg ? lastMsg.createdAt : null,
+      });
+    }
+
+    // 按最新時間排序
+    chatsList.sort((a, b) => {
+      const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+      const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    res.json(chatsList);
+  } catch (error) {
+    console.error("Error fetching gentleman chats:", error);
+    res.status(500).json({ message: "獲取名媛列表失敗。" });
+  }
 });
 
 // POST /api/generate: Google GenAI API (暫時停用，待適配新版SDK)

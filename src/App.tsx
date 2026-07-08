@@ -7,6 +7,7 @@ import ProfileScreen from "./components/ProfileScreen";
 import SoulMatchQuiz from "./components/SoulMatchQuiz";
 import AdminEditScreen from "./components/AdminEditScreen";
 import UnlockProfileModal from "./components/UnlockProfileModal";
+import GentlemanDashboard from "./components/GentlemanDashboard";
 import { useAuth } from "./components/AuthContext";
 import { useData } from "./components/DataContext";
 import { getOrCreateDeviceId, trackVisit } from "./data";
@@ -166,18 +167,25 @@ export default function App() {
             </motion.div>
           ) : (
             <motion.div
-              key="profile"
-              id="view-profile"
+              key={loggedInLadyCode ? "profile" : "gentleman-dashboard"}
+              id={loggedInLadyCode ? "view-profile" : "view-gentleman-dashboard"}
               initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }} // 這裡的動畫應該是針對紳士檔案
+              animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
               className="flex-1 flex flex-col"
             >
-              <ProfileScreen 
-                profile={currentProfile} 
-                onBack={handleBackToVerify} 
-              />
+              {loggedInLadyCode ? (
+                <ProfileScreen 
+                  profile={currentProfile} 
+                  onBack={handleBackToVerify} 
+                />
+              ) : (
+                <GentlemanDashboard
+                  gentlemanCode={verifiedCode}
+                  onLogout={handleBackToVerify}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>

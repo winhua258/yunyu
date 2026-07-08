@@ -13,30 +13,13 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Profile } from "../types";
+import { useAuth } from "./AuthContext";
 
 interface UnlockProfileModalProps {
   profile: Profile;
   onClose: () => void;
   onViewFull: () => void;
 }
-
-const GENTLEMAN_REPLIES: string[] = [
-  "你好，很高興能與妳建立聯繫。能透過系統認識到這麼優質的妳，真的感到很幸運。",
-  "謝謝妳願意開始這段對話。我一直相信，好的緣分是從一次真誠的交流開始的。",
-  "妳的問題很有深度，我喜歡這樣有想法的對話。我們能聊得更久一點嗎？",
-  "我覺得我們之間有一種說不清楚的默契，也許這就是系統配對準確的地方。",
-  "聽到妳這樣說，讓我想起了上次去日本旅行時的一個片段，那段經歷讓我對生活有了新的看法。",
-  "我平時工作雖然忙，但每到週末我都會刻意放下手機，享受真實的人際連結。",
-  "妳說的這個觀點很有意思，我從沒這樣想過。能和有想法的人對話，是一種享受。",
-  "我喜歡一起討論未來，那種對生活有期待、有規劃的人，會讓我感到安心。",
-  "其實我不是很擅長線上聊天，更喜歡面對面的真實交流。但和妳聊天，感覺挺自然的。",
-  "我在台灣定居多年，深深愛上了這裡的生活節奏和人情味。妳平時喜歡做什麼？",
-  "我週末有時會去信義區的精品咖啡館坐坐，有機會的話，也許可以一起喝杯咖啡？",
-  "妳的感受是我最在乎的。希望我們之間的每一次交流，都能讓妳感到舒適和被尊重。",
-  "我一直認為，真正的高品質伴侶關係，是建立在深度了解與相互尊重之上的。",
-  "感謝妳的分享，讓我對妳有更深的認識。我覺得我們有很多可以探索的共同話題。",
-  "我很期待有機會能在現實中見到妳，讓我們的連結從螢幕延伸到真實的生活。",
-];
 
 const UNLOCK_MILESTONES = [
   { count: 10, label: "完整個人介紹" },
@@ -48,6 +31,7 @@ export default function UnlockProfileModal({
   onClose,
   onViewFull,
 }: UnlockProfileModalProps) {
+  const { loggedInLadyCode } = useAuth();
   const [messages, setMessages] = useState<{ role: "user" | "gentleman"; text: string }[]>([
     {
       role: "gentleman",
@@ -64,23 +48,69 @@ export default function UnlockProfileModal({
   const unlockedBio = msgCount >= 10;
   const unlockedLine = msgCount >= 20;
 
+  // 定時獲取對話歷史記錄
+  useEffect(() => {
+    if (!loggedInLadyCode) return;
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`/api/chat/history?user1=${loggedInLadyCode}&user2=${profile.code}`);
+        if (res.ok) {
+          const data = await res.json();
+          const formatted = data.map((msg: any) => ({
+            role: msg.senderCode === loggedInLadyCode ? "user" : "gentleman",
+            text: msg.text,
+          }));
+
+          if (formatted.length === 0) {
+            setMessages([
+              {
+                role: "gentleman",
+                text: `你好，很高興透過緣友與妳相遇。我是${profile.name.slice(0, 1)}先生，期待我們能有更深入的交流。`,
+              }
+            ]);
+            setMsgCount(0);
+          } else {
+            setMessages(formatted);
+            setMsgCount(formatted.length);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch chat history:", err);
+      }
+    };
+
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 3000);
+    return () => clearInterval(interval);
+  }, [loggedInLadyCode, profile.code]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = input.trim();
-    if (!text || isTyping) return;
+    if (!text || !loggedInLadyCode) return;
     setInput("");
-    const newCount = msgCount + 1;
-    setMsgCount(newCount);
-    setMessages((prev) => [...prev, { role: "user", text }]);
-    setIsTyping(true);
-    setTimeout(() => {
-      const reply = GENTLEMAN_REPLIES[Math.floor(Math.random() * GENTLEMAN_REPLIES.length)];
-      setMessages((prev) => [...prev, { role: "gentleman", text: reply }]);
-      setIsTyping(false);
-    }, 900 + Math.random() * 800);
+
+    // 樂觀更新前端介面
+    const userMsg = { role: "user" as const, text };
+    setMessages((prev) => [...prev, userMsg]);
+    setMsgCount((prev) => prev + 1);
+
+    try {
+      await fetch("/api/chat/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderCode: loggedInLadyCode,
+          receiverCode: profile.code,
+          text,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   const progressPct = Math.min((msgCount / 20) * 100, 100);
