@@ -1373,3 +1373,17 @@
 3.  **部署**：
     *   打包建置完成並重新啟動後端 Port 3000，已 Push 至遠端（Commit: `9e840f9`）。
 
+
+---
+
+## 2026-07-08 更換密碼後舊密碼未清除的 Bug 修復記錄
+
+- **本輪目標**：修復主控更換密碼（主控密碼或紳士編輯密碼）後，前端 React Context 中舊密碼未被清除、仍殘留在記憶體中的安全漏洞。
+- **問題根因（真實可複現）**：更換密碼時，`handleSync` 成功將新密碼寫入 DB，但未呼叫 `refreshData()`，導致 React Context 的 `adminCodes` / `gentlemanEditCodes` 仍保存舊密碼。後續每 15 秒輪詢的公開 API 不會回傳真實密碼（遮蔽為空），因此舊密碼一直殘留在前端記憶體中，後續任何 sync 都使用錯誤的舊密碼鑒權。
+
+### 修改詳情
+- **`AdminEditScreen.tsx`**：在主控密碼與紳士密碼各自的更換成功回調中，分別新增：
+  - 主控密碼：`await refreshData(cleanInput)` — 以新密碼重新同步，Context 中的 `adminCodes` 立即替換為新密碼
+  - 紳士密碼：`await refreshData(adminCodes[0])` — 以當前管理密碼重新同步，Context 中的 `gentlemanEditCodes` 立即替換為新密碼
+- **效果**：舊密碼從記憶體中被徹底清除，後續所有 sync 使用正確的新密碼鑒權。
+- **部署**：Vite 打包成功，已 Push 至遠端（Commit: `58890c9`）。
