@@ -1184,12 +1184,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     lifestyleStr: genProfile.lifestyle.join(", "),
                     cardDetail: genProfile.cardDetail,
                     idealMatch: genProfile.idealMatch,
-                    imageUrl: "",
-                    imageUrls: [],
-                    contactLineUrl: "",
                   }));
                   setCurrentMetrics(genMetrics);
-                  setSuccessMessage("✨ 已自動生成台灣男賓資料，請確認後手動儲存。");
+                  setSuccessMessage("✨ 已自動填入隨機生成資料，請確認後點擊儲存。");
                   setTimeout(() => setSuccessMessage(""), 4000);
                 }}
                 className="w-full py-3 px-4 bg-gradient-to-r from-brand-olive to-[#5a5a3a] hover:from-[#4d4d36] hover:to-brand-olive text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-99 shadow-md"
