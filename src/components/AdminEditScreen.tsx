@@ -1290,6 +1290,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       // 直接更換（將陣列置換為僅含新密碼）
                       const result = await handleSync(profiles, allMetrics, [cleanInput]);
                       if (result && result.success) {
+                        // 密碼變更成功後，必須立即使用新密碼重新同步全域狀態，清除舊密碼
+                        await refreshData(cleanInput);
                         setAdminCodeInput("");
                         setAdminCodeSuccess(`主控密碼已變更為「${cleanInput}」！`);
                         setTimeout(() => setAdminCodeSuccess(""), 4000);
@@ -1355,6 +1357,8 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       // 直接更換（將陣列置換為僅含新密碼）
                       const result = await handleSync(profiles, allMetrics, adminCodes, [cleanInput]);
                       if (result && result.success) {
+                        // 密碼變更成功後，使用當前管理密碼重新同步全域狀態，更新紳士密碼並清除舊值
+                        await refreshData(adminCodes[0]);
                         setGentlemanCodeInput("");
                         setGentlemanCodeSuccess(`紳士密碼已變更為「${cleanInput}」！`);
                         setTimeout(() => setGentlemanCodeSuccess(""), 4000);
