@@ -585,14 +585,32 @@ export default function ProfileScreen({ profile, onBack, onEnterEditMode, onOpen
               </p>
               
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   const cleanPassword = passwordInput.trim();
-                  if (adminCodes.includes(cleanPassword) || cleanPassword === "admin") {
-                    setShowPasswordModal(false);
-                    onEnterEditMode?.(cleanPassword);
-                  } else {
-                    setPasswordError("密碼錯誤，請重新輸入");
+                  if (!cleanPassword) {
+                    setPasswordError("請輸入密碼");
+                    return;
+                  }
+                  try {
+                    const response = await fetch("/api/gentleman/verify-password", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ password: cleanPassword })
+                    });
+                    if (response.ok) {
+                      const data = await response.json();
+                      if (data.valid) {
+                        setShowPasswordModal(false);
+                        onEnterEditMode?.(cleanPassword);
+                      } else {
+                        setPasswordError("密碼錯誤，請重新輸入");
+                      }
+                    } else {
+                      setPasswordError("伺服器驗證失敗，請重試");
+                    }
+                  } catch (err) {
+                    setPasswordError("網路連線錯誤，請重試");
                   }
                 }}
                 className="space-y-4"

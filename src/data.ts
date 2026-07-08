@@ -221,6 +221,7 @@ export async function syncSharedConfig(config: {
   profiles: Record<string, Profile>;
   metrics: Record<string, PersonalityMetrics>;
   adminCodes: string[];
+  gentlemanEditCodes?: string[];
 }, adminCode: string): Promise<{ success: boolean; message: string }> {
   try {
     const response = await fetch("/api/profile-config", {
@@ -391,7 +392,11 @@ export async function registerLady(name?: string, photoUrl?: string): Promise<{ 
  * @param currentAdminCodes The list of current admin codes to preserve
  * @returns A promise that resolves to a success/failure object.
  */
-export async function resetDatabaseToDefaults(adminCode: string, currentAdminCodes: string[]): Promise<{ success: boolean; message: string }> {
+export async function resetDatabaseToDefaults(
+  adminCode: string,
+  currentAdminCodes: string[],
+  currentGentlemanEditCodes?: string[]
+): Promise<{ success: boolean; message: string }> {
   if (!adminCode) {
     const message = "需要提供管理員代碼才能重置資料庫。";
     console.error(message);
@@ -404,6 +409,7 @@ export async function resetDatabaseToDefaults(adminCode: string, currentAdminCod
     profiles: DEFAULT_PROFILES,
     metrics: DEFAULT_METRICS,
     adminCodes: currentAdminCodes, // Preserve existing admin codes
+    gentlemanEditCodes: currentGentlemanEditCodes || [],
   };
 
   return await syncSharedConfig(configToSync, adminCode);

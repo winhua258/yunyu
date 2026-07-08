@@ -6,6 +6,7 @@ interface DataContextType {
   profiles: Record<string, Profile>;
   metrics: Record<string, PersonalityMetrics>;
   adminCodes: string[];
+  gentlemanEditCodes: string[];
   isDataLoading: boolean;
   refreshData: (adminCode?: string) => Promise<void>;
   setOptimisticData: (data: { profiles: Record<string, Profile>, metrics: Record<string, PersonalityMetrics> }) => void;
@@ -28,14 +29,16 @@ function normalizeData(payload: any) {
 
     const finalMetrics = (typeof payload.metrics === "object" && payload.metrics ? { ...payload.metrics } : {});
     const finalAdminCodes = Array.isArray(payload.adminCodes) ? payload.adminCodes : [];
+    const finalGentlemanEditCodes = Array.isArray(payload.gentlemanEditCodes) ? payload.gentlemanEditCodes : [];
 
-    return { finalProfiles, finalMetrics, finalAdminCodes };
+    return { finalProfiles, finalMetrics, finalAdminCodes, finalGentlemanEditCodes };
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [metrics, setMetrics] = useState<Record<string, PersonalityMetrics>>({});
   const [adminCodes, setAdminCodes] = useState<string[]>([]);
+  const [gentlemanEditCodes, setGentlemanEditCodes] = useState<string[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const refreshData = useCallback(async (adminCode?: string, showLoadingScreen = false) => {
@@ -51,7 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(`無法載入伺服器設定: ${response.status}`);
       
       const payload = await response.json();
-      const { finalProfiles, finalMetrics, finalAdminCodes } = normalizeData(payload);
+      const { finalProfiles, finalMetrics, finalAdminCodes, finalGentlemanEditCodes } = normalizeData(payload);
       setProfiles(finalProfiles);
       setMetrics(finalMetrics);
       
@@ -67,6 +70,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return [...prev, adminCode];
         });
       }
+
+      // 同樣防範定期輪詢（公開接口）清除紳士編輯密碼
+      if (finalGentlemanEditCodes.length > 0) {
+        setGentlemanEditCodes(finalGentlemanEditCodes);
+      }
       console.log("✅ [DataContext] 成功從伺服器載入並刷新了線上設定。");
     } catch (error) {
       console.error("❌ [DataContext] 無法從伺服器載入線上設定，正在啟用【備用預設資料】。", error);
@@ -75,6 +83,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setMetrics(finalMetrics);
       // 僅在並無已加載的管理密碼時才重置為空
       setAdminCodes(prev => prev.length > 0 ? prev : []);
+      setGentlemanEditCodes(prev => prev.length > 0 ? prev : []);
     } finally {
       if (showLoadingScreen) {
         setIsDataLoading(false);
@@ -106,7 +115,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   }, [refreshData]); // The effect depends on the refreshData function.
 
-  const value = { profiles, metrics, adminCodes, isDataLoading, refreshData, setOptimisticData };
+  const value = { profiles, metrics, adminCodes, gentlemanEditCodes, isDataLoading, refreshData, setOptimisticData };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
