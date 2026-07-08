@@ -756,6 +756,8 @@ app.post("/api/generate", async (req, res) => {
 
 // --- 啟動伺服器 ---
 const port = process.env.PORT || 3000;
-ViteExpress.listen(app, port, () =>
-  console.log(`✅ Server is listening on http://localhost:${port}`)
+const host = "0.0.0.0";
+const server = app.listen(port, host, () =>
+  console.log(`✅ Server is listening on http://${host}:${port}`)
 );
+ViteExpress.bind(app, server);

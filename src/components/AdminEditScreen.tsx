@@ -40,6 +40,9 @@ import {
   updateLadyByAdmin,
   deleteLadyByAdmin,
   fetchAdminVisits,
+  fetchIpMetadata,
+  updateIpMetadata,
+  IpMetadataItem,
 } from "../data";
 import { useData } from "./DataContext";
 
@@ -76,6 +79,32 @@ function getIpDescription(ip: string | undefined): string {
   };
   const region = Object.entries(regionMap).find(([prefix]) => ip.startsWith(prefix))?.[1] ?? "其他地區";
   return `${ip} [${region}]`;
+}
+
+function getIpRegion(ip: string | undefined): string {
+  if (!ip) return "未知地區";
+  const regionMap: Record<string, string> = {
+    // IPv4 Taiwan Prefixes
+    "202.160": "台灣（中華電信）", "61.": "台灣（台灣大哥大）", "114.": "台灣（遠傳）",
+    "218.": "台灣（亞太）", "223.": "台灣（台灣之星）", "1.": "台灣（台灣固網）",
+    // IPv4 Other
+    "211.": "香港", "210.": "香港", "103.": "香港/東南亞",
+    "65.181": "美國/VPN", "192.168": "本地（開發）", "127.": "本地（開發）",
+    
+    // IPv6 Taiwan
+    "2001:b0": "台灣（中華電信 IPv6）",
+    "2001:b4": "台灣（遠傳電信 IPv6）",
+    "2001:b02": "台灣（台灣大哥大 IPv6）",
+    "2001:288": "台灣（學術網路 TANet IPv6）",
+    "2404:0": "台灣 IPv6",
+    
+    // IPv6 Local & Dev
+    "::1": "本地開發 (localhost IPv6)",
+    "fe80:": "本地開發 (Link-Local IPv6)",
+    "fc00:": "本地開發 (Unique-Local IPv6)",
+    "fd00:": "本地開發 (Unique-Local IPv6)"
+  };
+  return Object.entries(regionMap).find(([prefix]) => ip.startsWith(prefix))?.[1] ?? "其他地區";
 }
 
 interface AdminEditScreenProps {
@@ -133,6 +162,66 @@ const METRIC_CATEGORIES = [
 
 type AdminTab = "gentlemen" | "ladies" | "analytics";
 
+interface IpNoteCellProps {
+  ip: string;
+  initialNote: string;
+  onSave: (ip: string, newNote: string) => void;
+}
+
+function IpNoteCell({ ip, initialNote, onSave }: IpNoteCellProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [note, setNote] = useState(initialNote);
+
+  React.useEffect(() => {
+    setNote(initialNote);
+  }, [initialNote]);
+
+  const handleSave = () => {
+    setIsEditing(false);
+    if (note !== initialNote) {
+      onSave(ip, note);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSave();
+    } else if (e.key === "Escape") {
+      setNote(initialNote);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        type="text"
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        className="w-full bg-white border border-brand-border rounded px-2 py-0.5 text-[11px] font-semibold text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-olive"
+        placeholder="輸入備註 (Enter 儲存)"
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={() => setIsEditing(true)}
+      className="cursor-pointer hover:bg-brand-beige/30 hover:text-brand-dark px-2 py-1 rounded transition-all min-h-[22px] flex items-center text-brand-muted italic"
+      title="點擊以編輯備註"
+    >
+      {note ? (
+        <span className="font-sans not-italic text-brand-dark font-medium">{note}</span>
+      ) : (
+        <span className="text-[10px] text-brand-light font-normal">+ 新增備註</span>
+      )}
+    </div>
+  );
+}
+
 export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   // Load global data from context
   const { profiles, metrics: allMetrics, adminCodes, refreshData, isDataLoading, setOptimisticData } = useData();
@@ -177,7 +266,7 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   }
   const [visitsData, setVisitsData] = useState<{ summary: VisitSummaryItem[]; totalLogs: number } | null>(null);
   const [visitsLoading, setVisitsLoading] = useState(false);
-  const [excludedIp, setExcludedIp] = useState<string>(() => localStorage.getItem("yuanyu_excluded_ip") || "");
+  const [ipMetadataList, setIpMetadataList] = useState<IpMetadataItem[]>([]);
   const [visitFilter, setVisitFilter] = useState<"all" | "quiz_completed" | "quiz_not_completed">("all");
 
   const loadLadies = React.useCallback(async () => {
@@ -198,14 +287,37 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     if (!adminCodes[0]) return;
     setVisitsLoading(true);
     try {
-      const data = await fetchAdminVisits(adminCodes[0]);
+      const [data, metadata] = await Promise.all([
+        fetchAdminVisits(adminCodes[0]),
+        fetchIpMetadata(adminCodes[0])
+      ]);
       setVisitsData(data);
+      setIpMetadataList(metadata);
     } catch (e) {
-      console.error("Failed to load visits data", e);
+      console.error("Failed to load visits or IP metadata", e);
     } finally {
       setVisitsLoading(false);
     }
   }, [adminCodes]);
+
+  const handleSaveIpMetadata = async (ipAddress: string, updates: { note?: string; isExcluded?: boolean }) => {
+    if (!adminCodes[0]) return;
+    try {
+      const updated = await updateIpMetadata(adminCodes[0], ipAddress, updates);
+      setIpMetadataList(prev => {
+        const idx = prev.findIndex(item => item.ipAddress === ipAddress);
+        if (idx >= 0) {
+          const newMetadataList = [...prev];
+          newMetadataList[idx] = updated;
+          return newMetadataList;
+        } else {
+          return [...prev, updated];
+        }
+      });
+    } catch (e) {
+      console.error("Failed to update IP metadata", e);
+    }
+  };
 
   const handleSort = (field: string) => {
     if (ladySortField === field) {
@@ -2064,7 +2176,9 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           };
 
           // Excluded IPs list mapped directly from our database configuration
-          const excludedIpList = ipMetadataList.filter(item => item.isExcluded).map(item => item.ipAddress);
+          const excludedIpList = (Array.isArray(ipMetadataList) ? ipMetadataList : [])
+            .filter(item => item && item.isExcluded)
+            .map(item => item.ipAddress);
 
           // Filter visits summary by excludedIp list for statistics only
           const rawVisits = visitsData?.summary || [];
@@ -2313,23 +2427,24 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                     <table className="w-full text-[11px] text-left">
                       <thead className="bg-brand-beige/55 sticky top-0 border-b border-brand-border/30">
                         <tr>
-                          <th className="px-4 py-2 text-brand-muted font-bold">IP 位址</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold text-center w-12">排除</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">IP 位址 (地區/國家)</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">業務狀態</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">點擊訪問次數</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">包含設備數</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">最近進入時間</th>
                           <th className="px-4 py-2 text-brand-muted font-bold">設備與瀏覽器描述</th>
-                          <th className="px-4 py-2 text-brand-muted font-bold text-right">操作</th>
+                          <th className="px-4 py-2 text-brand-muted font-bold">備註 (點擊編輯)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {visitsLoading ? (
                           <tr>
-                            <td colSpan={7} className="text-center py-8 text-brand-muted">載入中...</td>
+                            <td colSpan={8} className="text-center py-8 text-brand-muted">載入中...</td>
                           </tr>
                         ) : filteredVisits.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="text-center py-8 text-brand-muted">沒有符合篩選條件的記錄</td>
+                            <td colSpan={8} className="text-center py-8 text-brand-muted">沒有符合篩選條件的記錄</td>
                           </tr>
                         ) : (
                           filteredVisits.map(item => {
@@ -2342,18 +2457,40 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                               return rawVisits.some(v => v.ipAddress !== item.ipAddress && (v.deviceIds || []).includes(devId));
                             });
 
+                            const isIpExcluded = (Array.isArray(ipMetadataList) ? ipMetadataList : []).find(m => m && m.ipAddress === item.ipAddress)?.isExcluded || false;
+                            const ipNote = (Array.isArray(ipMetadataList) ? ipMetadataList : []).find(m => m && m.ipAddress === item.ipAddress)?.note || "";
+
                             return (
-                              <tr key={item.ipAddress} className="border-b border-brand-border/10 hover:bg-brand-beige/10">
+                              <tr key={item.ipAddress} className={`border-b border-brand-border/10 hover:bg-brand-beige/10 transition-colors ${isIpExcluded ? "bg-red-50/15" : ""}`}>
+                                <td className="px-4 py-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={isIpExcluded}
+                                    onChange={e => {
+                                      const checked = e.target.checked;
+                                      void handleSaveIpMetadata(item.ipAddress, { isExcluded: checked });
+                                    }}
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-brand-olive focus:ring-brand-olive cursor-pointer"
+                                    title={isIpExcluded ? "已排除此 IP 訪問統計" : "勾選排除此 IP"}
+                                  />
+                                </td>
                                 <td className="px-4 py-2 font-mono font-semibold text-brand-dark">
-                                  <span>{item.ipAddress}</span>
-                                  {isSameDeviceShared && (
-                                    <span 
-                                      className="inline-block text-[8px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 font-sans font-bold ml-1.5"
-                                      title="系統偵測到此設備使用過多個不同 IP 連線本網站"
-                                    >
-                                      同設備跨 IP
+                                  <div className="flex flex-col gap-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                      <span>{item.ipAddress}</span>
+                                      {isSameDeviceShared && (
+                                        <span 
+                                          className="inline-block text-[8px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 font-sans font-bold shrink-0"
+                                          title="系統偵測到此設備使用過多個不同 IP 連線本網站"
+                                        >
+                                          同設備跨 IP
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-brand-muted font-sans font-normal">
+                                      {getIpRegion(item.ipAddress)}
                                     </span>
-                                  )}
+                                  </div>
                                 </td>
                                 <td className="px-4 py-2">
                                   {isRegistered && hasTakenQuiz ? (
@@ -2375,30 +2512,15 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                                 <td className="px-4 py-2 text-brand-light">
                                   {item.lastVisit ? new Date(item.lastVisit).toLocaleString("zh-TW") : "—"}
                                 </td>
-                                <td className="px-4 py-2 text-brand-muted truncate max-w-[200px]" title={item.userAgent}>
+                                <td className="px-4 py-2 text-brand-muted truncate max-w-[150px]" title={item.userAgent}>
                                   {getFriendlyDevice(item.userAgent)}
                                 </td>
-                                <td className="px-4 py-2 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      // Support adding this IP to the list of excluded IPs
-                                      const trimmedNewIp = item.ipAddress.trim();
-                                      if (trimmedNewIp) {
-                                        const currentList = excludedIp 
-                                          ? excludedIp.split(/[\s,，]+/).map(ip => ip.trim()).filter(Boolean)
-                                          : [];
-                                        if (!currentList.includes(trimmedNewIp)) {
-                                          const newList = [...currentList, trimmedNewIp].join(", ");
-                                          setExcludedIp(newList);
-                                          localStorage.setItem("yuanyu_excluded_ip", newList);
-                                        }
-                                      }
-                                    }}
-                                    className="text-[9px] text-brand-olive hover:underline font-bold"
-                                  >
-                                    排除此 IP
-                                  </button>
+                                <td className="px-4 py-2 min-w-[140px] max-w-[200px]">
+                                  <IpNoteCell
+                                    ip={item.ipAddress}
+                                    initialNote={ipNote}
+                                    onSave={(ip, newNote) => void handleSaveIpMetadata(ip, { note: newNote })}
+                                  />
                                 </td>
                               </tr>
                             );

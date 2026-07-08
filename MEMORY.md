@@ -1085,3 +1085,22 @@
 - **驗證命令 and 結果**：執行 `npm run build` 編譯完成；重啟 PM2 服務；編寫並執行 integration script `test_ip_metadata.js`，全部測試用例順利通過。
 - **提交哈希**：f275f981907ca56c1afde82728a3591ef38d5309
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-08 第五十三輪：修復主控端白屏崩潰 Bug 與 Localhost 遠端連線拒絕問題
+
+- **本輪目標**：解決管理面板進入後白屏的 Bug，並修復 Localhost 拒絕連接 (`ERR_CONNECTION_REFUSED`) 的網絡問題。
+- **發現的問題**：
+  - **白屏崩潰 Bug**：之前重構 IP 排除邏輯時，前台 `AdminEditScreen.tsx` 調用了 `<IpNoteCell>` 與 `getIpRegion` 函數，但這兩者的定義和相關 API 狀態與 Client-side 引用未被完全重新寫入程式中。這導致 React 在渲染時由於找不到這兩個元素引用而抛出 runtime `ReferenceError` 崩潰，形成白屏。
+  - **連線拒絕問題**：後台伺服器啟動時預設僅監聽本地 `localhost` (127.0.0.1) 接口，導致外部或容器代理連接時發生拒絕連線錯誤。
+- **修改內容**：
+  - **修復白屏崩潰** (`src/components/AdminEditScreen.tsx`)：
+    - **重構與宣告 `IpNoteCell`**：在前台代碼中實現點擊編輯備註單元格組件 `IpNoteCell`，支援 KeyDown `Enter` 保存、`Escape` 取消與 `onBlur` 失焦保存。
+    - **實作 `getIpRegion`**：將 IPv4/IPv6 電信與地區段的前綴匹配函數 `getIpRegion` 重建補全至 helper helper 中，以便 IP 列表列順利顯示。
+    - **API 元件安全性防護**：對 `ipMetadataList` 取值加上 `Array.isArray()` 前置防禦，確保後台回傳異常時前台 100% 不會拋錯崩潰。
+  - **解決連線拒絕** (`server.js`)：
+    - 將伺服器綁定由預設 `localhost` 改為通用網卡 **`0.0.0.0`**，透過 `ViteExpress.bind` 機制綁定已監聽的底層 Server，使得容器端口對映與 Workspace 轉發能正常存取。
+- **驗證命令 and 結果**：執行 `npm run build` 順利編譯完成，包體無任何錯誤；PM2 重啟程序後伺服器成功在 `0.0.0.0:3000` 啟動，外網與本地均能流暢登入管理面板，列表、備註與排除勾選渲染完美，無任何報錯。
+- **提交哈希**：3e9a720be32174ac3bb67215a629932b70b1c644
+- **是否已經收斂**：是。
