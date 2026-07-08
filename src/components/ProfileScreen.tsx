@@ -28,11 +28,13 @@ import {
 import { Profile } from "../types";
 import { copyToClipboard } from "../utils";
 import { useData } from "./DataContext";
+import { useAuth } from "./AuthContext";
 
 interface ProfileScreenProps {
   profile: Profile;
   onBack: () => void;
   onEnterEditMode?: (password: string) => void;
+  onOpenChat?: (code: string) => void;
 }
 
 const loadedImagesCache = new Set<string>();
@@ -44,8 +46,10 @@ const GREETING_OPTIONS = [
   "你好，我在緣友遇見了你的靈魂名片。很高興系統讓我們相遇，期待與你聊聊喔 ✨"
 ];
 
-export default function ProfileScreen({ profile, onBack, onEnterEditMode }: ProfileScreenProps) {
+export default function ProfileScreen({ profile, onBack, onEnterEditMode, onOpenChat }: ProfileScreenProps) {
   const { adminCodes } = useData();
+  const { loggedInLadyCode } = useAuth();
+  const [chatCount, setChatCount] = useState(0);
   const [showRedirectModal, setShowRedirectModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
@@ -54,6 +58,27 @@ export default function ProfileScreen({ profile, onBack, onEnterEditMode }: Prof
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const imgRef = React.useRef<HTMLImageElement>(null);
+
+  // 定期獲取女賓與該男賓的對話條數，用於動態解鎖預覽內容
+  React.useEffect(() => {
+    if (!loggedInLadyCode || !profile.code) return;
+    const fetchChatHistoryCount = async () => {
+      try {
+        const res = await fetch(`/api/chat/history?user1=${loggedInLadyCode}&user2=${profile.code}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setChatCount(data.length);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load chat history in ProfileScreen:", err);
+      }
+    };
+    fetchChatHistoryCount();
+    const interval = setInterval(fetchChatHistoryCount, 4000);
+    return () => clearInterval(interval);
+  }, [loggedInLadyCode, profile.code]);
 
   const images = (profile.imageUrls && profile.imageUrls.length > 0
     ? profile.imageUrls
@@ -202,19 +227,38 @@ export default function ProfileScreen({ profile, onBack, onEnterEditMode }: Prof
               </div>
             </div>
             
-            <p className="italic text-lg md:text-xl text-brand-olive font-serif pl-1 md:pl-2">
-              「 {profile.tagline} 」
+            <p className="italic text-lg md:text-xl text-brand-olive font-serif pl-1 md:pl-2 select-none">
+              「 {!loggedInLadyCode || chatCount >= 10 ? profile.tagline : "誠摯邀請您的深入對話，以解鎖宣告內容"} 」
             </p>
           </div>
 
           {/* Bio Description Box */}
           <div className="text-brand-muted text-sm md:text-base leading-relaxed bg-white/40 border border-brand-border/30 p-6 rounded-3xl backdrop-blur-sm shadow-sm space-y-4">
-            <p>{profile.bio}</p>
-            {profile.idealMatch && (
-              <p className="text-brand-olive text-xs md:text-sm font-serif italic pt-2 border-t border-brand-border/40">
-                <span className="font-bold font-sans not-italic text-[10px] uppercase tracking-wider block text-brand-light mb-1">關於對方的理想期待：</span>
-                {profile.idealMatch}
-              </p>
+            {!loggedInLadyCode || chatCount >= 10 ? (
+              <>
+                <p>{profile.bio}</p>
+                {profile.idealMatch && (
+                  <p className="text-brand-olive text-xs md:text-sm font-serif italic pt-2 border-t border-brand-border/40">
+                    <span className="font-bold font-sans not-italic text-[10px] uppercase tracking-wider block text-brand-light mb-1">關於對方的理想期待：</span>
+                    {profile.idealMatch}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="relative overflow-hidden py-4 rounded-xl">
+                <p className="blur-sm select-none line-clamp-3 leading-relaxed">
+                  {profile.bio || "這裡是一段非常優質的個人簡介內容，展示了這位高淨值紳士的生活風格與獨特品味，期待與您共同開啟一段契合的靈魂對話。"}
+                </p>
+                <div className="absolute inset-0 flex items-center justify-center bg-white/10">
+                  <button
+                    onClick={() => onOpenChat?.(profile.code)}
+                    className="bg-white/95 hover:bg-brand-beige border border-brand-border/80 shadow-md text-brand-olive text-xs font-bold px-4.5 py-2.5 rounded-full flex items-center gap-1.5 transition-all transform active:scale-95 cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>與紳士聊天解鎖簡介 (當前對話 {chatCount}/10 條)</span>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
@@ -241,15 +285,25 @@ export default function ProfileScreen({ profile, onBack, onEnterEditMode }: Prof
 
           {/* Call to Action LINE button */}
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center mt-4">
-            <button
-              id="btn-line-contact-trigger"
-              onClick={handleLineClick}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#06C755] text-white px-10 py-4.5 rounded-full text-sm font-bold uppercase tracking-widest shadow-md hover:bg-[#05b04b] hover:shadow-xl transition-all duration-300 transform active:scale-98"
-            >
-              <Heart className="w-4 h-4 shrink-0 fill-current" />
-              <span>一鍵 LINE 聯絡與心動開聊</span>
-              <ExternalLink className="w-4 h-4 shrink-0" />
-            </button>
+            {loggedInLadyCode && chatCount < 20 ? (
+              <button
+                onClick={() => onOpenChat?.(profile.code)}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-brand-olive text-white px-10 py-4.5 rounded-full text-sm font-bold uppercase tracking-widest shadow-md hover:bg-[#4d4d36] transition-all duration-300 transform active:scale-98 cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 shrink-0" />
+                <span>與紳士對話解鎖 LINE (當前 {chatCount}/20 條)</span>
+              </button>
+            ) : (
+              <button
+                id="btn-line-contact-trigger"
+                onClick={handleLineClick}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#06C755] text-white px-10 py-4.5 rounded-full text-sm font-bold uppercase tracking-widest shadow-md hover:bg-[#05b04b] hover:shadow-xl transition-all duration-300 transform active:scale-98"
+              >
+                <Heart className="w-4 h-4 shrink-0 fill-current" />
+                <span>一鍵 LINE 聯絡與心動開聊</span>
+                <ExternalLink className="w-4 h-4 shrink-0" />
+              </button>
+            )}
 
             {onEnterEditMode && (
               <button

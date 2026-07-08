@@ -180,6 +180,10 @@ export default function App() {
                 <ProfileScreen 
                   profile={currentProfile} 
                   onBack={handleBackToVerify} 
+                  onOpenChat={(code) => {
+                    setUnlockModalCode(code);
+                    setShowUnlockModal(true);
+                  }}
                 />
               ) : unlockedGentlemanCodes[verifiedCode!] ? (
                 <GentlemanDashboard

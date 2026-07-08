@@ -425,13 +425,18 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     return false;
   };
 
-  // 過濾用：列出全體可配對紳士（排除模板、排除已關閉配對的紳士）
-  const gentlemanList = [
-    ...(Object.values(profiles) as Profile[]).filter(
+  // 過濾用：列出全體可配對紳士（排除模板、排除已關閉配對的紳士，且已解鎖排在首位，移除 placeholders）
+  const gentlemanList = (Object.values(profiles) as Profile[])
+    .filter(
       (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code) && (p.isAcceptingMatches !== false)
-    ),
-    ...PLACEHOLDER_PROFILES
-  ];
+    )
+    .sort((a, b) => {
+      const aUnlocked = checkIsUnlocked(a.code);
+      const bUnlocked = checkIsUnlocked(b.code);
+      if (aUnlocked && !bUnlocked) return -1;
+      if (!aUnlocked && bUnlocked) return 1;
+      return 0;
+    });
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative py-12 px-4 md:px-12 bg-brand-beige overflow-hidden">
@@ -788,7 +793,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           <img
                             src={p.imageUrl}
                             alt=""
-                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isUnlocked ? "" : "blur-sm opacity-55"
+                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isUnlocked ? "" : "blur-[1px] opacity-80"
                               }`}
                           />
                           {!isUnlocked && (
@@ -807,7 +812,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] text-brand-light font-mono font-bold">
-                              {isUnlocked ? p.code : "編號: ****"}
+                              {isUnlocked ? "已驗證紳士" : "編號: ****"}
                             </span>
                             <span className="text-[10px] text-brand-muted font-bold">{p.age} 歲 · {p.location}</span>
                           </div>
@@ -821,6 +826,22 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       </div>
                     );
                   })}
+                </div>
+
+                {/* 下一頁分頁按鈕 */}
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => {
+                      if (gentlemanList.length > 0) {
+                        setUpgradeTargetProfile(gentlemanList[0]);
+                      }
+                      setShowUpgradeModal(true);
+                    }}
+                    className="flex items-center justify-center gap-1.5 px-6 py-2.5 bg-brand-beige hover:bg-brand-border/40 border border-brand-border/80 text-brand-olive rounded-full text-xs font-bold transition-all transform active:scale-95 cursor-pointer shadow-sm"
+                  >
+                    <span>下一頁 (Next Page)</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
