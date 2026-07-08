@@ -1188,3 +1188,29 @@
 
 
 - **補充調整 (2026-07-08)**：優化主控台「自動生成男賓資料」按鈕的儲存體驗。調整 `handleAutoSave` 接受傳入的特質指標數據，在點擊 `✨ 自動生成台灣男賓資料` 按鈕後，直接執行保存與後端同步，不再需要管理員手動點擊「儲存」按鈕，實時回寫資料庫。
+
+---
+
+## 2026-07-08 紳士入口流程微調與密碼解鎖編輯回覆功能落實記錄
+
+- **本輪目標**：微調紳士端流程。登入後先顯示靜態個人資料卡（`ProfileScreen`）。在資料卡中加入「🔒 編輯資料與回覆消息」按鈕。點選後必須驗證密碼（相符於管理密碼），驗證成功後切換至 `GentlemanDashboard`，大廳內部新增「對話回覆」與「修改資料」雙 Tab，實現紳士編輯資料與對話管理功能。
+- **是否真實可複現**：是（TypeScript 編譯與 Vite 生產環境編譯無任何錯誤）
+
+### 修改詳情
+1.  **前端路由 (`App.tsx`)**：
+    *   新增 `unlockedGentlemanCodes` 狀態與 `gentlemanAuthCode` 狀態。
+    *   當前已登入的紳士預設導向 `ProfileScreen`，並傳入解鎖回呼 `onEnterEditMode`（此時保存驗證成功的密碼）。
+    *   解鎖後（`unlockedGentlemanCodes[verifiedCode] === true`），導向 `GentlemanDashboard`，並傳遞 `adminCode`（用於調用 profile-config API 的認證代號）以及返回個人檔案的回呼 `onBackToProfile`。
+2.  **個人檔案頁 (`ProfileScreen.tsx`)**：
+    *   新增 `onEnterEditMode` 可選屬性。當該屬性存在時，在 LINE 心動開聊按鈕旁渲染一個金色質感的「🔒 編輯資料與回覆消息」按鈕。
+    *   點選後彈出客製化的安全身分驗證 Modal。密碼驗證通過（與 `adminCodes` 一致，包含通用 `admin`）後調用 `onEnterEditMode(password)` 觸發 App 視圖切換。
+3.  **紳士互動大廳 (`GentlemanDashboard.tsx`)**：
+    *   新增 `adminCode` 與 `onBackToProfile` 屬性。
+    *   左側頂部操作列中，加入一個「返回個人卡片」按鈕。
+    *   新增頂部 Tab Bar 控制器：
+        *   **對話回覆 Tab**：原有名媛聊天清單及對話歷史框（維持 Polling 即時通訊）。
+        *   **修改資料 Tab**：紳士專屬的個人資料編輯 Form（姓名、年齡、地區、Tagline、詳細 Bio、生活風格、LINE 聯絡連結）。
+        *   **儲存功能**：串接伺服器 `POST /api/profile-config`，並在 Header 寫入 `x-admin-code: adminCode` 通過管理權限驗證。儲存完成後，呼叫 `refreshData()` 樂觀重新整理前台狀態。
+4.  **打包與編譯**：
+    *   執行 `npm run build` 生成最新 Bundle，重啟 Node 服務器。
+
