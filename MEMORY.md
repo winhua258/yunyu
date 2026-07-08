@@ -1355,3 +1355,21 @@
 3.  **部署**：
     *   打包完成並重新部署啟動服務，已 Push 到遠端（Commit: `8b09ef0`）。
 
+
+---
+
+## 2026-07-08 行動端防縮放鎖定與排版恢復記錄
+
+- **本輪目標**：應使用者要求，將手機端防縮放限制、多指捏合攔截、行動端 inputs 強制 16px 字型、以及 Header 的橫向滑動排版完全加固恢復至最穩定能防止露出白邊的狀態。
+- **是否真實可複現**：是（建置編譯順利通過，比例鎖定已生效）
+
+### 修改詳情
+1.  **手機端限制重新加固 (`index.html` & `main.tsx` & `index.css`)**：
+    *   **Viewport 鎖定**：加回 `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />` 防止行動端多點觸控溢出縮放。
+    *   **手勢攔截**：重新載入全域多點觸控捏合 `touchstart` 及雙擊 `touchend` 的事件監聽，保障固定的外層展現比例。
+    *   **輸入框聚焦優化**：加回行動端 inputs 強制 `font-size: 16px !important` 的 CSS 規則，防止聚焦時 iOS Safari 的自動放大排版拉伸。
+2.  **Header 滑動排版加固 (`Header.tsx` & `index.css`)**：
+    *   將 Header 選項容器還原為橫向滑動型態，保留所有連結的同時，避免內容過寬引發頁面溢出出現白邊。
+3.  **部署**：
+    *   打包建置完成並重新啟動後端 Port 3000，已 Push 至遠端（Commit: `9e840f9`）。
+
