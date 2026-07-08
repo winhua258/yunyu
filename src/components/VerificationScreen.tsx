@@ -350,6 +350,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     const unlockedList = lady?.unlockedGentlemanCodes || [];
     const isUnlocked = unlockedList.includes(inputCode) || lady?.matchedGentlemanCode === inputCode;
 
+    if (targetProfile.isAcceptingMatches === false && !isUnlocked) {
+      showToast("此紳士目前關閉配對功能，暫不接受新配對", "info");
+      return;
+    }
+
     if (isUnlocked) {
       onVerifySuccess(inputCode);
       return;
@@ -425,10 +430,10 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     return false;
   };
 
-  // 過濾用：列出全體可配對紳士（排除模板、排除已關閉配對的紳士，且已解鎖排在首位，移除 placeholders）
+  // 過濾用：列出全體可配對或不可配對紳士（排除模板，且已解鎖排在首位，移除 placeholders）
   const gentlemanList = (Object.values(profiles) as Profile[])
     .filter(
-      (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code) && (p.isAcceptingMatches !== false)
+      (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code)
     )
     .sort((a, b) => {
       const aUnlocked = checkIsUnlocked(a.code);
@@ -672,7 +677,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                     <div className="space-y-2">
                       <button
                         onClick={() => onVerifySuccess(lady.matchedGentlemanCode!)}
-                        className="w-full py-3 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all shadow hover:shadow-md cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full py-3 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all shadow hover:shadow-md cursor-pointer flex items-center justify-center gap-2 animate-pulse-scale"
                       >
                         <ShieldCheck className="w-4 h-4 text-brand-accent fill-current" />
                         <span>查看契合紳士 ({lady.matchedGentlemanCode})</span>
@@ -775,6 +780,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           {lady.matchedGentlemanCode === p.code && (
                             <span className="text-[8px] bg-brand-accent text-brand-olive font-bold px-1.5 py-0.5 rounded shadow-sm">
                               AI 媒合
+                            </span>
+                          )}
+                          {p.isAcceptingMatches === false && (
+                            <span className="text-[8px] bg-red-50 text-red-600 font-bold px-1.5 py-0.5 rounded border border-red-200/50 shadow-sm">
+                              暫不配對
                             </span>
                           )}
                           {isUnlocked ? (

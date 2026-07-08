@@ -137,7 +137,7 @@ export default function App() {
       />
 
       {/* Main Content Area with elegant fade transitions */}
-      <main id="main-container" className="flex-1 flex flex-col relative">
+      <main id="main-container" className="flex-1 flex flex-col relative min-h-0">
         <AnimatePresence mode="wait">
           {showAdmin ? (
             <motion.div
@@ -174,7 +174,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="flex-1 flex flex-col"
+              className="flex-1 flex flex-col min-h-0"
             >
               {loggedInLadyCode ? (
                 <ProfileScreen 

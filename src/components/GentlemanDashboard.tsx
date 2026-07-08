@@ -216,7 +216,7 @@ export default function GentlemanDashboard({
   const progressPct = Math.min((totalLadyMsgs / 20) * 100, 100);
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row md:h-[calc(100vh-60px)] md:max-h-[calc(100vh-60px)] overflow-hidden bg-brand-beige/30 font-sans">
+    <div className="flex-1 flex flex-col md:flex-row md:h-[calc(100vh-60px)] md:max-h-[calc(100vh-60px)] overflow-hidden bg-brand-beige/30 font-sans min-h-0">
       
       {/* LEFT SIDEBAR: Chats List */}
       <div className="w-full md:w-80 border-r border-brand-border/40 bg-white flex flex-col shrink-0">
@@ -332,7 +332,7 @@ export default function GentlemanDashboard({
       </div>
 
       {/* RIGHT MAIN WINDOW */}
-      <div className="flex-1 flex flex-col bg-white overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0">
         <AnimatePresence mode="wait">
           {activeTab === "chat" ? (
             <motion.div
@@ -340,7 +340,7 @@ export default function GentlemanDashboard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-grow flex flex-col h-full overflow-hidden"
+              className="flex-1 flex flex-col min-h-0 overflow-hidden"
             >
               {selectedLadyCode && selectedChat ? (
                 <>
@@ -390,7 +390,7 @@ export default function GentlemanDashboard({
                   </div>
 
                   {/* Chat Messages flow area */}
-                  <div className="flex-grow overflow-y-auto p-5 bg-brand-beige/5 space-y-4">
+                  <div className="flex-1 overflow-y-auto min-h-0 p-5 bg-brand-beige/5 space-y-4">
                     <div className="flex justify-center my-2">
                       <div className="bg-brand-beige/50 border border-brand-border/40 text-brand-light text-[9px] font-bold px-3 py-1.5 rounded-full tracking-wider flex items-center gap-1.5">
                         <Unlock className="w-3 h-3 text-brand-olive" />
@@ -470,7 +470,7 @@ export default function GentlemanDashboard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-grow overflow-y-auto p-6 md:p-10 max-w-2xl mx-auto w-full space-y-6"
+              className="flex-1 overflow-y-auto min-h-0 p-6 md:p-10 max-w-2xl mx-auto w-full space-y-6"
             >
               <div>
                 <h3 className="font-serif text-lg font-bold text-brand-dark mb-1">編輯個人檔案</h3>

@@ -31,11 +31,16 @@ export default function UnlockProfileModal({
   onClose,
   onViewFull,
 }: UnlockProfileModalProps) {
-  const { loggedInLadyCode } = useAuth();
+  const { loggedInLadyCode, ladyProfiles } = useAuth();
+  const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
+  const isUnlocked = lady
+    ? lady.matchedGentlemanCode === profile.code || lady.unlockedGentlemanCodes?.includes(profile.code)
+    : false;
+
   const [messages, setMessages] = useState<{ role: "user" | "gentleman"; text: string }[]>([
     {
       role: "gentleman",
-      text: `你好，很高興透過緣友與妳相遇。我是${profile.name.slice(0, 1)}先生，期待我們能有更深入的交流。`,
+      text: `你好，很高興透過緣友與妳相遇。我是${isUnlocked ? profile.name : profile.name.slice(0, 1) + "先生"}，期待我們能有更深入的交流。`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -65,7 +70,7 @@ export default function UnlockProfileModal({
             setMessages([
               {
                 role: "gentleman",
-                text: `你好，很高興透過緣友與妳相遇。我是${profile.name.slice(0, 1)}先生，期待我們能有更深入的交流。`,
+                text: `你好，很高興透過緣友與妳相遇。我是${isUnlocked ? profile.name : profile.name.slice(0, 1) + "先生"}，期待我們能有更深入的交流。`,
               }
             ]);
             setMsgCount(0);
@@ -167,7 +172,7 @@ export default function UnlockProfileModal({
               </div>
               <div className="absolute bottom-4 left-5 right-5">
                 <h2 className="text-white font-serif text-xl font-bold drop-shadow-lg">
-                  {maskedName} <span className="text-base text-white/80 font-normal">· {profile.age} 歲</span>
+                  {isUnlocked ? profile.name : maskedName} <span className="text-base text-white/80 font-normal">· {profile.age} 歲</span>
                 </h2>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <MapPin className="w-3 h-3 text-white/70" />
