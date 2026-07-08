@@ -20,10 +20,19 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
+}
+
+/* 隱藏滾動條的實用類別 */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom smooth styling tweaks */
