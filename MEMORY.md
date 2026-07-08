@@ -1299,3 +1299,22 @@
 3.  **部署**：
     *   完成 Vite 生產環境建置並重啟 Node.js Port 3000 伺服器，已 Push 到遠端（Commit: `8be79df`）。
 
+
+---
+
+## 2026-07-08 行動端網頁防縮放與佈局鎖定優化記錄
+
+- **本輪目標**：防止行動端網頁在聊天輸入框聚焦、雙擊或多指捏合時發生整體視窗放大，解決放大後無法貼合邊界而產生的左右白邊/排版假白邊問題。
+- **是否真實可複現**：是（建置編譯順利通過，CSS 與 JS 規則已應用）
+
+### 修改詳情
+1.  **Viewport Meta 調整 (`index.html`)**：
+    *   將 `<meta name="viewport">` 屬性更新為 `width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover`，強制限定行動端的初始及最大縮放比例，防止整體外層拉伸。
+2.  **行動端輸入框聚焦防放大 (`src/index.css`)**：
+    *   新增行動端專屬媒體查詢規則：當螢幕寬度小於 `768px` 時，強制所有 `<input>`、`<textarea>`、`<select>` 元素字型大小為 `16px`。此舉能完全防堵 iOS Safari 因為輸入框字體過小（小於 16px）而在聚焦時自動將整個網頁畫面放大的預設行為。
+    *   新增全域 `html, body` 之 `touch-action: manipulation` 及 `overflow-x: hidden` 限制。
+3.  **多指捏合與雙擊手勢防護 (`src/main.tsx`)**：
+    *   新增全域 JS 事件監聽器：主動攔截並阻止大於 1 個觸控點的 `touchstart` 捏合縮放，以及時間間隔短於 `300ms` 的 `touchend` 雙擊網頁自動縮放行為，進一步加固固定比例效果，而內部滾動不受任何影響。
+4.  **部署**：
+    *   建置並更新發佈至遠端（Commit: `0ef8938`）。
+
