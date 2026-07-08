@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Lock,
@@ -229,6 +229,61 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
   const [bgSubtitleIndex, setBgSubtitleIndex] = useState(0);
   const [activeVlog, setActiveVlog] = useState<VlogStory>(vlogStories[0]);
 
+  // 過濾出所有未公開的角色 (isAcceptingMatches === false)
+  const dynamicVlogStories = useMemo(() => {
+    const unpublicized = (Object.values(profiles) as Profile[]).filter(
+      (p) => p.isAcceptingMatches === false
+    );
+
+    if (unpublicized.length === 0) {
+      return vlogStories;
+    }
+
+    const mapped = unpublicized.map((p) => {
+      const roleStr = p.tagline.split("，")[0];
+      const firstBioSentence = p.bio.split("。\n\n")[0] || p.bio.split("\n")[0];
+      const cleanBio = firstBioSentence.replace("你好，我是" + p.name + "。", "").trim();
+      const matchRequirement = p.cardDetail || p.idealMatch || "希望能遇見同樣對生活保有好奇心的妳。";
+
+      return {
+        id: p.code,
+        name: p.name,
+        age: p.age || 40,
+        role: roleStr,
+        avatar: p.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+        vlogCover: p.imageUrl || "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&q=80&w=800",
+        title: p.tagline,
+        match: `${95 + Math.floor((p.code.charCodeAt(0) || 0) % 5)}% 契合度`, // 穩定隨機
+        views: `${800 + Math.floor((p.code.charCodeAt(0) || 0) % 7) * 100} views`,
+        duration: "0:45",
+        location: p.location || "臺北市",
+        tags: p.lifestyle.slice(0, 3),
+        subtitles: [
+          p.tagline,
+          cleanBio.length > 50 ? cleanBio.slice(0, 50) + "..." : cleanBio,
+          matchRequirement.length > 50 ? matchRequirement.slice(0, 50) : matchRequirement
+        ],
+        comments: [
+          { user: "林雅筑", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100", text: "很有生活質感與深度的紳士" },
+          { user: "陳詩涵", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100", text: "期待與您的靈魂對談" }
+        ]
+      };
+    });
+
+    // 每次載入時重新隨機打亂，最多取 4 個展示
+    return [...mapped].sort(() => 0.5 - Math.random()).slice(0, 4);
+  }, [profiles]);
+
+  // 監聽動態 stories 變化，初始化或重置 activeVlog
+  React.useEffect(() => {
+    if (dynamicVlogStories.length > 0) {
+      const exists = dynamicVlogStories.some(v => v.id === activeVlog.id);
+      if (!exists) {
+        setActiveVlog(dynamicVlogStories[0]);
+      }
+    }
+  }, [dynamicVlogStories]);
+
   const getSubtitleIndex = (vlog: VlogStory, progressVal: number): number => {
     const total = vlog.subtitles.length;
     if (total === 0) return 0;
@@ -278,16 +333,16 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
     const interval = setInterval(() => {
       setVlogProgress((prev) => {
         if (prev >= 100) {
-          const currentIndex = vlogStories.findIndex(v => v.id === activeVlog.id);
-          const nextIndex = (currentIndex + 1) % vlogStories.length;
-          setActiveVlog(vlogStories[nextIndex]);
+          const currentIndex = dynamicVlogStories.findIndex(v => v.id === activeVlog.id);
+          const nextIndex = (currentIndex + 1) % dynamicVlogStories.length;
+          setActiveVlog(dynamicVlogStories[nextIndex]);
           return 0;
         }
         return prev + 1;
       });
     }, 150);
     return () => clearInterval(interval);
-  }, [activeVlog]);
+  }, [activeVlog, dynamicVlogStories]);
 
   // Real-time ticking online/matched statistics
   const [onlineCount, setOnlineCount] = useState(324);
@@ -1165,7 +1220,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               isMuted={isMuted}
               setIsMuted={setIsMuted}
               bgSubtitleIndex={bgSubtitleIndex}
-              vlogStories={vlogStories}
+              vlogStories={dynamicVlogStories}
               getSubtitleIndex={getSubtitleIndex}
               scrollToSection={scrollToSection}
             />

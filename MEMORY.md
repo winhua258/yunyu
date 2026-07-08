@@ -1491,3 +1491,23 @@
   - 手動滾動測試：分界線已完全消失，過渡效果優雅自然。
   - `npm run build` -> 生產打包建置成功。
 - **是否已經收斂**：是。
+
+---
+
+## 2026-07-08 落地頁 CinemaVlog 排除角色動態隨機展示優化記錄
+
+- **本輪目標**：將落地頁「階段 02 / CinemaVlog」特寫展示的 4 位紳士故事，改為由後台主控端中設為「不開啟配對（隱藏/排除）」的 5 位真實紳士角色（蔡俊宏、許冠宇、黃博文、謝承翰、楊宗翰）中動態隨機選取與展示，提升平台的探秘感與可信度。
+- **發現的問題**：改版前 CinemaVlog 的角色固定為 4 位已公開的普通男賓（葉家銘、吴建铭、陳界衡、鄭永昌），這與主控端最新的配對公開設置狀態冗餘重疊，且未展現隨機驚喜的動態特效。
+- **是否真實可複現**：是（重整網頁可見 CinemaVlog 中展示的人物永遠固定不變）。
+- **複現命令或驗證方式**：手動重整首頁。
+- **修改內容**：
+  - **`VerificationScreen.tsx`**：
+    - 引入 `useMemo`，設計 `dynamicVlogStories` 過濾邏輯。從 profiles 字典中篩選出 `isAcceptingMatches === false`（不接受匹配/未公開）的真實成員。
+    - 自適應地將 `Profile` 資料結構轉換為 high-entropy 的 `VlogStory` 特寫故事模型（自動解析 tagline 第一段作為 role 標題、自動擷取 bio 第一段作為 subtitles 對白、自動截取 lifestyle 作為標籤）。
+    - 每次進入首頁時進行穩定隨機洗牌打亂（穩定隨機與 shuffle 機制結合），並最多選出 4 位展示。
+    - 若 profiles 數據加載未完成或為空，安全降級使用靜態的 `vlogStories` fallback 預設列表。
+    - 新增 `useEffect` 對 `dynamicVlogStories` 進行掛載同步，並將 auto-play timer 及 CinemaVlog 的遍歷 stories 替換為 `dynamicVlogStories`，確保影片輪播及動態進度條無縫運行。
+- **驗證命令 and 結果**：
+  - `npm run build` -> Vite 生產建置順利打包，打包零錯誤。
+  - 重整頁面驗證：CinemaVlog 中展示的人物變更為蔡俊宏、許冠宇、黃博文、謝承翰、楊宗翰等角色，且順序隨機洗牌，輪播影片和進度正常切換。
+- **是否已經收斂**：是。
