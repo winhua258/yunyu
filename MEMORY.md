@@ -1387,3 +1387,29 @@
   - 紳士密碼：`await refreshData(adminCodes[0])` — 以當前管理密碼重新同步，Context 中的 `gentlemanEditCodes` 立即替換為新密碼
 - **效果**：舊密碼從記憶體中被徹底清除，後續所有 sync 使用正確的新密碼鑒權。
 - **部署**：Vite 打包成功，已 Push 至遠端（Commit: `58890c9`）。
+
+## 2026-07-08 交友卡片展示優化、解鎖姓名修復與面板滾動優化
+
+- **本輪目標**：優化名媛面板卡片展示，修復解鎖後對話框姓名依然遮蔽的 Bug，優化「查看契合紳士」按鈕動效，並徹底解決紳士聊天面板無限向下延展的排版 Bug。
+- **發現的問題**：
+  1. 名媛面板過濾掉了未開啟配對（`isAcceptingMatches === false`）的紳士資料卡，導致這些成員完全無法在名媛面板顯示。
+  2. 即使名媛解鎖了紳士卡片，但在對話框（`UnlockProfileModal`）的標題與首條訊息中，紳士的姓名依然是遮蔽脫敏後的名稱（例如「陳○翔」）。
+  3. 「查看契合紳士」按鈕視覺吸引力不足，需要呼吸燈或高亮效果來引導點擊。
+  4. 紳士聊天面板（`GentlemanDashboard`）在聊天記錄增加時，由於 flexbox 佈局的 nested height 溢出限制缺失，導致聊天面板整個容器無限向下拉長，底部的輸入框被擠到視窗外。
+- **是否真實可複現**：是，在名媛面板觀察，會發現未開啟配對的紳士消失；答題解鎖後進入 `UnlockProfileModal` 對話，姓名依舊是「○」號遮蔽；紳士登入後輸入大量對話，視窗會隨著對話增多而向下拉長，沒有內部滾動條。
+- **複現命令或驗證方式**：手動操作交友解鎖流程與對話回覆流程。
+- **修改內容**：
+  - `VerificationScreen.tsx`：
+    - 移成了 `gentlemanList` 中 `(p.isAcceptingMatches !== false)` 的過濾，讓不可配對紳士正常顯示。
+    - 卡片渲染中，若 `p.isAcceptingMatches === false`，加入紅色的「暫不配對」標籤。
+    - 點擊「暫不配對」且未解鎖的卡片時，呼叫 `showToast` 提示「此紳士目前關閉配對功能，暫不接受新配對」。
+    - 為「查看契合紳士」按鈕新增 `animate-pulse-scale` 呼吸燈特效。
+  - `UnlockProfileModal.tsx`：
+    - 透過 `useAuth()` 獲取當前登入名媛的資料，檢查該紳士是否已與其配對或被手動解鎖（`isUnlocked`）。
+    - 對於已解鎖的紳士，在對話框頂部顯示其真實全名而非 `maskedName`，首條對話也同步使用全名。
+  - `GentlemanDashboard.tsx` 與 `App.tsx`：
+    - 為 `main-container`、`view-gentleman-dashboard`、`GentlemanDashboard` 根元素、右側聊天面板與 Edit 面板加上 `min-h-0` 或 `flex-1` 屬性。
+    - 將聊天訊息容器由 `flex-grow` 改為 `flex-1 overflow-y-auto min-h-0`，限制其最大高度並啟用內部滾動，解決了聊天面板無限往下延展的排版 Bug。
+- **驗證命令和結果**：
+  - 執行 `npm run build`：Vite 生產建置順利完成，打包無報錯。
+- **是否已經收斂**：是。
