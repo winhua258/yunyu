@@ -6,6 +6,7 @@ import VerificationScreen from "./components/VerificationScreen";
 import ProfileScreen from "./components/ProfileScreen";
 import SoulMatchQuiz from "./components/SoulMatchQuiz";
 import AdminEditScreen from "./components/AdminEditScreen";
+import UnlockProfileModal from "./components/UnlockProfileModal";
 import { useAuth } from "./components/AuthContext";
 import { useData } from "./components/DataContext";
 import { getOrCreateDeviceId, trackVisit } from "./data";
@@ -17,6 +18,9 @@ export default function App() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [hasInitializedLady, setHasInitializedLady] = useState(false);
+  // 解鎖資料卡彈窗：AI 測驗完成後先顯示彈窗，確認後才進入完整紳士頁
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockModalCode, setUnlockModalCode] = useState<string | null>(null);
 
   useEffect(() => {
     // 記錄每次進入網站的訪客軌跡
@@ -179,8 +183,28 @@ export default function App() {
           <SoulMatchQuiz 
             onClose={() => setShowQuiz(false)} 
             onMatchComplete={(code) => {
-              setVerifiedCode(code);
               setShowQuiz(false);
+              // AI 測驗完成後先顯示解鎖資料卡彈窗，而非直接跳轉
+              setUnlockModalCode(code);
+              setShowUnlockModal(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Unlock Profile Modal — 顯示在 Quiz 完成後 */}
+      <AnimatePresence>
+        {showUnlockModal && unlockModalCode && profiles[unlockModalCode] && (
+          <UnlockProfileModal
+            profile={profiles[unlockModalCode]}
+            onClose={() => {
+              setShowUnlockModal(false);
+              setUnlockModalCode(null);
+            }}
+            onViewFull={() => {
+              setShowUnlockModal(false);
+              setVerifiedCode(unlockModalCode);
+              setUnlockModalCode(null);
             }}
           />
         )}

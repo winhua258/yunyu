@@ -28,7 +28,8 @@ import {
   ShieldCheck,
   Smartphone,
   Globe,
-  Edit2
+  Edit2,
+  Wand2
 } from "lucide-react";
 import { Profile, PersonalityMetrics, LadyProfile } from "../types";
 import { 
@@ -105,6 +106,96 @@ function getIpRegion(ip: string | undefined): string {
     "fd00:": "本地開發 (Unique-Local IPv6)"
   };
   return Object.entries(regionMap).find(([prefix]) => ip.startsWith(prefix))?.[1] ?? "其他地區";
+}
+
+// 台灣高端男賓資料自動生成器（37-48 歲，符合台灣地區風格）
+function generateTaiwanGentlemanData(): { profile: Omit<Profile, "code" | "contactLineUrl" | "imageUrl" | "imageUrls">; metrics: PersonalityMetrics } {
+  const pick = (arr: any[]): any => arr[Math.floor(Math.random() * arr.length)];
+  const pickN = (arr: any[], n: number): any[] => [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+  const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const surnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊", "許", "鄭", "謝", "洪", "曾"];
+  const givenNames = ["家銘", "建廷", "永昌", "界衡", "俊宏", "志偉", "明哲", "博文", "啟峰", "國豪",
+                      "育仁", "政翰", "世傑", "宗翰", "冠宇", "文豪", "浩然", "彥廷", "承翰", "振宇"];
+  const cities = ["臺北市", "新北市", "桃園市", "新竹市", "臺中市", "臺南市", "高雄市"];
+
+  type Profession = { title: string; company: string; taglineTemplate: string; bioTemplate: string };
+  const professions: Profession[] = [
+    {
+      title: "科技公司創辦人",
+      company: "智鴻科技",
+      taglineTemplate: (n: string, c: string) => `${c}${n}創辦人，以技術驅動創新，在商業藍圖與生活品味之間，追求最完整的人生平衡。`,
+      bioTemplate: (n: string) => `你好，我是${n}。目前擔任科技新創公司的創辦人，日常在雲端架構與商業策略中穿梭。高壓的工作節奏讓我更懂得珍惜生活的留白。\n\n工作之外，我喜歡透過健身恢復精力，也對精品咖啡有著極度的熱忱，週末常流連各大獨立咖啡館。偶爾安排一趟說走就走的海島旅行，在藍天與海風中重新充電。\n\n我相信，好的伴侶不是彼此束縛，而是能互相激發，讓彼此都成為更好的自己。如果妳也喜歡享受生活的質感、對未來有所期待，我很期待與妳共同書寫屬於我們的故事。`,
+    },
+    {
+      title: "投資總監",
+      company: "鼎盛資本",
+      taglineTemplate: (n: string, c: string) => `${c}${n}投資總監，以數字讀懂市場，以熱忱感受生活，在理性與感性之間尋找最美的平衡點。`,
+      bioTemplate: (n: string) => `你好，我是${n}。在資本市場工作多年，看過許多繁榮與起伏，也因此更加珍惜眼前真實的溫暖。\n\n除了工作，我是個非常熱愛生活的人——閱讀讓我保持思維的深度，紅酒讓我學會細品時間的厚度，旅行讓我不斷重新定義何謂美好。\n\n我期待遇見一個知性又有生命力的妳，能在工作上各自閃耀，也能在生活中互相陪伴，一起在全球最美的角落留下我們的足跡。`,
+    },
+    {
+      title: "建設公司董事",
+      company: "永昌建設",
+      taglineTemplate: (n: string, c: string) => `${c}${n}建設公司董事，深耕不動產與城市建築，以匠人精神對待工作，以紳士品味對待生活。`,
+      bioTemplate: (n: string) => `你好，我是${n}。長期投身不動產與建設行業，每一棟建築對我來說不只是磚瓦，而是承載著無數家庭夢想的空間。\n\n我喜歡收藏當代藝術、品鑑各國精選紅酒，也熱衷於探索城市中的創意餐廳與精品酒店。旅行是我調劑身心的方式，也是我觀察世界建築美學的窗口。\n\n我希望能遇見一個溫柔而獨立、懂得生活美學的妳，讓我們一起打造一個充滿品味與溫度的家。`,
+    },
+    {
+      title: "醫療集團院長",
+      company: "昱誠醫療",
+      taglineTemplate: (n: string, c: string) => `${c}${n}院長，以醫者的嚴謹對待生命，以藝術家的眼光欣賞世界，在忙碌與安靜中都能找到自己的節奏。`,
+      bioTemplate: (n: string) => `你好，我是${n}。投入醫療領域近二十年，見過生命的脆弱，也深刻理解陪伴的珍貴。\n\n工作之餘，我熱愛古典音樂與室內樂演奏，也喜歡騎自行車探索城市的各個角落。我的廚藝其實不差，喜歡在假日親手為重要的人料理一頓精心的晚餐。\n\n我期待遇見一個能讓我靜下來、令我感到安心的妳。不需要多麼轟轟烈烈，我更嚮往那種每天都想見到彼此、平淡而幸福的相處方式。`,
+    },
+    {
+      title: "企業策略顧問",
+      company: "宏遠顧問",
+      taglineTemplate: (n: string, c: string) => `${c}${n}企業策略顧問，協助各大企業制定長遠布局，私底下是個熱愛生活藝術與人文旅行的深度探索者。`,
+      bioTemplate: (n: string) => `你好，我是${n}。長期擔任企業策略顧問，常常需要在複雜的商業環境中快速找到核心問題並提出解方，這讓我培養出敏銳的洞察力與溝通能力。\n\n我熱愛旅行，不是那種走馬看花的觀光客，而是會提前鑽研當地文化、歷史與美食的深度旅人。業餘時間我也在學習攝影，透過鏡頭記錄生活中那些被人遺忘的美麗瞬間。\n\n我希望能遇見一個有自己想法、懂得享受人生的妳，讓我們的對話永遠有新的火花，讓我們的生活永遠有新的驚喜。`,
+    },
+  ] as any;
+
+  const lifestyleTags = [
+    "精品咖啡", "品酒", "健身", "高爾夫", "深度旅行", "閱讀", "藝術收藏", "美食探店",
+    "古典音樂", "戶外登山", "水上運動", "攝影", "自行車", "料理", "室內設計", "跑步",
+  ];
+
+  const name = pick(surnames) + pick(givenNames);
+  const city = pick(cities);
+  const age = rand(37, 48);
+  const prof = pick(professions);
+  const lifestyle = pickN(lifestyleTags, rand(4, 6));
+
+  const tagline = (prof.taglineTemplate as any)(name, prof.company);
+  const bio = (prof.bioTemplate as any)(name);
+  const cardDetail = `希望能遇見：一個對生活充滿熱忱、知性優雅、讓我忍不住想多了解的妳。`;
+  const idealMatch = `期待遇見一個有自己的人生規劃，同時也願意和我共同創造美好回憶的伴侶。`;
+
+  const metrics: PersonalityMetrics = {
+    Rationality: rand(45, 85),
+    Spontaneity: rand(40, 75),
+    Adventure: rand(45, 80),
+    Hedonism: rand(55, 90),
+    Dominance: rand(40, 70),
+    Extroversion: rand(50, 85),
+    SecurityNeed: rand(45, 75),
+    EmotionalDependency: rand(40, 70),
+    GrowthMindset: rand(60, 90),
+    FamilyOrientation: rand(55, 85),
+    ConsumptionTendency: rand(60, 90),
+    FinancialMaturity: rand(65, 95),
+    CommunicationEfficiency: rand(55, 85),
+    RitualNeed: rand(50, 80),
+    QualityOfLife: rand(65, 95),
+    FreedomNeed: rand(45, 75),
+    Responsibility: rand(60, 90),
+    DecisionSpeed: rand(55, 85),
+    ConflictResolution: rand(50, 80),
+    LongTermCommitment: rand(60, 90),
+  };
+
+  return {
+    profile: { name, age, location: city, tagline, bio, lifestyle, cardDetail, idealMatch },
+    metrics,
+  };
 }
 
 interface AdminEditScreenProps {
@@ -1075,6 +1166,37 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                   {!editData.lifestyleStr.trim() && <span className="text-[9px] text-brand-light italic">無標籤</span>}
                 </div>
               </div>
+
+              {/* 自動生成按鈕 */}
+              <button
+                id="btn-admin-auto-generate"
+                type="button"
+                onClick={() => {
+                  const { profile: genProfile, metrics: genMetrics } = generateTaiwanGentlemanData();
+                  setEditData(prev => ({
+                    ...prev,
+                    name: genProfile.name,
+                    age: genProfile.age,
+                    location: genProfile.location,
+                    tagline: genProfile.tagline,
+                    bio: genProfile.bio,
+                    lifestyle: genProfile.lifestyle,
+                    lifestyleStr: genProfile.lifestyle.join(", "),
+                    cardDetail: genProfile.cardDetail,
+                    idealMatch: genProfile.idealMatch,
+                    imageUrl: "",
+                    imageUrls: [],
+                    contactLineUrl: "",
+                  }));
+                  setCurrentMetrics(genMetrics);
+                  setSuccessMessage("✨ 已自動生成台灣男賓資料，請確認後手動儲存。");
+                  setTimeout(() => setSuccessMessage(""), 4000);
+                }}
+                className="w-full py-3 px-4 bg-gradient-to-r from-brand-olive to-[#5a5a3a] hover:from-[#4d4d36] hover:to-brand-olive text-white text-xs font-bold tracking-widest uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-99 shadow-md"
+              >
+                <Wand2 className="w-4 h-4" />
+                <span>✨ 自動生成台灣男賓資料</span>
+              </button>
             </div>
 
             {/* Quick Actions Card */}

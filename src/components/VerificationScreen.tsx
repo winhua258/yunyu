@@ -788,13 +788,18 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                           <img
                             src={p.imageUrl}
                             alt=""
-                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isUnlocked ? "" : "blur-md opacity-40"
+                            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isUnlocked ? "" : "blur-sm opacity-55"
                               }`}
                           />
                           {!isUnlocked && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <Lock className="w-6 h-6 text-brand-olive/60" />
-                            </div>
+                            <>
+                              {/* 漸層遮罩：增加神秘感 */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/60 via-brand-dark/10 to-transparent pointer-events-none" />
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                                <Lock className="w-5 h-5 text-white/80 drop-shadow-lg" />
+                                <span className="text-[9px] text-white/70 font-bold tracking-wider">點擊解鎖</span>
+                              </div>
+                            </>
                           )}
                         </div>
 
