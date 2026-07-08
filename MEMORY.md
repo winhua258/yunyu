@@ -1083,5 +1083,5 @@
     - **IP 地區列**：IP 下方以小字顯示偵測到的國家地區 (如 `台灣（中華電信 IPv6）`)。
     - **行內點擊編輯備註**：開發 `IpNoteCell` 組件，點擊備註文字直接切換為輸入框（onBlur / Enter 保存，Escape 取消），無需額外彈窗，無縫儲存至 MongoDB 資料庫。
 - **驗證命令 and 結果**：執行 `npm run build` 編譯完成；重啟 PM2 服務；編寫並執行 integration script `test_ip_metadata.js`，全部測試用例順利通過。
-- **提交哈希**：待提交後更新。
+- **提交哈希**：f275f981907ca56c1afde82728a3591ef38d5309
 - **是否已經收斂**：是。
