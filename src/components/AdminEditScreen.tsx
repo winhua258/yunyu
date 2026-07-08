@@ -1237,17 +1237,52 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
               </button>
             </div>
 
-            {/* Admin Security Code Card */}
+            {/* 紳士編輯與安全密碼管理 */}
             <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-brand-border/60 space-y-4">
               <h3 className="font-serif text-sm font-bold text-brand-dark tracking-wider uppercase border-b border-brand-border pb-3 flex items-center gap-2">
                 <Lock className="w-4 h-4 text-brand-olive" />
-                <span>變更管理員登入編號</span>
+                <span>紳士編輯與安全密碼管理</span>
               </h3>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <p className="text-[10px] text-brand-muted leading-relaxed">
-                  更換此編號後，後續即可使用新編號登入本運營主控台（原預設之 admin、8888、9999 仍可作為備用密碼保留）。
+                  此處設定的密碼為「紳士登入卡片」後，點擊「編輯資料與回覆消息」時所需輸入的安全驗證密碼（系統預設 `admin` 仍可作為備用登入與編輯密碼）。
                 </p>
+
+                {/* 密碼清單展示 */}
+                <div className="space-y-2">
+                  <span className="text-[9px] font-bold text-brand-light uppercase tracking-wider block">當前授權之編輯密碼：</span>
+                  <div className="flex flex-wrap gap-2">
+                    {adminCodes.length === 0 ? (
+                      <span className="text-[10px] italic text-brand-light">無自訂密碼</span>
+                    ) : (
+                      adminCodes.map((code) => (
+                        <div key={code} className="flex items-center gap-1 bg-brand-beige border border-brand-border px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-brand-olive shadow-sm">
+                          <span>{code}</span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (adminCodes.length <= 1) {
+                                setAdminCodeSuccess("錯誤：系統必須保留至少一組安全密碼！");
+                                return;
+                              }
+                              const updatedCodes = adminCodes.filter(c => c !== code);
+                              const result = await handleSync(profiles, allMetrics, updatedCodes);
+                              if (result && result.success) {
+                                setAdminCodeSuccess(`已刪除授權密碼「${code}」`);
+                                setTimeout(() => setAdminCodeSuccess(""), 3000);
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700 cursor-pointer pl-1 text-[10px] flex items-center justify-center"
+                            title="刪除此密碼"
+                          >
+                            <X className="w-2.5 h-2.5 shrink-0" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
                 
                 <div className="flex gap-2">
                   <input
@@ -1257,15 +1292,38 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       setAdminCodeInput(e.target.value);
                       setAdminCodeSuccess("");
                     }}
-                    placeholder="請輸入新管理員編號"
+                    placeholder="請輸入新安全密碼..."
                     className="flex-1 min-w-0 bg-brand-beige/40 border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive transition-all"
                   />
                   <button
                     type="button"
-                    onClick={handleUpdateAdminCode}
+                    onClick={async () => {
+                      const cleanInput = adminCodeInput.trim();
+                      if (!cleanInput) {
+                        setAdminCodeSuccess("請輸入有效的密碼");
+                        return;
+                      }
+                      if (adminCodes.includes(cleanInput)) {
+                        setAdminCodeSuccess("錯誤：此密碼已在授權列表中");
+                        return;
+                      }
+                      if (profiles[cleanInput]) {
+                        setAdminCodeSuccess(`錯誤：此密碼「${cleanInput}」與已存在的紳士編號重複！`);
+                        return;
+                      }
+                      const updatedCodes = [...adminCodes, cleanInput];
+                      const result = await handleSync(profiles, allMetrics, updatedCodes);
+                      if (result && result.success) {
+                        setAdminCodeInput("");
+                        setAdminCodeSuccess(`已成功新增安全授權密碼「${cleanInput}」！`);
+                        setTimeout(() => setAdminCodeSuccess(""), 4000);
+                      } else {
+                        setAdminCodeSuccess(`錯誤：${result?.message}`);
+                      }
+                    }}
                     className="py-2 px-4 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold rounded-xl transition-all shadow-sm hover:shadow active:scale-97 cursor-pointer shrink-0"
                   >
-                    更新
+                    新增
                   </button>
                 </div>
                 
