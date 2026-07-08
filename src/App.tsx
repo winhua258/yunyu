@@ -77,7 +77,13 @@ export default function App() {
       setVerifiedCode(null); // 管理員登入不顯示個人檔案
       if (loggedInLadyCode) logout();
     } else {
-      setVerifiedCode(code);
+      // 如果是已登入的麗人查看配對的紳士，彈出對話解鎖彈窗以進行互動解鎖
+      if (loggedInLadyCode && ladyProfiles[loggedInLadyCode]?.matchedGentlemanCode === code) {
+        setUnlockModalCode(code);
+        setShowUnlockModal(true);
+      } else {
+        setVerifiedCode(code);
+      }
       // 麗人查看或解鎖紳士時，不執行自動登出，保留其麗人登入狀態
     }
   };
