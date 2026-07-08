@@ -271,7 +271,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         if (parts.length >= 2) {
           const company = parts[0].trim();
           const jobTitle = parts[1].split(/[，。]/)[0].trim();
-          roleStr = `${jobTitle} // ${company}`;
+          if (company) {
+            roleStr = `${jobTitle} // ${company}`;
+          } else {
+            roleStr = jobTitle;
+          }
         }
       }
 
