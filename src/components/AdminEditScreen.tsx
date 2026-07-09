@@ -331,6 +331,12 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
   const [ladyEditName, setLadyEditName] = useState("");
   const [ladyEditMatchedCode, setLadyEditMatchedCode] = useState("");
   const [ladyEditUnlockedCodes, setLadyEditUnlockedCodes] = useState<string[]>([]);
+  const [ladyEditMatchCounts, setLadyEditMatchCounts] = useState(0);
+  const [ladyEditIdVerified, setLadyEditIdVerified] = useState("none");
+  const [ladyEditIdFileName, setLadyEditIdFileName] = useState("");
+  const [ladyEditOccupationVerified, setLadyEditOccupationVerified] = useState("none");
+  const [ladyEditOccupationFileName, setLadyEditOccupationFileName] = useState("");
+  const [ladyEditVerifyOccupation, setLadyEditVerifyOccupation] = useState("");
   const [clearUnlockedOnDowngrade, setClearUnlockedOnDowngrade] = useState(true);
   const [ladyEditSaving, setLadyEditSaving] = useState(false);
   const [ladyEditMsg, setLadyEditMsg] = useState("");
@@ -436,6 +442,12 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
     setLadyEditName(lady.name || "");
     setLadyEditMatchedCode(lady.matchedGentlemanCode || "");
     setLadyEditUnlockedCodes(lady.unlockedGentlemanCodes || []);
+    setLadyEditMatchCounts(lady.matchCounts || 0);
+    setLadyEditIdVerified(lady.idVerified || "none");
+    setLadyEditIdFileName(lady.idVerifyFileName || "");
+    setLadyEditOccupationVerified(lady.occupationVerified || "none");
+    setLadyEditOccupationFileName(lady.occupationVerifyFileName || "");
+    setLadyEditVerifyOccupation(lady.verifyOccupation || "");
     setClearUnlockedOnDowngrade(true);
     setLadyEditMsg("");
   };
@@ -458,7 +470,13 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
           notes: ladyEditNotes,
           name: ladyEditName,
           matchedGentlemanCode: ladyEditMatchedCode || null,
-          unlockedGentlemanCodes
+          unlockedGentlemanCodes,
+          matchCounts: ladyEditMatchCounts,
+          idVerified: ladyEditIdVerified,
+          idVerifyFileName: ladyEditIdFileName,
+          occupationVerified: ladyEditOccupationVerified,
+          occupationVerifyFileName: ladyEditOccupationFileName,
+          verifyOccupation: ladyEditVerifyOccupation
         },
         adminCodes[0]
       );
@@ -2870,6 +2888,83 @@ export default function AdminEditScreen({ onExit }: AdminEditScreenProps) {
                       </label>
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1.5">剩餘配對次數 (可用於解鎖/測驗)</label>
+                  <input
+                    type="number"
+                    value={ladyEditMatchCounts}
+                    onChange={e => setLadyEditMatchCounts(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-full bg-white border border-brand-border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-olive/20 focus:border-brand-olive"
+                  />
+                </div>
+
+                <div className="bg-brand-border/10 p-3 rounded-2xl border border-brand-border/30 space-y-3">
+                  <span className="text-[10px] font-bold text-brand-olive tracking-widest block uppercase">
+                    📁 麗人實名認證附件審核
+                  </span>
+                  
+                  {/* 身分認證 */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-brand-dark">身分證件認證</span>
+                      {ladyEditIdFileName && (
+                        <span className="text-[9px] text-[#888] bg-white px-2 py-0.5 rounded border">
+                          檔名: {ladyEditIdFileName}
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={ladyEditIdVerified}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setLadyEditIdVerified(val);
+                        if (val === "approved" && editLady.idVerified !== "approved") {
+                          setLadyEditMatchCounts(prev => prev + 3);
+                        }
+                      }}
+                      className="w-full bg-white border border-brand-border rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer"
+                    >
+                      <option value="none">未提交 (none)</option>
+                      <option value="pending">待審核 (pending)</option>
+                      <option value="approved">已批准 (approved) (+3配對)</option>
+                      <option value="rejected">已拒絕 (rejected)</option>
+                    </select>
+                  </div>
+
+                  {/* 職業認證 */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-brand-dark">高端職業認證</span>
+                      {ladyEditOccupationFileName && (
+                        <span className="text-[9px] text-[#888] bg-white px-2 py-0.5 rounded border">
+                          檔名: {ladyEditOccupationFileName}
+                        </span>
+                      )}
+                    </div>
+                    {ladyEditVerifyOccupation && (
+                      <div className="text-[10px] text-brand-olive font-bold">
+                        填寫職業: {ladyEditVerifyOccupation}
+                      </div>
+                    )}
+                    <select
+                      value={ladyEditOccupationVerified}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setLadyEditOccupationVerified(val);
+                        if (val === "approved" && editLady.occupationVerified !== "approved") {
+                          setLadyEditMatchCounts(prev => prev + 3);
+                        }
+                      }}
+                      className="w-full bg-white border border-brand-border rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer"
+                    >
+                      <option value="none">未提交 (none)</option>
+                      <option value="pending">待審核 (pending)</option>
+                      <option value="approved">已批准 (approved) (+3配對)</option>
+                      <option value="rejected">已拒絕 (rejected)</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>

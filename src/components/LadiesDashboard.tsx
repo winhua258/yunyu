@@ -18,6 +18,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { Profile } from "../types";
+import { useAuth } from "./AuthContext";
 
 interface LadiesDashboardProps {
   profiles: Record<string, Profile>;
@@ -25,25 +26,23 @@ interface LadiesDashboardProps {
   setMatchCounts: (counts: number | ((prev: number) => number)) => void;
   unlockedCodes: string[];
   setUnlockedCodes: (codes: string[] | ((prev: string[]) => string[])) => void;
-  isLadyVerified: boolean;
-  setIsLadyVerified: (verified: boolean) => void;
   onViewProfile: (code: string) => void;
   onStartQuiz: () => void;
   onExit?: () => void;
 }
-
 export default function LadiesDashboard({
   profiles,
   matchCounts,
   setMatchCounts,
   unlockedCodes,
   setUnlockedCodes,
-  isLadyVerified,
-  setIsLadyVerified,
   onViewProfile,
   onStartQuiz,
   onExit
 }: LadiesDashboardProps) {
+  const { loggedInLadyCode, ladyProfiles, simulateAssets } = useAuth();
+  const lady = loggedInLadyCode ? ladyProfiles[loggedInLadyCode] : null;
+
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -117,23 +116,43 @@ export default function LadiesDashboard({
   };
 
   // Run mock high-end verification scan
-  const submitVerification = () => {
+  const submitVerification = async () => {
     if (!verifyFileName) return;
     setVerifyStep("uploading");
     
     let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
+    const interval = setInterval(async () => {
+      progress += 20;
       if (progress >= 100) {
         clearInterval(interval);
-        setVerifyStep("success");
-        setIsLadyVerified(true);
-        setMatchCounts((prev) => prev + 3);
-        // Persist
-        localStorage.setItem("yuanyu_lady_verified", "true");
-        localStorage.setItem("yuanyu_match_counts", String(matchCounts + 3));
+        try {
+          const extraFields: any = {};
+          if (verifyType === "id") {
+            extraFields.idVerified = "pending";
+            extraFields.idVerifyFileName = verifyFileName;
+          } else {
+            extraFields.occupationVerified = "pending";
+            extraFields.occupationVerifyFileName = verifyFileName;
+            extraFields.verifyOccupation = verifyOccupation;
+          }
+          
+          // Set overall asset status to pending as well
+          await simulateAssets(
+            lady?.membershipLevel || "free",
+            "pending",
+            lady?.unlockedGentlemanCodes || [],
+            lady?.quizTaken || false,
+            lady?.matchedGentlemanCode || null,
+            extraFields
+          );
+          setVerifyStep("success");
+        } catch (err) {
+          console.error("Failed to submit verification:", err);
+          showToast("上傳失敗，請稍後再試", "error");
+          setVerifyStep("idle");
+        }
       }
-    }, 200);
+    }, 150);
   };
 
   // Run high-tech matching algorithm to unlock a gentleman
@@ -471,30 +490,69 @@ export default function LadiesDashboard({
             </div>
             
             <p className="text-xs text-white/60 leading-relaxed">
-              上傳您的實名證明文件或高端職業認證（例如：執業執照、模特卡、外商企業高階經理人等），通過 AI 安全審核可直接<strong>免費獲得 3 次配對次數</strong>！
+              上傳您的實名證明文件或高端職業認證（例如：執業執照、名片影本），主控審核通過後可<strong>獲得 3 次配對次數</strong>！
             </p>
 
-            {isLadyVerified ? (
-              <div className="bg-brand-accent/10 border border-brand-accent/20 p-4 rounded-2xl flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-brand-accent shrink-0 mt-0.5" />
-                <div className="text-xs text-brand-accent font-bold">
-                  <span>您已完成實名麗人認證</span>
-                  <p className="text-[10px] font-normal text-white/50 mt-1">系統已對發放過 3 次特許配對特權。</p>
-                </div>
+            {/* 1. 身分認證項目 */}
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white">身分認證 (ID Photo)</span>
+                {lady?.idVerified === "approved" ? (
+                  <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">已驗證</span>
+                ) : lady?.idVerified === "pending" ? (
+                  <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">審核中</span>
+                ) : lady?.idVerified === "rejected" ? (
+                  <span className="text-[10px] text-rose-500 font-bold bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20">被拒絕</span>
+                ) : (
+                  <span className="text-[10px] text-white/40 font-bold">未認證</span>
+                )}
               </div>
-            ) : (
-              <button
-                id="btn-show-lady-verify"
-                onClick={() => {
-                  setVerifyStep("idle");
-                  setVerifyFileName("");
-                  setShowVerifyModal(true);
-                }}
-                className="w-full py-3 bg-brand-olive hover:bg-[#4d4d36] text-white text-xs font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer text-center block shadow-md"
-              >
-                立即提交認證 (+3 次配對)
-              </button>
-            )}
+              {lady?.idVerified !== "approved" && lady?.idVerified !== "pending" && (
+                <button
+                  id="btn-show-lady-verify-id"
+                  onClick={() => {
+                    setVerifyType("id");
+                    setVerifyStep("idle");
+                    setVerifyFileName("");
+                    setShowVerifyModal(true);
+                  }}
+                  className="w-full py-2 bg-brand-olive hover:bg-[#4d4d36] text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer text-center block"
+                >
+                  立即提交身分證件 (+3)
+                </button>
+              )}
+            </div>
+
+            {/* 2. 職業認證項目 */}
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white">高階職業認證 (Occupation)</span>
+                {lady?.occupationVerified === "approved" ? (
+                  <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">已驗證</span>
+                ) : lady?.occupationVerified === "pending" ? (
+                  <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">審核中</span>
+                ) : lady?.occupationVerified === "rejected" ? (
+                  <span className="text-[10px] text-rose-500 font-bold bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20">被拒絕</span>
+                ) : (
+                  <span className="text-[10px] text-white/40 font-bold">未認證</span>
+                )}
+              </div>
+              {lady?.occupationVerified !== "approved" && lady?.occupationVerified !== "pending" && (
+                <button
+                  id="btn-show-lady-verify-job"
+                  onClick={() => {
+                    setVerifyType("occupation");
+                    setVerifyStep("idle");
+                    setVerifyFileName("");
+                    setVerifyOccupation("");
+                    setShowVerifyModal(true);
+                  }}
+                  className="w-full py-2 bg-brand-olive hover:bg-[#4d4d36] text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer text-center block"
+                >
+                  立即提交職業證明 (+3)
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Premium Quiz Promotion */}
@@ -653,10 +711,11 @@ export default function LadiesDashboard({
                       <CheckCircle className="w-6 h-6" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className="font-serif text-lg font-bold text-white">認證核准！獲得特許配對特權</h4>
+                      <h4 className="font-serif text-lg font-bold text-white">認證資料已提交！</h4>
                       <p className="text-xs text-white/60 leading-relaxed max-w-xs mx-auto">
-                        恭喜您成功開通「尊榮麗人實名標章」！
-                        系統已額外為您增加 <strong className="text-brand-accent">3 次配對次數</strong>，祝您在緣友收穫美好情誼。
+                        您的認證文件已加密送出。主控台管理員將在 24 小時內完成真人審核。
+                        <br />
+                        審核通過後，系統將會自動為您增加 <strong className="text-brand-accent">3 次配對次數</strong>，感謝您的配合。
                       </p>
                     </div>
                     <button
@@ -664,7 +723,7 @@ export default function LadiesDashboard({
                       onClick={() => setShowVerifyModal(false)}
                       className="w-full py-3 bg-brand-olive text-white rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer"
                     >
-                      開始配對
+                      關閉視窗
                     </button>
                   </div>
                 )}

@@ -50,6 +50,11 @@ export interface LadyProfile {
   quizMetrics: PersonalityMetrics;
   membershipLevel?: string;
   assetVerified?: string;
+  idVerified?: string;
+  idVerifyFileName?: string;
+  occupationVerified?: string;
+  occupationVerifyFileName?: string;
+  verifyOccupation?: string;
   unlockedGentlemanCodes?: string[];
   quizAnswers?: number[];
   deviceId?: string;

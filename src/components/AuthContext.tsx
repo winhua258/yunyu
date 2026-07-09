@@ -9,7 +9,7 @@ interface AuthContextType {
   register: () => Promise<{ lady: LadyProfile; isNew: boolean }>;
   logout: () => void;
   updateLadyProfile: (profile: LadyProfile) => void;
-  simulateAssets: (level: string, verified: string, unlocked?: string[], quizTaken?: boolean, matchedGentlemanCode?: string | null) => Promise<LadyProfile>;
+  simulateAssets: (level: string, verified: string, unlocked?: string[], quizTaken?: boolean, matchedGentlemanCode?: string | null, extraFields?: any) => Promise<LadyProfile>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -77,9 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [loggedInLadyCode, ladyProfiles, updateLadyProfile]);
 
-  const simulateAssets = useCallback(async (level: string, verified: string, unlocked?: string[], quizTaken?: boolean, matched?: string | null) => {
+  const simulateAssets = useCallback(async (level: string, verified: string, unlocked?: string[], quizTaken?: boolean, matched?: string | null, extraFields?: any) => {
     if (!loggedInLadyCode) throw new Error("尚未登入麗人角色");
-    const lady = await simulateLadyAssets(loggedInLadyCode, level, verified, unlocked, quizTaken, matched);
+    const lady = await simulateLadyAssets(loggedInLadyCode, level, verified, unlocked, quizTaken, matched, undefined, extraFields);
     updateLadyProfile(lady);
     return lady;
   }, [loggedInLadyCode, updateLadyProfile]);

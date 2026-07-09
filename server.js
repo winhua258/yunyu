@@ -64,6 +64,11 @@ const LadyProfileSchema = new mongoose.Schema({
   quizMetrics: { type: MetricsSchema, default: {} },
   membershipLevel: { type: String, default: "free" },
   assetVerified: { type: String, default: "none" },
+  idVerified: { type: String, default: "none" },
+  idVerifyFileName: { type: String, default: "" },
+  occupationVerified: { type: String, default: "none" },
+  occupationVerifyFileName: { type: String, default: "" },
+  verifyOccupation: { type: String, default: "" },
   unlockedGentlemanCodes: { type: [String], default: [] },
   quizAnswers: { type: [Number], default: [] }, // 各題作答選項索引 (0-3)
   deviceId: { type: String, default: "" },
@@ -625,19 +630,32 @@ app.post("/api/lady/:code/quiz-result", async (req, res) => {
 app.post("/api/lady/:code/simulate-assets", async (req, res) => {
   try {
     const { code } = req.params;
-    const { membershipLevel, assetVerified, unlockedGentlemanCodes } = req.body;
+    const { 
+      membershipLevel, 
+      assetVerified, 
+      unlockedGentlemanCodes,
+      idVerified,
+      idVerifyFileName,
+      occupationVerified,
+      occupationVerifyFileName,
+      verifyOccupation,
+      matchCounts
+    } = req.body;
 
     const lady = await LadyProfile.findOne({ code });
     if (!lady) {
       return res.status(404).json({ message: "查無此女性用戶編號。" });
     }
 
-    if (membershipLevel !== undefined) {
-      lady.membershipLevel = membershipLevel;
-    }
-    if (assetVerified !== undefined) {
-      lady.assetVerified = assetVerified;
-    }
+    if (membershipLevel !== undefined) lady.membershipLevel = membershipLevel;
+    if (assetVerified !== undefined) lady.assetVerified = assetVerified;
+    if (idVerified !== undefined) lady.idVerified = idVerified;
+    if (idVerifyFileName !== undefined) lady.idVerifyFileName = idVerifyFileName;
+    if (occupationVerified !== undefined) lady.occupationVerified = occupationVerified;
+    if (occupationVerifyFileName !== undefined) lady.occupationVerifyFileName = occupationVerifyFileName;
+    if (verifyOccupation !== undefined) lady.verifyOccupation = verifyOccupation;
+    if (matchCounts !== undefined) lady.matchCounts = matchCounts;
+    
     if (unlockedGentlemanCodes !== undefined) {
       lady.unlockedGentlemanCodes = unlockedGentlemanCodes;
     }
@@ -673,7 +691,23 @@ app.get("/api/admin/ladies", adminAuth, async (req, res) => {
 app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
   try {
     const { code } = req.params;
-    const { membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode, notes, photoUrl, pendingPhotoUrl, name } = req.body;
+    const { 
+      membershipLevel, 
+      assetVerified, 
+      unlockedGentlemanCodes, 
+      quizTaken, 
+      matchedGentlemanCode, 
+      notes, 
+      photoUrl, 
+      pendingPhotoUrl, 
+      name,
+      idVerified,
+      idVerifyFileName,
+      occupationVerified,
+      occupationVerifyFileName,
+      verifyOccupation,
+      matchCounts
+    } = req.body;
 
     const lady = await LadyProfile.findOne({ code });
     if (!lady) {
@@ -682,6 +716,13 @@ app.post("/api/admin/lady/:code/update", adminAuth, async (req, res) => {
 
     if (membershipLevel !== undefined) lady.membershipLevel = membershipLevel;
     if (assetVerified !== undefined) lady.assetVerified = assetVerified;
+    if (idVerified !== undefined) lady.idVerified = idVerified;
+    if (idVerifyFileName !== undefined) lady.idVerifyFileName = idVerifyFileName;
+    if (occupationVerified !== undefined) lady.occupationVerified = occupationVerified;
+    if (occupationVerifyFileName !== undefined) lady.occupationVerifyFileName = occupationVerifyFileName;
+    if (verifyOccupation !== undefined) lady.verifyOccupation = verifyOccupation;
+    if (matchCounts !== undefined) lady.matchCounts = matchCounts;
+
     if (unlockedGentlemanCodes !== undefined) lady.unlockedGentlemanCodes = unlockedGentlemanCodes;
     if (quizTaken !== undefined) lady.quizTaken = quizTaken;
     if (matchedGentlemanCode !== undefined) lady.matchedGentlemanCode = matchedGentlemanCode;
