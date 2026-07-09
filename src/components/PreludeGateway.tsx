@@ -104,6 +104,7 @@ export default function PreludeGateway({
 
           {/* Scanner Button Core */}
           <motion.button
+            id="prelude-gateway-btn"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onMouseDown={() => {

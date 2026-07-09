@@ -1351,7 +1351,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
             </div>
 
             {/* GUEST VIEW: Split verification for Gentlemen + Ladies */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
+            <div id="verify-login-card" className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-brand-border/60 relative overflow-hidden backdrop-blur-md">
 
               {/* Center vertical line */}
               <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />

@@ -194,7 +194,7 @@ export default function CinemaVlog({
         
         {/* LEFT COLUMN: Premium Candidate Selector Drawer (Glassmorphic) */}
         <div className="lg:col-span-3 flex flex-col space-y-4 h-full justify-center">
-          <div className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 space-y-4 shadow-2xl text-left">
+          <div id="cinema-vlog-slider" className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 space-y-4 shadow-2xl text-left">
             <h4 className="text-[10px] font-serif font-bold tracking-[0.2em] text-brand-accent uppercase border-b border-white/5 pb-2.5">
               ELITE MEMBERS // 本週精選尊榮會員
             </h4>

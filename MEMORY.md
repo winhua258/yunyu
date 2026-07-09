@@ -1568,3 +1568,26 @@
   - `pm2 restart yuanyu` -> PM2 順利熱載入後端伺服器。
 - **是否已經收斂**：是。
 
+---
+
+## 2026-07-09 新手引導互動式捲動與金色脈衝高亮優化記錄
+
+- **本輪目標**：重構新手引導指南（OnboardingGuide），將原本靜態全螢幕遮蓋的文字介紹，改為右下角懸浮氣泡卡片，並在點選步驟時自動平滑捲動到對應的頁面版塊、高亮顯示金色呼吸燈。
+- **發現的問題**：舊版新手引導指南是全螢幕覆蓋的靜態文字說明，不僅阻斷了頁面背景，也無法讓客戶直觀看到功能所在的真實位置與點擊指示。
+- **是否真實可複現**：是（登入時自動彈出的 onboarding 視窗遮蓋了整個首頁）。
+- **複現命令或驗證方式**：手動打開新手引導。
+- **修改內容**：
+  - **`PreludeGateway.tsx`**、**`CinemaVlog.tsx`**、**`ClubPositioning.tsx`**、**`VerificationScreen.tsx`**：
+    - 分別在指紋按鈕、會員選擇面板、定位支柱、以及登入卡片上新增了專屬 ID：`#prelude-gateway-btn`、`#cinema-vlog-slider`、`#club-positioning-pillars`、`#verify-login-card`。
+  - **`OnboardingGuide.tsx`**：
+    - 將全螢幕遮罩修改為無干擾的固定懸浮氣泡面板（`fixed bottom-6 right-6`，行動端 `bottom-4` 居中且適應寬度）。
+    - 引入 `useEffect` 偵測當前步驟。切換時自動選取目標 DOM，調用 `scrollIntoView({ behavior: "smooth", block: "center" })` 使其自動捲動至可視區域。
+    - 清除先前步驟的高亮，並在當前元素加上 `.tour-target-highlight` CSS 類別。
+    - 注入全域 CSS 樣式，對高亮元素繪製 `outline` 和 pulsing gold `box-shadow` 金黃色呼吸燈特效，完美指示客戶該看哪裡與點選哪裡。
+- **驗證命令 and 結果**：
+  - 執行 `npm run build` -> Vite 前端成功打包，編譯無錯誤。
+  - 手動測試 Onboarding 流程：切換步驟時頁面自動流暢捲動，且按鈕/卡片周圍會亮起極為醒目的金色發光脈衝，點擊「跳過」或「開始體驗」高亮外框隨即徹底移除，體驗非常高級且直觀。
+  - `pm2 restart yuanyu` -> 後端伺服器熱重啟成功。
+- **是否已經收斂**：是。
+
+
