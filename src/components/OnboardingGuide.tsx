@@ -25,7 +25,7 @@ export default function OnboardingGuide({ onClose }: OnboardingGuideProps) {
     {
       title: "第一步：會籍註冊與驗證",
       subtitle: "如何獲得會籍 / 輸入專屬驗證碼解鎖",
-      description: "在主頁向下滑動至「雙通道准入入口」，您可以點擊選擇「麗人會籍核驗」或「紳士會籍審核」。在核驗框中輸入您的專屬會籍代碼。測試體驗期間，您可以使用公共體驗碼「GUEST」或管理員專用碼「ADMIN」快速開啟，解鎖完整平台體驗。",
+      description: "向下滑動至「會籍核驗入口」，點選麗人或紳士認證，輸入會籍代碼即可解鎖。測試期可輸入體驗碼「GUEST」或「ADMIN」快速體驗。",
       icon: <UserCheck className="w-16 h-16 text-brand-olive" />,
       highlights: ["麗人與紳士獨立驗證", "支援專屬配對金鑰", "快速測試可用「GUEST」"],
       bgClass: "from-[#FDFBF7] to-[#FAF8F5]"
@@ -33,7 +33,7 @@ export default function OnboardingGuide({ onClose }: OnboardingGuideProps) {
     {
       title: "第二步：AI 靈魂共鳴測驗",
       subtitle: "2 分鐘全息答題特質描繪 · 讓推薦更懂你",
-      description: "點擊頂部導航欄的「AI 靈魂共鳴」或入口處的答題按鈕，進入 2 分鐘的性格特質答題系統。該測驗由 AI 從認知邊界、生活美學、金錢成熟度、衝突應對等 20 個維度進行深度側寫，生成您專屬的雷達圖，這是後續精確匹配高契合伴侶的核心依據。",
+      description: "點擊「AI 靈魂共鳴」開啟 2 分鐘性格答題。系統將多維度剖析並生成您的專屬性格雷達圖，做為高契合度精準匹配的核心依據。",
       icon: <Sparkles className="w-16 h-16 text-brand-olive fill-current animate-pulse" />,
       highlights: ["20個核心特質答題", "生成專屬個性雷達圖", "智慧契合度加分機制"],
       bgClass: "from-[#FAF8F5] to-[#F5EFE6]"
@@ -41,7 +41,7 @@ export default function OnboardingGuide({ onClose }: OnboardingGuideProps) {
     {
       title: "第三步：瀏覽心儀會員",
       subtitle: "去哪裡看男生？尊享高淨值紳士名錄",
-      description: "完成會籍驗證後，系統將自動為您開啟專屬的「麗人會籍大廳」。在這裡您可以直接瀏覽「精選紳士資料庫」，查看每位傑出男性的年齡、身高、精緻生活相冊、背景標籤，以及他與您的 AI 性格特質契合度百分比，輕鬆尋找頻率一致的對象。",
+      description: "驗證後開啟專屬會籍大廳。您可以瀏覽「精選紳士資料庫」，直觀查看男士年齡、身高、生活相冊、背景標籤及 AI 契合度百分比。",
       icon: <Users className="w-16 h-16 text-brand-olive" />,
       highlights: ["精選紳士資料庫", "實時百分比契合度", "深度標籤與實名背景"],
       bgClass: "from-[#F5EFE6] to-[#FAF8F5]"
@@ -49,7 +49,7 @@ export default function OnboardingGuide({ onClose }: OnboardingGuideProps) {
     {
       title: "第四步：開啟專屬私密聊天",
       subtitle: "去哪裡聊天？一鍵建立 LINE 專屬保密通道",
-      description: "當您在名錄中看到心儀對象時，點擊他卡片下方的「一鍵建立 專屬通道」按鈕。系統將自動生成專屬戀人連結與連線序號，您可以一鍵直連本會所的 LINE 專屬顧問。由專業顧問全程低調引導對談，在最高安全隱私（NDA）保護下優雅啟航。",
+      description: "點擊心儀卡片下的「一鍵建立 專屬通道」，系統會自動生成連線序號與連結，點擊直連專屬 LINE 顧問，在嚴密隱私防護下開啟對談。",
       icon: <MessageSquare className="w-16 h-16 text-brand-olive" />,
       highlights: ["一鍵直連 LINE 專屬通道", "專屬戀人編號安全連線", "全程 NDA 隱私防線保護"],
       bgClass: "from-[#FAF8F5] to-[#FCFAF2]"

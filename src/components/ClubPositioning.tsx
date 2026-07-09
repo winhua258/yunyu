@@ -12,19 +12,19 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
       icon: <UserCheck className="w-6 h-6 text-brand-olive" />,
       title: "100% 實名真偽查核",
       english: "Identity Authenticity",
-      description: "本會所實行嚴格的實名審核機制。所有會員均須經由專屬顧問進行真人身分比對與電話面談，杜絕一切虛假帳號與假冒身分，確保交友生態的最高安全性與純粹性。"
+      description: "顧問真人面談與身分雙重比對，100% 杜絕虛假與假冒帳號，確保交友生態安全純粹。"
     },
     {
       icon: <Award className="w-6 h-6 text-brand-olive" />,
       title: "頂格高淨值資產審查",
       english: "Premium Asset Validation",
-      description: "紳士會籍要求極高之資產实力核驗，包含房產地契、有價證券信託證明或高淨值企業持股等（資產門檻需達 NT$ 8,000 萬以上），官方簽章驗證，保證推薦對象的傑出階層與誠信實力。"
+      description: "紳士會籍須通過 NT$ 8,000 萬以上淨資產核驗（房產/證券/股權），保證圈層實力對等。"
     },
     {
       icon: <EyeOff className="w-6 h-6 text-brand-olive" />,
       title: "國防級隱私與 NDA 保護",
       english: "Absolute Discretion & NDA",
-      description: "採用「專屬戀人編號」登入制，全站不公開任何個人隱私、目錄與社群。所有聯絡資訊均受端對端加密保護，並严格簽署高端會員保密協定（NDA），守護您的社交聲譽與穩私安全。"
+      description: "全站實施專屬編號登入。嚴格簽署保密協定（NDA）與防拍照洩漏，全力守護社交聲譽。"
     }
   ];
 
@@ -32,22 +32,22 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
     {
       num: "01",
       title: "線上會籍核驗",
-      desc: "開啟會籍認證金鑰，提交基本名片與實名資產認證證明，由 AI 與專屬顧問進行多重真偽核算。"
+      desc: "線上提交基本資料與資產證明，由顧問與 AI 進行多重真實度核查。"
     },
     {
       num: "02",
-      title: "AI 靈魂共鳴採集",
-      desc: "參與 2 分鐘 AI 靈魂特質測驗，從認知、生活美學、金錢成熟度、衝突應對等 20 個維度進行全息側寫。"
+      title: "AI 靈魂特質採集",
+      desc: "進行 2 分鐘心理測驗，從認知、美學等 20 個維度進行全息性格側寫。"
     },
     {
       num: "03",
       title: "雙向保密特區推薦",
-      desc: "解鎖專屬麗人推薦特區或紳士資料庫，精確對比雙方性格雷達圖與生活特寫，篩選最心靈共鳴的伴侶。"
+      desc: "解鎖專屬數據庫，對比雙方性格雷達圖與真實生活特寫，精準篩選配對。"
     },
     {
       num: "04",
       title: "一鍵建立 專屬通道",
-      desc: "一鍵直連 LINE 專屬保密通道。無騷擾、不外洩，在專業顧問的引導下，開啟一場優雅且私密的對談。"
+      desc: "一鍵直連 LINE 雙向保密通道，在顧問引導下展開安全、優雅的私密對談。"
     }
   ];
 
@@ -97,7 +97,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-xs md:text-sm text-white/60 leading-relaxed font-light tracking-wider"
           >
-            「緣友 YUAN-YU」非大眾娛樂化的快餐式交友，而是一座專為傑出紳士與知性麗人打造的私人實名社交會所。我們將「誠信、品味、隱私」封裝於精緻的數字合約中，實現靈魂深處的頻率對話。
+            「緣友 YUAN-YU」專為傑出紳士與知性麗人打造。我們將「誠信、品味、隱私」融入極簡數字合約，開啟靈魂對等的深度頻率對話。
           </motion.p>
         </div>
 

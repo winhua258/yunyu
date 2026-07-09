@@ -80,9 +80,9 @@ export default function PreludeGateway({
             transition={{ delay: 1.5, duration: 1 }}
             className="text-xs md:text-sm text-brand-muted max-w-2xl mx-auto leading-relaxed tracking-[0.12em] px-4 font-serif"
           >
-            為維護極致高端且安全的會員制社交生態，本會所實行嚴格的實名身份與高淨值資產審查。
+            本會所專為高淨值會員打造，實行嚴格實名身份與資產核驗。
             <br className="hidden md:inline" />
-            請輕觸下方「會籍認證核驗金鑰」啟動專屬憑證校驗，開啟沉浸式美學邂逅。
+            請長按下方「會籍金鑰」啟動專屬校驗，開啟私密美學邂逅。
           </motion.p>
         </div>
 
@@ -169,8 +169,8 @@ export default function PreludeGateway({
             </div>
           </motion.button>
 
-          {/* Diagnostic side log screen - Hidden to reduce visual noise */}
-          <div className="hidden">
+          {/* Diagnostic side log screen */}
+          <div className="absolute -right-36 md:-right-48 w-44 md:w-52 h-28 bg-white/80 border border-brand-border rounded-2xl p-2.5 text-left hidden lg:block overflow-hidden backdrop-blur-sm shadow-md font-serif text-[8.5px] leading-normal text-brand-olive">
             <div className="text-[9px] font-bold border-b border-brand-border pb-1 mb-1.5 text-brand-dark tracking-wider">
               會籍安全核驗進度
             </div>
@@ -192,8 +192,8 @@ export default function PreludeGateway({
             </div>
           </div>
 
-          {/* Live activity side display - Hidden to reduce visual noise */}
-          <div className="hidden">
+          {/* Live activity side display */}
+          <div className="absolute -left-36 md:-left-48 w-44 md:w-52 h-28 bg-white/80 border border-brand-border rounded-2xl p-2.5 text-left hidden lg:block overflow-hidden backdrop-blur-sm shadow-md font-serif text-[8.5px] text-brand-text">
             <div className="text-[9px] border-b border-brand-border pb-1 mb-1.5 font-bold text-brand-dark tracking-wider flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-brand-olive fill-current" /> 緣友會所大數據
             </div>

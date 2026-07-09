@@ -1781,7 +1781,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <span>實名認證（100% 真人審核）</span>
                     </h5>
                     <p className="text-[10.5px] text-brand-muted leading-relaxed pl-3.5">
-                      所有申請男賓均須提交台灣官方有效身分證明文件，由專人手動核對年齡與真實性，徹底杜絕人頭帳號與詐騙行為。
+                      男賓均須提交有效身分證明，由專人手動核對真實性，杜絕虛假與詐騙帳號。
                     </p>
                   </div>
 
@@ -1791,7 +1791,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <span>千萬資產/財力審核</span>
                     </h5>
                     <p className="text-[10.5px] text-brand-muted leading-relaxed pl-3.5">
-                      男賓須通過專屬資產實力認證（年收入、不動產或大額動產等財力證明），符合頂級菁英標準方可核發「專屬戀人編號」。
+                      男賓須提交不動產、有價證券或持股證明，符合高淨值門檻方可開通會籍。
                     </p>
                   </div>
 
@@ -1801,7 +1801,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
                       <span>雙向加密隱私保護</span>
                     </h5>
                     <p className="text-[10.5px] text-brand-muted leading-relaxed pl-3.5">
-                      全站實施高規格匿名代表發碼制，個人聯絡資訊、隱私照片不對外公開，保障雙方最高安全防波。
+                      全站採用去個人化專屬編號，聯絡資訊與隱私照全程不公開，確保社交聲譽。
                     </p>
                   </div>
                 </div>
