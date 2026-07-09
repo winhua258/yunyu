@@ -54,7 +54,8 @@ const ConfigSchema = new mongoose.Schema({
 const LadyProfileSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
   name: { type: String, default: "未命名麗人" },
-  isVerified: { type: Boolean, default: true },
+  isVerified: { type: Boolean, default: false },
+  matchCounts: { type: Number, default: 1 },
   photoUrl: { type: String, default: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800" },
   pendingPhotoUrl: { type: String, default: "" }, // 待審核頭像 URL（麗人提交，主控批准後才替換）
   notes: { type: String, default: "" }, // 主控備注
@@ -547,6 +548,7 @@ app.post("/api/lady/:code/photo-request", async (req, res) => {
     }
 
     lady.pendingPhotoUrl = pendingPhotoUrl;
+    lady.isVerified = false; // 變更頭像後需要重新審核
     lady.updatedAt = new Date();
     await lady.save();
 

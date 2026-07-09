@@ -60,17 +60,13 @@ export default function App() {
     }
   }, [loggedInLadyCode, ladyProfiles]);
 
-  // Handle Onboarding Guide trigger
+  // Handle Onboarding Guide trigger — fires on website entry (not login-dependent)
   useEffect(() => {
-    if (loggedInLadyCode) {
-      const hasCompletedOnboarding = localStorage.getItem(`yuanyu_onboarding_completed_${loggedInLadyCode}`);
-      if (hasCompletedOnboarding !== "true") {
-        setShowOnboarding(true);
-      }
-    } else {
-      setShowOnboarding(false);
+    const hasCompletedOnboarding = localStorage.getItem("yuanyu_onboarding_completed");
+    if (hasCompletedOnboarding !== "true") {
+      setShowOnboarding(true);
     }
-  }, [loggedInLadyCode]);
+  }, []);
 
   const handleSetLadyUnlockedCodes = async (codesOrFn: string[] | ((prev: string[]) => string[])) => {
     if (!loggedInLadyCode) return;
@@ -368,13 +364,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Onboarding Guide Modal Overlay */}
+      {/* Onboarding Guide Modal Overlay — shows on first website visit */}
       <AnimatePresence>
-        {showOnboarding && loggedInLadyCode && (
+        {showOnboarding && (
           <OnboardingGuide 
             onClose={() => {
               setShowOnboarding(false);
-              localStorage.setItem(`yuanyu_onboarding_completed_${loggedInLadyCode}`, "true");
+              localStorage.setItem("yuanyu_onboarding_completed", "true");
             }}
           />
         )}

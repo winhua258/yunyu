@@ -502,12 +502,13 @@ export async function simulateLadyAssets(
   assetVerified?: string,
   unlockedGentlemanCodes?: string[],
   quizTaken?: boolean,
-  matchedGentlemanCode?: string | null
+  matchedGentlemanCode?: string | null,
+  matchCounts?: number
 ): Promise<LadyProfile> {
   const response = await fetch(`/api/lady/${ladyCode}/simulate-assets`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode }),
+    body: JSON.stringify({ membershipLevel, assetVerified, unlockedGentlemanCodes, quizTaken, matchedGentlemanCode, matchCounts }),
   });
   if (!response.ok) {
     const errorData = await response.json();
@@ -547,6 +548,8 @@ export async function updateLadyByAdmin(
     photoUrl?: string;
     pendingPhotoUrl?: string;
     name?: string;
+    matchCounts?: number;
+    isVerified?: boolean;
   },
   adminCode: string
 ): Promise<LadyProfile> {

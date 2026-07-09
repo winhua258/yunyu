@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Heart, 
@@ -211,6 +211,39 @@ export default function LadiesDashboard({
     (p) => !TEMPLATE_EXCLUDED_CODES.includes(p.code)
   );
 
+  // Dialog progress for each unlocked gentleman: msgCount per code
+  const [dialogProgress, setDialogProgress] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (unlockedCodes.length === 0) return;
+    const ladyCode = localStorage.getItem("yuanyu_lady_code") || "";
+    if (!ladyCode) return;
+
+    const fetchProgress = async () => {
+      const result: Record<string, number> = {};
+      await Promise.all(
+        unlockedCodes.map(async (gentCode) => {
+          try {
+            const res = await fetch(`/api/chat/history?user1=${ladyCode}&user2=${gentCode}`);
+            if (res.ok) {
+              const data = await res.json();
+              result[gentCode] = Array.isArray(data) ? data.length : 0;
+            } else {
+              result[gentCode] = 0;
+            }
+          } catch {
+            result[gentCode] = 0;
+          }
+        })
+      );
+      setDialogProgress(result);
+    };
+
+    fetchProgress();
+    const interval = setInterval(fetchProgress, 8000);
+    return () => clearInterval(interval);
+  }, [unlockedCodes]);
+
   return (
     <div className="w-full bg-[#0D0D0B] text-[#E5E5E3] min-h-screen py-10 px-4 md:px-12 font-sans relative overflow-hidden">
       {/* Ambient backgrounds */}
@@ -274,11 +307,18 @@ export default function LadiesDashboard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
             {gentlemenList.map((gent) => {
               const isUnlocked = unlockedCodes.includes(gent.code);
-              
+              const msgCount = isUnlocked ? (dialogProgress[gent.code] ?? 0) : 0;
+              // Tier: 0=locked, 1=partial (1-19 msgs, show bio/tagline no LINE), 2=full (>=20 msgs)
+              const unlockTier = !isUnlocked ? 0 : msgCount >= 20 ? 2 : 1;
+
               return (
                 <div 
                   key={gent.code}
-                  className="bg-[#141412] rounded-[2rem] border border-white/5 overflow-hidden shadow-xl hover:border-brand-accent/30 transition-all duration-300 relative group flex flex-col justify-between min-h-[380px]"
+                  className={`rounded-[2rem] border overflow-hidden shadow-xl transition-all duration-300 relative group flex flex-col justify-between min-h-[380px] ${
+                    unlockTier === 0
+                      ? "bg-[#141412]/70 border-white/5 opacity-80 hover:opacity-90"
+                      : "bg-[#141412] border-white/5 hover:border-brand-accent/30"
+                  }`}
                 >
                   {/* Photo Section */}
                   <div className="relative h-56 w-full overflow-hidden bg-black/40">
@@ -286,7 +326,7 @@ export default function LadiesDashboard({
                       src={gent.imageUrl} 
                       alt="" 
                       className={`w-full h-full object-cover transition-all duration-700 ${
-                        isUnlocked ? "blur-0 scale-100 group-hover:scale-105" : "blur-xl saturate-50 scale-105"
+                        unlockTier === 2 ? "blur-0 scale-100 group-hover:scale-105" : "blur-xl saturate-50 scale-105"
                       }`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
@@ -302,15 +342,8 @@ export default function LadiesDashboard({
                       ● AI 契合 98%
                     </div>
 
-                    {/* 暫不配對標籤 */}
-                    {gent.isAcceptingMatches === false && (
-                      <div className="absolute top-12 left-4 z-20 bg-red-650/95 backdrop-blur-md text-white text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-red-500/30 flex items-center gap-1 shadow-md select-none">
-                        <span>暫不配對</span>
-                      </div>
-                    )}
-
-                    {/* Identity Details when Unlocked */}
-                    {isUnlocked && (
+                    {/* Identity Details when partially or fully unlocked */}
+                    {unlockTier >= 1 && (
                       <div className="absolute bottom-4 left-6 right-6 z-20 text-white">
                         <div className="flex items-baseline gap-2">
                           <h3 className="font-serif text-lg font-bold">{gent.name}</h3>
@@ -323,7 +356,8 @@ export default function LadiesDashboard({
 
                   {/* Info / Interaction Section */}
                   <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                    {isUnlocked ? (
+                    {unlockTier === 2 ? (
+                      // TIER 2: Fully unlocked (≥20 msgs) — show all including LINE
                       <>
                         <p className="text-xs text-white/70 line-clamp-3 leading-relaxed text-left">
                           {gent.bio}
@@ -357,7 +391,42 @@ export default function LadiesDashboard({
                           </button>
                         </div>
                       </>
+                    ) : unlockTier === 1 ? (
+                      // TIER 1: Partial unlock (1-19 msgs) — show bio/tagline, progress bar, no LINE
+                      <div className="flex-1 flex flex-col justify-between py-1">
+                        <p className="text-xs text-white/60 line-clamp-2 leading-relaxed text-left mb-3">
+                          {gent.bio}
+                        </p>
+
+                        {/* Conversation progress bar */}
+                        <div className="mb-3 space-y-1.5">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-white/50 flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-brand-accent" />
+                              對話解鎖進度
+                            </span>
+                            <span className="text-brand-accent font-mono font-bold">{msgCount}/20</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-brand-olive to-brand-accent rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min((msgCount / 20) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-white/40 text-center">再聊 {20 - msgCount} 句即可完全解鎖 LINE 聯絡方式</p>
+                        </div>
+
+                        <button
+                          id={`btn-view-profile-partial-${gent.code}`}
+                          onClick={() => onViewProfile(gent.code)}
+                          className="w-full py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-full text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <span>繼續對話解鎖</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     ) : (
+                      // TIER 0: Locked — ghost card with unlock button
                       <div className="flex-1 flex flex-col justify-between py-2 text-center relative z-10">
                         <div className="space-y-1.5 mb-4">
                           <div className="flex justify-center">

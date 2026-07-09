@@ -41,6 +41,7 @@ export interface LadyProfile {
   code: string;
   name: string;
   isVerified: boolean;
+  matchCounts?: number;
   photoUrl: string;
   pendingPhotoUrl?: string;
   notes?: string;
