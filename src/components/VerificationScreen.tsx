@@ -1361,9 +1361,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               <div className="hidden md:block absolute inset-y-12 left-1/2 w-px bg-gradient-to-b from-brand-border/10 via-brand-border/80 to-brand-border/10" />
 
               {/* LEFT COLUMN: LADIES (名媛限時免財力認證通道) */}
-              <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${selectedGender === "female"
-                ? "opacity-100 border-brand-olive/50 shadow-lg"
-                : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
+              <div className={`flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${selectedGender === "female"
+                ? "flex opacity-100 border-brand-olive/50 shadow-lg"
+                : "hidden md:flex opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
                 }`}>
                 <div className="absolute top-3 right-3 bg-brand-accent text-brand-olive text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse select-none">
                   PROMO 限時特許
@@ -1489,9 +1489,9 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
               </div>
 
               {/* RIGHT COLUMN: GENTLEMEN (紳士通道) */}
-              <div className={`flex flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${selectedGender === "male"
-                ? "opacity-100 border-brand-olive/50 shadow-lg"
-                : "opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
+              <div className={`flex-col justify-start p-6 md:p-8 bg-brand-beige/20 rounded-3xl border relative overflow-hidden space-y-6 h-full transition-all duration-500 ${selectedGender === "male"
+                ? "flex opacity-100 border-brand-olive/50 shadow-lg"
+                : "hidden md:flex opacity-30 blur-[1.5px] pointer-events-none select-none border-brand-border/40"
                 }`}>
                 <div className="absolute top-3 right-3 bg-brand-olive/10 text-brand-olive text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest border border-brand-olive/20 select-none">
                   GENTLEMEN 通道

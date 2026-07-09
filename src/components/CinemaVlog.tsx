@@ -191,15 +191,15 @@ export default function CinemaVlog({
 
       {/* Main Grid Layout without bounded video player card */}
       <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center flex-1 my-6">
-        
         {/* LEFT COLUMN: Premium Candidate Selector Drawer (Glassmorphic) */}
-        <div className="lg:col-span-3 flex flex-col space-y-4 h-full justify-center">
+        <div className="lg:col-span-3 flex flex-col space-y-4 w-full h-full justify-center">
           <div id="cinema-vlog-slider" className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 space-y-4 shadow-2xl text-left">
             <h4 className="text-[10px] font-serif font-bold tracking-[0.2em] text-brand-accent uppercase border-b border-white/5 pb-2.5">
               ELITE MEMBERS // 本週精選尊榮會員
             </h4>
             
-            <div className="grid grid-cols-4 lg:grid-cols-1 gap-3">
+            {/* Desktop list: visible only on lg screens */}
+            <div className="hidden lg:flex lg:flex-col gap-3">
               {vlogStories.map((story) => (
                 <button
                   key={story.id}
@@ -212,22 +212,55 @@ export default function CinemaVlog({
                       : "bg-transparent border-white/5 hover:bg-white/5 text-white/60 hover:text-white"
                   }`}
                 >
-                  <div className="relative shrink-0 mx-auto lg:mx-0">
+                  <div className="relative shrink-0">
                     <img 
                       src={story.avatar} 
                       alt={story.name} 
-                      className={`w-9 h-9 lg:w-11 lg:h-11 rounded-full object-cover border-2 transition-transform duration-300 ${
+                      className={`w-11 h-11 rounded-full object-cover border-2 transition-transform duration-300 ${
                         activeVlog.id === story.id ? "border-brand-accent scale-105" : "border-transparent"
                       }`}
                     />
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#161614]" />
                   </div>
-                  <div className="hidden lg:block space-y-0.5 flex-1">
+                  <div className="space-y-0.5 flex-1">
                     <div className="flex items-center justify-between">
                       <span className="font-serif font-bold text-xs">{story.name}</span>
                       <span className="text-[9px] font-bold text-brand-accent bg-brand-accent/10 px-1.5 rounded-md">{story.match}</span>
                     </div>
                     <p className="text-[10px] text-brand-light truncate max-w-[140px]">{story.role}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Mobile Swipe Shelf: horizontal scroll layout with full card details */}
+            <div className="flex lg:hidden overflow-x-auto gap-4 snap-x pb-2 scrollbar-none">
+              {vlogStories.map((story) => (
+                <button
+                  key={story.id}
+                  onClick={() => {
+                    setActiveVlog(story);
+                  }}
+                  className={`flex-shrink-0 snap-center w-52 p-3 rounded-2xl border text-left transition-all duration-300 flex items-center gap-3 focus:outline-none ${
+                    activeVlog.id === story.id
+                      ? "bg-brand-accent/25 border-brand-accent text-white shadow-lg"
+                      : "bg-white/5 border-white/10 text-white/70"
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <img 
+                      src={story.avatar} 
+                      alt={story.name} 
+                      className="w-10 h-10 rounded-full object-cover border border-white/20"
+                    />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-brand-dark" />
+                  </div>
+                  <div className="space-y-0.5 flex-1 overflow-hidden">
+                    <div className="flex items-center justify-between">
+                      <span className="font-serif font-bold text-xs truncate">{story.name}</span>
+                      <span className="text-[8px] font-bold text-brand-accent bg-brand-accent/20 px-1.5 py-0.25 rounded shrink-0">{story.match}</span>
+                    </div>
+                    <p className="text-[9px] text-white/55 truncate">{story.role.split(" // ")[0]}</p>
                   </div>
                 </button>
               ))}

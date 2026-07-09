@@ -170,7 +170,7 @@ export default function PreludeGateway({
             </div>
           </motion.button>
 
-          {/* Diagnostic side log screen */}
+          {/* Diagnostic side log screen (Desktop absolute, hidden on mobile) */}
           <div className="absolute -right-36 md:-right-48 w-44 md:w-52 h-28 bg-white/80 border border-brand-border rounded-2xl p-2.5 text-left hidden lg:block overflow-hidden backdrop-blur-sm shadow-md font-serif text-[8.5px] leading-normal text-brand-olive">
             <div className="text-[9px] font-bold border-b border-brand-border pb-1 mb-1.5 text-brand-dark tracking-wider">
               會籍安全核驗進度
@@ -193,7 +193,7 @@ export default function PreludeGateway({
             </div>
           </div>
 
-          {/* Live activity side display */}
+          {/* Live activity side display (Desktop absolute, hidden on mobile) */}
           <div className="absolute -left-36 md:-left-48 w-44 md:w-52 h-28 bg-white/80 border border-brand-border rounded-2xl p-2.5 text-left hidden lg:block overflow-hidden backdrop-blur-sm shadow-md font-serif text-[8.5px] text-brand-text">
             <div className="text-[9px] border-b border-brand-border pb-1 mb-1.5 font-bold text-brand-dark tracking-wider flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-brand-olive fill-current" /> 緣友會所大數據
@@ -209,6 +209,39 @@ export default function PreludeGateway({
             </div>
           </div>
 
+        </div>
+
+        {/* Mobile-only responsive diagnostic & data boards row */}
+        <div className="flex lg:hidden flex-col sm:flex-row gap-4 w-full max-w-sm px-4">
+          <div className="flex-1 bg-white/85 border border-brand-border rounded-2xl p-3 text-left shadow-sm backdrop-blur-sm text-[9px] leading-relaxed text-brand-olive">
+            <div className="font-bold border-b border-brand-border pb-1 mb-1 text-brand-dark tracking-wide">
+              會籍安全核驗進度
+            </div>
+            <div className="space-y-0.5">
+              {(scanState === "scanning" && scanProgress > 10) ? (
+                <>
+                  <p className="truncate text-brand-olive">● 建立核驗通道...</p>
+                  {scanProgress >= 40 && <p className="truncate text-brand-olive">● 檢索誠信等級</p>}
+                  {scanProgress >= 70 && <p className="truncate text-brand-olive">● 認證資產簽章</p>}
+                </>
+              ) : (
+                <>
+                  <p className="animate-pulse">● 等待金鑰指令...</p>
+                  <p className="text-brand-light/60">● 加密: AES-256 | NDA</p>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex-1 bg-white/85 border border-brand-border rounded-2xl p-3 text-left shadow-sm backdrop-blur-sm text-[9px] leading-relaxed text-brand-text">
+            <div className="font-bold border-b border-brand-border pb-1 mb-1 text-brand-dark tracking-wide flex items-center gap-1">
+              <Sparkles className="w-2.5 h-2.5 text-brand-olive fill-current" /> 緣友大數據
+            </div>
+            <div className="space-y-0.5">
+              <p>門檻: <span className="text-brand-olive font-bold">NT$ 8,000萬+</span></p>
+              <p>男女比例: <span className="text-brand-olive font-bold">45% 紳士 : 55% 麗人</span></p>
+            </div>
+          </div>
         </div>
 
         {/* Interactive chevron scroll down action */}

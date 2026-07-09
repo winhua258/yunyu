@@ -102,7 +102,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
         </div>
 
         {/* Pillars Grid */}
-        <div id="club-positioning-pillars" className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-10">
+        <div id="club-positioning-pillars" className="flex lg:grid lg:grid-cols-3 flex-row overflow-x-auto lg:overflow-x-visible gap-6 lg:gap-8 pb-4 lg:pb-0 snap-x scrollbar-none w-full">
           {pillars.map((pillar, idx) => (
             <motion.div
               key={idx}
@@ -110,7 +110,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: idx * 0.2 }}
-              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-accent/40 rounded-[2.5rem] p-8 space-y-6 transition-all duration-500 shadow-xl backdrop-blur-xl relative"
+              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-accent/40 rounded-[2.5rem] p-8 space-y-6 transition-all duration-500 shadow-xl backdrop-blur-xl relative flex-shrink-0 lg:flex-shrink snap-center w-72 lg:w-auto text-left"
             >
               {/* Outer decorative light */}
               <div className="absolute top-0 left-0 right-0 h-1 rounded-t-[2.5rem] bg-gradient-to-r from-transparent via-brand-accent/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -151,8 +151,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
               <span>全流程安全加密：嚴密保護隱私</span>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="flex lg:grid lg:grid-cols-4 flex-row overflow-x-auto lg:overflow-x-visible gap-6 pb-4 lg:pb-0 snap-x scrollbar-none w-full">
             {steps.map((step, idx) => (
               <motion.div
                 key={idx}
@@ -160,7 +159,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: idx * 0.15 }}
-                className="space-y-4 text-left relative group"
+                className="space-y-4 text-left relative group flex-shrink-0 lg:flex-shrink snap-center w-64 lg:w-auto"
               >
                 {/* Arrow connector for large screens */}
                 {idx < 3 && (
@@ -214,8 +213,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
               在私密性與層級對等的線下對話中，拉近心靈的頻率。
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="flex md:grid md:grid-cols-3 flex-row overflow-x-auto md:overflow-x-visible gap-6 pb-4 md:pb-0 snap-x scrollbar-none w-full">
             {[
               {
                 image: "/images/superyacht.png",
@@ -239,7 +237,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
                 title: "「綠茵揮桿」大屯山私人高爾夫菁英邀請賽",
                 date: "2026.08.22",
                 location: "陽明山私人高爾夫俱樂部",
-                desc: "以球會友，在國家公園懷抱的頂級果嶺展開 18 洞對戰，晚間於會所專屬雪茄吧暢談人生故事與靈魂頻率的共鳴。"
+                desc: "以球會友，在國家公園懷抱的頂級果嶺展開 18 洞對戰，晚間於會所專屬雪茄吧暢談人生故事與靈魂頻率의共鳴。"
               }
             ].map((evt, idx) => (
               <motion.div
@@ -248,7 +246,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: idx * 0.15 }}
-                className="group bg-white/5 border border-white/10 hover:border-brand-accent/40 rounded-[2rem] overflow-hidden transition-all duration-500 shadow-xl backdrop-blur-md flex flex-col"
+                className="group bg-white/5 border border-white/10 hover:border-brand-accent/40 rounded-[2rem] overflow-hidden transition-all duration-500 shadow-xl backdrop-blur-md flex flex-col flex-shrink-0 md:flex-shrink snap-center w-72 md:w-auto"
               >
                 {/* Event Cover Photo */}
                 <div className="relative h-48 overflow-hidden">
@@ -288,6 +286,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
               </motion.div>
             ))}
           </div>
+
         </div>
 
       </div>
