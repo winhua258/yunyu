@@ -62,7 +62,7 @@ export default function App() {
 
   // Handle Onboarding Guide trigger — fires on website entry (not login-dependent)
   useEffect(() => {
-    const hasCompletedOnboarding = localStorage.getItem("yuanyu_onboarding_completed");
+    const hasCompletedOnboarding = localStorage.getItem("yuanyu_onboarding_completed_v2");
     if (hasCompletedOnboarding !== "true") {
       setShowOnboarding(true);
     }
@@ -370,7 +370,7 @@ export default function App() {
           <OnboardingGuide 
             onClose={() => {
               setShowOnboarding(false);
-              localStorage.setItem("yuanyu_onboarding_completed", "true");
+              localStorage.setItem("yuanyu_onboarding_completed_v2", "true");
             }}
           />
         )}
