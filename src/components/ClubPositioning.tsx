@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Shield, Award, EyeOff, Sparkles, CheckCircle, ArrowRight, UserCheck } from "lucide-react";
+import { Shield, Award, EyeOff, Sparkles, CheckCircle, ArrowRight, UserCheck, Calendar, MapPin } from "lucide-react";
 
 interface ClubPositioningProps {
   scrollToSection: (sectionId: string, index: number) => void;
@@ -197,6 +197,96 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
               <span>立即開啟會籍驗證通道</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+          </div>
+        </div>
+
+        {/* Curated Salon Events Section */}
+        <div className="space-y-12">
+          <div className="text-center space-y-3">
+            <span className="text-[10px] font-serif text-brand-accent font-bold tracking-widest uppercase block">
+              EXCLUSIVE OFF-LINE SALONS // 會所限定高端圈層沙龍
+            </span>
+            <h3 className="text-2xl md:text-3xl font-serif text-white font-bold tracking-wider">
+              線下限定社交圈層 · 聯結智慧與品位
+            </h3>
+            <p className="text-xs text-white/50 max-w-2xl mx-auto leading-relaxed font-light">
+              「緣友」定期舉辦頂級私人沙龍，以茶會友、以球會商、以酒會心。
+              在私密性與層級對等的線下對話中，拉近心靈的頻率。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                image: "/images/superyacht.png",
+                tag: "私人遊艇品鑑",
+                title: "「風馳海境」私人遊艇與波爾多名莊品酒沙龍",
+                date: "2026.07.25",
+                location: "基隆港私人遊艇俱樂部",
+                desc: "約邀 8 位完成實名資產核驗會員，夕陽時分乘私人遊艇破浪出行，細品 5 款一等列級莊佳釀，在微風中探討產業與美學的未來。"
+              },
+              {
+                image: "/images/private_jet.png",
+                tag: "商務公務機晚宴",
+                title: "「雲端對談」松山公務機專屬私密高空沙龍",
+                date: "2026.08.08",
+                location: "台北松山商務航空中心",
+                desc: "專為高淨值會員定制的極致飛行與精緻晚宴。在頂級空域體驗與私人管家服務中，分享對生活溫度與事業廣度的深度感悟。"
+              },
+              {
+                image: "/images/golf_club.png",
+                tag: "果嶺菁英賽",
+                title: "「綠茵揮桿」大屯山私人高爾夫菁英邀請賽",
+                date: "2026.08.22",
+                location: "陽明山私人高爾夫俱樂部",
+                desc: "以球會友，在國家公園懷抱的頂級果嶺展開 18 洞對戰，晚間於會所專屬雪茄吧暢談人生故事與靈魂頻率的共鳴。"
+              }
+            ].map((evt, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: idx * 0.15 }}
+                className="group bg-white/5 border border-white/10 hover:border-brand-accent/40 rounded-[2rem] overflow-hidden transition-all duration-500 shadow-xl backdrop-blur-md flex flex-col"
+              >
+                {/* Event Cover Photo */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={evt.image}
+                    alt={evt.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <span className="absolute top-4 left-4 px-3 py-1 bg-brand-accent/90 text-brand-dark text-[9px] font-bold tracking-widest uppercase rounded-full">
+                    {evt.tag}
+                  </span>
+                </div>
+
+                {/* Event Details */}
+                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-2 text-left">
+                    <h4 className="text-sm font-serif font-bold text-white tracking-wide group-hover:text-brand-accent transition-colors leading-snug">
+                      {evt.title}
+                    </h4>
+                    <p className="text-[11px] text-white/60 leading-relaxed font-light">
+                      {evt.desc}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-white/5 space-y-1.5 text-left text-[10px] text-white/50 font-serif">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-brand-accent" />
+                      <span>沙龍時間：{evt.date}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-brand-accent" />
+                      <span>活動地點：{evt.location}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
 

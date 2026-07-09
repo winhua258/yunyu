@@ -169,8 +169,8 @@ export default function PreludeGateway({
             </div>
           </motion.button>
 
-          {/* Diagnostic side log screen */}
-          <div className="absolute -right-36 md:-right-48 w-44 md:w-52 h-28 bg-white/80 border border-brand-border rounded-2xl p-2.5 text-left hidden lg:block overflow-hidden backdrop-blur-sm shadow-md font-serif text-[8.5px] leading-normal text-brand-olive">
+          {/* Diagnostic side log screen - Hidden to reduce visual noise */}
+          <div className="hidden">
             <div className="text-[9px] font-bold border-b border-brand-border pb-1 mb-1.5 text-brand-dark tracking-wider">
               會籍安全核驗進度
             </div>
@@ -192,8 +192,8 @@ export default function PreludeGateway({
             </div>
           </div>
 
-          {/* Live activity side display */}
-          <div className="absolute -left-36 md:-left-48 w-44 md:w-52 h-28 bg-white/80 border border-brand-border rounded-2xl p-2.5 text-left hidden lg:block overflow-hidden backdrop-blur-sm shadow-md font-serif text-[8.5px] text-brand-text">
+          {/* Live activity side display - Hidden to reduce visual noise */}
+          <div className="hidden">
             <div className="text-[9px] border-b border-brand-border pb-1 mb-1.5 font-bold text-brand-dark tracking-wider flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-brand-olive fill-current" /> 緣友會所大數據
             </div>

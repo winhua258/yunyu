@@ -263,7 +263,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
       ]
     };
 
-    const mapped = unpublicized.map((p) => {
+    const mapped = unpublicized.map((p, index) => {
       // 從資料卡 tagline 精準解析真實職務與企業，不予編造：職位 // 企業
       let roleStr = p.tagline.split("，")[0];
       if (p.tagline.includes(p.name)) {
@@ -289,7 +289,11 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
         age: p.age || 40,
         role: roleStr,
         avatar: p.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
-        vlogCover: p.imageUrl || "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&q=80&w=800",
+        vlogCover: [
+          "/images/private_jet.png",
+          "/images/superyacht.png",
+          "/images/golf_club.png"
+        ][index % 3],
         title: p.tagline,
         match: `${95 + Math.floor((p.code.charCodeAt(0) || 0) % 5)}% 契合度`, // 穩定隨機
         views: `${800 + Math.floor((p.code.charCodeAt(0) || 0) % 7) * 100} views`,
