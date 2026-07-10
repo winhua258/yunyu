@@ -48,6 +48,7 @@ export default function GentlemanDashboard({
   // 聊天狀態
   const [chats, setChats] = useState<LadyChatListItem[]>([]);
   const [selectedLadyCode, setSelectedLadyCode] = useState<string | null>(null);
+  const [mobileShowChatDetail, setMobileShowChatDetail] = useState(false);
   const [messages, setMessages] = useState<{ senderCode: string; text: string; createdAt: string }[]>([]);
   const [input, setInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -219,7 +220,9 @@ export default function GentlemanDashboard({
     <div className="flex-1 flex flex-col md:flex-row md:h-[calc(100vh-60px)] md:max-h-[calc(100vh-60px)] overflow-hidden bg-brand-beige/30 font-sans min-h-0">
       
       {/* LEFT SIDEBAR: Chats List */}
-      <div className="w-full md:w-80 border-r border-brand-border/40 bg-white flex flex-col shrink-0">
+      <div className={`w-full md:w-80 border-r border-brand-border/40 bg-white flex flex-col shrink-0 ${
+        activeTab === "chat" && mobileShowChatDetail ? "hidden md:flex" : "flex"
+      }`}>
         
         {/* Gentleman Header Info */}
         <div className="p-5 border-b border-brand-border/40 bg-brand-olive text-white relative overflow-hidden">
@@ -300,7 +303,10 @@ export default function GentlemanDashboard({
                 return (
                   <button
                     key={chat.ladyCode}
-                    onClick={() => setSelectedLadyCode(chat.ladyCode)}
+                    onClick={() => {
+                      setSelectedLadyCode(chat.ladyCode);
+                      setMobileShowChatDetail(true);
+                    }}
                     className={`w-full p-4 flex gap-3 text-left transition-all duration-300 border-l-4 cursor-pointer ${
                       isSelected 
                         ? "bg-brand-beige/25 border-brand-olive shadow-inner" 
@@ -332,7 +338,9 @@ export default function GentlemanDashboard({
       </div>
 
       {/* RIGHT MAIN WINDOW */}
-      <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0">
+      <div className={`flex-1 flex flex-col bg-white overflow-hidden min-h-0 ${
+        activeTab === "chat" && !mobileShowChatDetail ? "hidden md:flex" : "flex"
+      }`}>
         <AnimatePresence mode="wait">
           {activeTab === "chat" ? (
             <motion.div
@@ -347,6 +355,15 @@ export default function GentlemanDashboard({
                   {/* Chat header: Lady short profile */}
                   <div className="p-4 border-b border-brand-border/40 bg-brand-beige/10 flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-3">
+                      {/* Mobile back to chats list button */}
+                      <button
+                        type="button"
+                        onClick={() => setMobileShowChatDetail(false)}
+                        className="md:hidden p-1 text-brand-olive hover:bg-brand-border/20 rounded-xl transition-all cursor-pointer mr-1"
+                      >
+                        <ArrowLeft className="w-5 h-5 shrink-0" />
+                      </button>
+
                       <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-brand-border">
                         <img 
                           src={selectedChat.ladyPhoto || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300"} 

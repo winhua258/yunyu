@@ -200,7 +200,7 @@ export default function ProfileScreen({ profile, onBack, onEnterEditMode, onOpen
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="lg:col-span-7 flex flex-col gap-6"
+          className="lg:col-span-7 flex flex-col gap-6 order-2 lg:order-1"
         >
           {/* VIP Label Indicator */}
           <div className="flex items-center gap-2">
@@ -331,7 +331,7 @@ export default function ProfileScreen({ profile, onBack, onEnterEditMode, onOpen
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="lg:col-span-5 relative flex items-center justify-center py-8 md:py-0"
+          className="lg:col-span-5 relative flex items-center justify-center py-4 md:py-0 order-1 lg:order-2"
         >
           {/* Organic Rounded Picture Container */}
           <div 
