@@ -138,7 +138,7 @@ export default function CinemaVlog({
   return (
     <section 
       id="cinema-vlog"
-      className="w-full min-h-screen relative flex flex-col justify-between py-24 px-4 md:px-12 lg:px-20 overflow-hidden bg-gradient-to-b from-[#161614] via-[#161614] via-80% to-brand-beige text-white scroll-mt-36 md:scroll-mt-32"
+      className="w-full min-h-screen relative flex flex-col justify-between py-24 px-4 md:px-12 lg:px-20 overflow-hidden bg-gradient-to-b from-[#161614] via-[#161614] via-80% to-brand-beige text-white scroll-mt-16"
     >
       {/* Immersive background - Active Vlog Cover projecting directly */}
       <div className="absolute inset-0 z-0 overflow-hidden select-none pointer-events-none">

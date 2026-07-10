@@ -18,7 +18,7 @@ export default function PreludeGateway({
   return (
     <section
       id="prelude-gateway"
-      className="select-none w-full h-screen min-h-screen relative flex flex-col items-center justify-center px-4 overflow-hidden bg-gradient-to-b from-brand-beige via-brand-beige via-80% to-[#161614] text-brand-text scroll-mt-36 md:scroll-mt-32"
+      className="select-none w-full h-screen min-h-screen relative flex flex-col items-center justify-center px-4 overflow-hidden bg-gradient-to-b from-brand-beige via-brand-beige via-80% to-[#161614] text-brand-text scroll-mt-16"
     >
       {/* Ambient Glowing Spheres */}
       <div className="absolute top-[20%] left-[15%] w-96 h-96 rounded-full bg-brand-accent/20 blur-[100px] pointer-events-none animate-pulse" />

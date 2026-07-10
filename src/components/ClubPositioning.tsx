@@ -54,7 +54,7 @@ export default function ClubPositioning({ scrollToSection }: ClubPositioningProp
   return (
     <section
       id="club-positioning"
-      className="w-full min-h-screen relative flex flex-col items-center justify-center py-24 px-4 md:px-12 bg-gradient-to-b from-[#161614] to-[#0D0D0B] text-white overflow-hidden scroll-mt-36 md:scroll-mt-32"
+      className="w-full min-h-screen relative flex flex-col items-center justify-center py-24 px-4 md:px-12 bg-gradient-to-b from-[#161614] to-[#0D0D0B] text-white overflow-hidden scroll-mt-16"
     >
       {/* Background Decorative Ambient Glow */}
       <div className="absolute top-[30%] right-[5%] w-96 h-96 rounded-full bg-brand-olive/15 blur-[120px] pointer-events-none" />

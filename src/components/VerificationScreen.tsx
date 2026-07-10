@@ -1277,7 +1277,7 @@ export default function VerificationScreen({ onVerifySuccess, onSoulMatchClick }
 
             <div 
               id="access-portal"
-              className="w-full min-h-screen flex items-center justify-center relative py-12 px-4 md:px-12 bg-[#FAF8F5] overflow-hidden scroll-mt-20"
+              className="w-full min-h-screen flex items-center justify-center relative py-12 px-4 md:px-12 bg-[#FAF8F5] overflow-hidden scroll-mt-16"
             >
               {/* Background decoration inside access portal */}
               <div className="absolute top-[-100px] left-[-100px] w-[300px] md:w-[400px] h-[300px] md:h-[400px] bg-brand-border/40 rounded-full blur-3xl pointer-events-none" />
