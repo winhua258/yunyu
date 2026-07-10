@@ -47,6 +47,7 @@ export default function LadiesDashboard({
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<{ name: string; price: string; counts: number } | null>(null);
+  const [mobileTab, setMobileTab] = useState<"recommend" | "verify">("recommend");
 
   // Verification Form states
   const [verifyStep, setVerifyStep] = useState<"idle" | "uploading" | "success">("idle");
@@ -309,11 +310,43 @@ export default function LadiesDashboard({
         </div>
       </div>
 
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden w-full max-w-md mx-auto mb-6 bg-white/5 border border-white/10 p-1.5 rounded-2xl gap-2 backdrop-blur-md">
+        <button
+          type="button"
+          onClick={() => setMobileTab("recommend")}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            mobileTab === "recommend"
+              ? "bg-brand-accent text-brand-dark shadow-md"
+              : "text-white/60 hover:text-white"
+          }`}
+        >
+          🎩 推薦紳士名單
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("verify")}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all relative ${
+            mobileTab === "verify"
+              ? "bg-brand-accent text-brand-dark shadow-md"
+              : "text-white/60 hover:text-white"
+          }`}
+        >
+          📁 實名認證 / 測驗
+          {(lady?.idVerified !== "approved" || lady?.occupationVerified !== "approved") && (
+            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Main Grid */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left column: Gentlemen grid (Spans 8 columns on desktop) */}
-        <div className="lg:col-span-8 space-y-8 text-left">
+        <div className={`lg:col-span-8 space-y-8 text-left ${mobileTab === "recommend" ? "block" : "hidden lg:block"}`}>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-brand-accent">Elite Match Recommendation</span>
@@ -480,7 +513,7 @@ export default function LadiesDashboard({
         </div>
 
         {/* Right column: Verification/Package tasks (Spans 4 columns on desktop) */}
-        <div className="lg:col-span-4 space-y-6 text-left">
+        <div className={`lg:col-span-4 space-y-6 text-left ${mobileTab === "verify" ? "block" : "hidden lg:block"}`}>
           
           {/* Identity Verification Promotion */}
           <div className="bg-[#141412] p-6 rounded-[2rem] border border-white/5 shadow-xl space-y-4">
